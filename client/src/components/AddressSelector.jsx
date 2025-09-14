@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 
-const AddressSelector = ({ onAddressChange }) => {
+const AddressSelector = ({ onAddressChange, initialValues = null }) => {
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
@@ -13,104 +13,214 @@ const AddressSelector = ({ onAddressChange }) => {
     districts: false,
     wards: false,
   });
+  const [isInitializing, setIsInitializing] = useState(false);
+
+  // Memoize provinces, districts, and wards to prevent new references
+  const memoizedProvinces = useMemo(() => {
+    return provinces;
+  }, [provinces]);
+  const memoizedDistricts = useMemo(() => {
+    return districts;
+  }, [districts]);
+  const memoizedWards = useMemo(() => {
+    return wards;
+  }, [wards]);
 
   // Fetch provinces on component mount
   useEffect(() => {
     fetchProvinces();
   }, []);
 
-  // Fetch districts when province changes
+  // Initialize with default values if provided
   useEffect(() => {
-    if (selectedProvince) {
+    if (initialValues && provinces.length > 0 && !isInitializing) {
+      initializeAddressData();
+    }
+  }, [initialValues, provinces]);
+
+  const initializeAddressData = async () => {
+    setIsInitializing(true);
+    try {
+      const province = provinces.find(
+        (p) => p.name.toLowerCase() === initialValues.provinceName?.toLowerCase()
+      );
+
+      if (province) {
+        setSelectedProvince(province.code);
+
+        const districtResponse = await fetch(
+          `https://provinces.open-api.vn/api/p/${province.code}?depth=2`
+        );
+        const districtData = await districtResponse.json();
+        const fetchedDistricts = districtData.districts || [];
+        // Only update districts if different
+        setDistricts((prev) =>
+          JSON.stringify(prev) !== JSON.stringify(fetchedDistricts) ? fetchedDistricts : prev
+        );
+
+        const district = fetchedDistricts.find(
+          (d) => d.name.toLowerCase() === initialValues.districtName?.toLowerCase()
+        );
+
+        if (district) {
+          setSelectedDistrict(district.code);
+
+          const wardResponse = await fetch(
+            `https://provinces.open-api.vn/api/d/${district.code}?depth=2`
+          );
+          const wardData = await wardResponse.json();
+          const fetchedWards = wardData.wards || [];
+          // Only update wards if different
+          setWards((prev) =>
+            JSON.stringify(prev) !== JSON.stringify(fetchedWards) ? fetchedWards : prev
+          );
+
+          const ward = fetchedWards.find(
+            (w) => w.name.toLowerCase() === initialValues.wardName?.toLowerCase()
+          );
+
+          if (ward) {
+            setSelectedWard(ward.code);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error initializing address data:", error);
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
+  // Fetch districts when province changes, but only if not initializing
+  useEffect(() => {
+    if (selectedProvince && !isInitializing) {
       fetchDistricts(selectedProvince);
-      setSelectedDistrict("");
-      setSelectedWard("");
-      setWards([]);
-    } else {
-      setDistricts([]);
-      setWards([]);
     }
-  }, [selectedProvince]);
+  }, [selectedProvince, isInitializing]);
 
-  // Fetch wards when district changes
+  // Fetch wards when district changes, but only if not initializing
   useEffect(() => {
-    if (selectedDistrict) {
+    if (selectedDistrict && !isInitializing) {
       fetchWards(selectedDistrict);
-      setSelectedWard("");
-    } else {
-      setWards([]);
     }
-  }, [selectedDistrict]);
+  }, [selectedDistrict, isInitializing]);
 
-  // Update parent component when selections change
-  useEffect(() => {
-    if (onAddressChange) {
-      const provinceName = provinces.find(p => p.code === selectedProvince)?.name || "";
-      const districtName = districts.find(d => d.code === selectedDistrict)?.name || "";
-      const wardName = wards.find(w => w.code === selectedWard)?.name || "";
-      
-      onAddressChange({
+  // Memoize address data to prevent unnecessary recomputation
+  const addressData = useMemo(() => {
+    if (
+      !isInitializing &&
+      memoizedProvinces.length > 0 &&
+      selectedProvince &&
+      selectedDistrict &&
+      selectedWard
+    ) {
+      const province = memoizedProvinces.find((p) => String(p.code) === String(selectedProvince));
+      const district = memoizedDistricts.find((d) => String(d.code) === String(selectedDistrict));
+      const ward = memoizedWards.find((w) => String(w.code) === String(selectedWard));
+
+      return {
         provinceCode: selectedProvince,
-        provinceName,
+        provinceName: province?.name || "",
         districtCode: selectedDistrict,
-        districtName,
+        districtName: district?.name || "",
         wardCode: selectedWard,
-        wardName,
-      });
+        wardName: ward?.name || "",
+      };
     }
-  }, [selectedProvince, selectedDistrict, selectedWard, provinces, districts, wards, onAddressChange]);
+    return null;
+  }, [
+    selectedProvince,
+    selectedDistrict,
+    selectedWard,
+    memoizedProvinces,
+    memoizedDistricts,
+    memoizedWards,
+    isInitializing,
+  ]);
+
+  // Call onAddressChange when addressData changes
+  useEffect(() => {
+    if (addressData && !isInitializing) {
+      onAddressChange(addressData);
+    }
+  }, [addressData, onAddressChange, isInitializing]);
 
   const fetchProvinces = async () => {
-    setLoading(prev => ({ ...prev, provinces: true }));
+    setLoading((prev) => ({ ...prev, provinces: true }));
     try {
       const response = await fetch("https://provinces.open-api.vn/api/p/");
       const data = await response.json();
-      setProvinces(data);
+      setProvinces((prev) => (JSON.stringify(prev) !== JSON.stringify(data) ? data : prev));
     } catch (error) {
       console.error("Error fetching provinces:", error);
     } finally {
-      setLoading(prev => ({ ...prev, provinces: false }));
+      setLoading((prev) => ({ ...prev, provinces: false }));
     }
   };
 
   const fetchDistricts = async (provinceCode) => {
-    setLoading(prev => ({ ...prev, districts: true }));
+    setLoading((prev) => ({ ...prev, districts: true }));
     try {
-      const response = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+      const response = await fetch(
+        `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`
+      );
       const data = await response.json();
-      setDistricts(data.districts || []);
+      setDistricts((prev) =>
+        JSON.stringify(prev) !== JSON.stringify(data.districts || []) ? data.districts || [] : prev
+      );
     } catch (error) {
       console.error("Error fetching districts:", error);
+      setDistricts([]);
     } finally {
-      setLoading(prev => ({ ...prev, districts: false }));
+      setLoading((prev) => ({ ...prev, districts: false }));
     }
   };
 
   const fetchWards = async (districtCode) => {
-    setLoading(prev => ({ ...prev, wards: true }));
+    setLoading((prev) => ({ ...prev, wards: true }));
     try {
-      const response = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
+      const response = await fetch(
+        `https://provinces.open-api.vn/api/d/${districtCode}?depth=2`
+      );
       const data = await response.json();
-      setWards(data.wards || []);
+      setWards((prev) =>
+        JSON.stringify(prev) !== JSON.stringify(data.wards || []) ? data.wards || [] : prev
+      );
     } catch (error) {
       console.error("Error fetching wards:", error);
+      setWards([]);
     } finally {
-      setLoading(prev => ({ ...prev, wards: false }));
+      setLoading((prev) => ({ ...prev, wards: false }));
     }
+  };
+
+  const handleProvinceChange = (e) => {
+    const newProvince = e.target.value;
+    setSelectedProvince(newProvince);
+    setSelectedDistrict("");
+    setSelectedWard("");
+    setDistricts([]);
+    setWards([]);
+  };
+
+  const handleDistrictChange = (e) => {
+    const newDistrict = e.target.value;
+    setSelectedDistrict(newDistrict);
+    setSelectedWard("");
+    setWards([]);
   };
 
   return (
     <div className="space-y-4">
-      {/* Province/City Selector */}
       <div>
         <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-1">
-          Thành phố: <span className="text-red-500">*</span>
+          Tỉnh/Thành phố: <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <select
             id="province"
             value={selectedProvince}
-            onChange={(e) => setSelectedProvince(e.target.value)}
+            onChange={handleProvinceChange}
             className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white cursor-pointer"
             disabled={loading.provinces}
             required
@@ -145,7 +255,6 @@ const AddressSelector = ({ onAddressChange }) => {
         </div>
       </div>
 
-      {/* District Selector */}
       <div>
         <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-1">
           Quận/Huyện: <span className="text-red-500">*</span>
@@ -154,7 +263,7 @@ const AddressSelector = ({ onAddressChange }) => {
           <select
             id="district"
             value={selectedDistrict}
-            onChange={(e) => setSelectedDistrict(e.target.value)}
+            onChange={handleDistrictChange}
             className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white cursor-pointer"
             disabled={!selectedProvince || loading.districts}
             required
@@ -189,7 +298,6 @@ const AddressSelector = ({ onAddressChange }) => {
         </div>
       </div>
 
-      {/* Ward Selector */}
       <div>
         <label htmlFor="ward" className="block text-sm font-medium text-gray-700 mb-1">
           Phường/Xã: <span className="text-red-500">*</span>
@@ -238,6 +346,7 @@ const AddressSelector = ({ onAddressChange }) => {
 
 AddressSelector.propTypes = {
   onAddressChange: PropTypes.func,
+  initialValues: PropTypes.object,
 };
 
 export default AddressSelector;

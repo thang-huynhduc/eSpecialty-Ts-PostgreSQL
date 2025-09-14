@@ -47,6 +47,7 @@ const Cart = () => {
     phone: "",
     isDefault: false,
   });
+  // eslint-disable-next-line no-unused-vars
   const [addressData, setAddressData] = useState(null);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
