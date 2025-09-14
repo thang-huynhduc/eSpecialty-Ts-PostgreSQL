@@ -4,6 +4,9 @@ import {
   confirmPayment,
   handleStripeWebhook,
   createOrder,
+  createPayPalOrder,
+  capturePayPalPayment,
+  handlePayPalWebhook,
 } from "../controllers/paymentController.js";
 import userAuth from "../middleware/userAuth.js";
 
@@ -27,6 +30,25 @@ router.post(
   `${routeValue}stripe/webhook`,
   express.raw({ type: "application/json" }),
   handleStripeWebhook
+);
+
+// PayPal payment routes
+router.post(
+  `${routeValue}paypal/create-order`,
+  userAuth,
+  createPayPalOrder
+);
+router.post(
+  `${routeValue}paypal/capture-payment`,
+  userAuth,
+  capturePayPalPayment
+);
+
+// PayPal webhook (no auth required)
+router.post(
+  `${routeValue}paypal/webhook`,
+  express.raw({ type: "application/json" }),
+  handlePayPalWebhook
 );
 
 export default router;

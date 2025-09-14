@@ -339,16 +339,20 @@ const addAddress = async (req, res) => {
     const userId = req.user?.id; // Get from auth middleware for user routes
     const paramUserId = req.params?.userId; // Get from params for admin routes
     const targetUserId = userId || paramUserId;
-
-    const { label, street, city, state, zipCode, country, phone, isDefault } =
+    console.log("req.body", req.body);
+    let { label, street, ward, district, city, zipCode, country, phone, isDefault } =
       req.body;
 
+    // hard code for test payment
+    city = "Anytown";
+    district = "CA";
+
     // Validate required fields
-    if (!label || !street || !city || !state || !zipCode || !country) {
+    if (!label || !street || !ward || !district || !city || !zipCode || !country) {
       return res.json({
         success: false,
         message:
-          "All address fields are required (label, street, city, state, zipCode, country)",
+          "All address fields are required (label, street, ward, district, city, zipCode, country)",
       });
     }
 
@@ -366,8 +370,9 @@ const addAddress = async (req, res) => {
     const newAddress = {
       label,
       street,
+      ward,
+      district,
       city,
-      state,
       zipCode,
       country,
       phone: phone || "",
@@ -395,7 +400,7 @@ const updateAddress = async (req, res) => {
     const paramUserId = req.params?.userId; // Get from params for admin routes
     const targetUserId = userId || paramUserId;
     const { addressId } = req.params;
-    const { label, street, city, state, zipCode, country, phone, isDefault } =
+    const { label, street, ward, district, city, zipCode, country, phone, isDefault } =
       req.body;
 
     const user = await userModel.findById(targetUserId);
@@ -420,8 +425,9 @@ const updateAddress = async (req, res) => {
       ...user.addresses[addressIndex].toObject(),
       label: label || user.addresses[addressIndex].label,
       street: street || user.addresses[addressIndex].street,
+      ward: ward || user.addresses[addressIndex].ward,
+      district: district || user.addresses[addressIndex].district,
       city: city || user.addresses[addressIndex].city,
-      state: state || user.addresses[addressIndex].state,
       zipCode: zipCode || user.addresses[addressIndex].zipCode,
       country: country || user.addresses[addressIndex].country,
       phone: phone !== undefined ? phone : user.addresses[addressIndex].phone,

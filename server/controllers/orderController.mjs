@@ -12,10 +12,7 @@ const createOrder = async (req, res) => {
     console.log("Order Creation Debug:");
     console.log("Items:", JSON.stringify(items, null, 2));
     console.log("Address:", JSON.stringify(address, null, 2));
-    console.log("Amount:", amount);
-    // Hard code the last name
-    address.lastName = "Doe";
-    console.log("Last name", address.lastName);  
+    console.log("Amount:", amount);  
 
     // Validate authentication
     if (!userId) {
@@ -40,7 +37,6 @@ const createOrder = async (req, res) => {
         message: "Delivery address is required",
       });
     }
-
     // Validate address required fields with flexible field mapping
     const getAddressValue = (field) => {
       switch (field) {
@@ -76,12 +72,14 @@ const createOrder = async (req, res) => {
       "lastName",
       "email",
       "street",
+      "ward",
+      "district",
       "city",
-      "state",
       "zipcode",
       "country",
       "phone",
     ];
+
 
     const missingFields = requiredAddressFields.filter((field) => {
       const value = getAddressValue(field);
@@ -142,10 +140,11 @@ const createOrder = async (req, res) => {
         lastName: getAddressValue("lastName"),
         email: address.email || "",
         street: address.street || address.address || "",
-        city: address.city || "",
-        state: address.state || address.province || "",
+        ward: address.ward || "",
+        district: address.district || "",
+        city: address.city || address.province || "",
         zipcode: getAddressValue("zipcode"),
-        country: address.country || "",
+        country: address.country || "Vietnam",
         phone: address.phone || address.phoneNumber || "",
       },
       paymentMethod: "cod", // Default to cash on delivery

@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema(
     userCart: {
       type: Object,
       default: {},
-    },
+    }, 
     orders: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -24,10 +24,11 @@ const userSchema = new mongoose.Schema(
       {
         label: { type: String, required: true }, // e.g., 'Home', 'Work', 'Billing'
         street: { type: String, required: true },
-        city: { type: String, required: true },
-        state: { type: String, required: true },
+        ward: { type: String, required: true }, // Phường/Xã
+        district: { type: String, required: true }, // Quận/Huyện
+        city: { type: String, required: true }, // Tỉnh/Thành phố
         zipCode: { type: String, required: true },
-        country: { type: String, required: true },
+        country: { type: String, required: true, default: "Vietnam" },
         phone: { type: String, default: "" },
         isDefault: { type: Boolean, default: false },
         _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
