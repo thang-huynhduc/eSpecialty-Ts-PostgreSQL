@@ -39,8 +39,9 @@ const Cart = () => {
   const [addressForm, setAddressForm] = useState({
     label: "",
     street: "",
+    ward: "",
+    district: "",
     city: "",
-    state: "",
     zipCode: "",
     country: "Vietnam",
     phone: "",
@@ -616,8 +617,8 @@ const Cart = () => {
                                             )}
                                           </div>
                                           <p className="text-sm text-gray-600 leading-relaxed">
-                                            {address.street}, {address.city},{" "}
-                                            {address.state} {address.zipCode}
+                                            {address.street}, {address.ward}, {address.district},{" "}
+                                            {address.city} {address.zipCode}
                                             {address.phone && (
                                               <span className="block">
                                                 Phone: {address.phone}
@@ -840,7 +841,8 @@ const Cart = () => {
                   setAddressForm(prev => ({
                     ...prev,
                     city: data.provinceName,
-                    state: data.districtName + ", " + data.wardName,
+                    district: data.districtName,
+                    ward: data.wardName,
                   }));
                 }} 
               />

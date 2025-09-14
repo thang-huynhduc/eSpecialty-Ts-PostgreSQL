@@ -2,11 +2,10 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
-import StripePayment from "../components/StripePayment";
+import PayPalPayment from "../components/PayPalPayment";
 import toast from "react-hot-toast";
 import {
   FaCheckCircle,
-  FaCreditCard,
   FaMoneyBillWave,
   FaClock,
   FaMapMarkerAlt,
@@ -14,6 +13,7 @@ import {
   FaEnvelope,
   FaPhone,
   FaArrowLeft,
+  FaPaypal,
 } from "react-icons/fa";
 
 const Checkout = () => {
@@ -21,7 +21,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [paymentStep, setPaymentStep] = useState("selection"); // 'selection', 'stripe', 'processing'
+  const [paymentStep, setPaymentStep] = useState("selection"); // 'selection', 'paypal', 'processing'
 
   const fetchOrderDetails = useCallback(async () => {
     try {
@@ -57,26 +57,34 @@ const Checkout = () => {
   }, [orderId, fetchOrderDetails]);
 
   const handlePayment = async (paymentMethod) => {
-    if (paymentMethod === "stripe") {
-      setPaymentStep("stripe");
+    if (paymentMethod === "paypal") {
+      setPaymentStep("paypal");
     } else if (paymentMethod === "cod") {
       toast.success("Order confirmed with Cash on Delivery");
     }
   };
 
-  const handleStripeSuccess = (paymentIntentId) => {
+
+  const handlePayPalSuccess = (captureId, orderData) => {
     // Redirect to success page with payment details
+    toast.success("PayPal payment completed successfully!");
     navigate(
-      `/payment-success?order_id=${orderId}&payment_intent=${paymentIntentId}`
+      `/payment-success?order_id=${orderId}&capture_id=${captureId}&payment_method=paypal`
     );
   };
 
-  const handleStripeCancel = () => {
+  const handlePayPalCancel = () => {
+    setPaymentStep("selection");
+  };
+
+  const handlePayPalError = (error) => {
+    console.error("PayPal payment error:", error);
+    toast.error("PayPal payment failed. Please try again.");
     setPaymentStep("selection");
   };
 
   const handlePayOnline = () => {
-    setPaymentStep("stripe");
+    setPaymentStep("paypal");
   };
 
   const getStatusColor = (status) => {
@@ -271,9 +279,9 @@ const Checkout = () => {
                   <FaMapMarkerAlt className="w-4 h-4 text-gray-500 mt-0.5" />
                   <div className="text-gray-600">
                     <p>{order.address.street}</p>
+                    <p>{order.address.ward}, {order.address.district}</p>
                     <p>
-                      {order.address.city}, {order.address.state}{" "}
-                      {order.address.zipcode}
+                      {order.address.city} {order.address.zipcode}
                     </p>
                     <p>{order.address.country}</p>
                   </div>
@@ -338,21 +346,25 @@ const Checkout = () => {
 
                           <button
                             onClick={handlePayOnline}
-                            className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                            className="w-full flex items-center justify-center gap-3 bg-yellow-500 text-white py-3 px-4 rounded-lg hover:bg-yellow-600 transition-colors font-medium"
                           >
-                            <FaCreditCard className="w-5 h-5" />
-                            Pay Online Now
+                            <FaPaypal className="w-5 h-5" />
+                            Pay with PayPal
                           </button>
                         </div>
                       ) : (
                         <>
                           <button
-                            onClick={() => handlePayment("stripe")}
-                            className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                            onClick={() => handlePayment("paypal")}
+                            className="w-full flex items-center justify-center gap-3 bg-yellow-500 text-white py-3 px-4 rounded-lg hover:bg-yellow-600 transition-colors font-medium"
                           >
-                            <FaCreditCard className="w-5 h-5" />
-                            Pay with Card
+                            <FaPaypal className="w-5 h-5" />
+                            Pay with PayPal
                           </button>
+
+                          <div className="text-center">
+                            <span className="text-gray-500 text-sm">or</span>
+                          </div>
 
                           <button
                             onClick={() => handlePayment("cod")}
@@ -366,25 +378,27 @@ const Checkout = () => {
                     </>
                   )}
 
-                  {paymentStep === "stripe" && (
+
+                  {paymentStep === "paypal" && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-3 mb-4">
                         <button
-                          onClick={handleStripeCancel}
+                          onClick={handlePayPalCancel}
                           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         >
                           <FaArrowLeft className="w-4 h-4 text-gray-600" />
                         </button>
                         <h3 className="text-lg font-semibold text-gray-900">
-                          Payment Details
+                          PayPal Payment
                         </h3>
                       </div>
 
-                      <StripePayment
+                      <PayPalPayment
                         orderId={orderId}
                         amount={order.amount}
-                        onSuccess={handleStripeSuccess}
-                        onCancel={handleStripeCancel}
+                        onSuccess={handlePayPalSuccess}
+                        onCancel={handlePayPalCancel}
+                        onError={handlePayPalError}
                       />
                     </div>
                   )}

@@ -7,6 +7,7 @@ import path from "path";
 import { readdirSync } from "fs";
 import instanceMongodb from "./config/mongodb.js";
 import connectCloudinary from "./config/cloudinary.js";
+import morgan from "morgan";
 
 const port = process.env.PORT;
 
@@ -57,6 +58,9 @@ app.use(express.json());
 // init db
 instanceMongodb();
 connectCloudinary();
+// int morgan
+
+app.use(morgan("dev"));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

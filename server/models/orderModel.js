@@ -52,13 +52,17 @@ const orderSchema = new mongoose.Schema({
       type: String,
       required: true,
     },
+    ward: {
+      type: String,
+      required: true, // Phường/Xã
+    },
+    district: {
+      type: String,
+      required: true, // Quận/Huyện
+    },
     city: {
       type: String,
-      required: true,
-    },
-    state: {
-      type: String,
-      required: true,
+      required: true, // Tỉnh/Thành phố
     },
     zipcode: {
       type: String,
@@ -67,6 +71,7 @@ const orderSchema = new mongoose.Schema({
     country: {
       type: String,
       required: true,
+      default: "Vietnam",
     },
     phone: {
       type: String,
@@ -80,13 +85,44 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ["cod", "stripe", "paypal"],
+    enum: ["cod", "stripe", "paypal", "vnpay"],
     default: "cod",
   },
   paymentStatus: {
     type: String,
     enum: ["pending", "paid", "failed", "refunded"],
     default: "pending",
+  },
+  // PayPal specific fields
+  paypalOrderId: {
+    type: String,
+    default: null,
+  },
+  paypalCaptureId: {
+    type: String,
+    default: null,
+  },
+  // Currency information
+  originalCurrency: {
+    type: String,
+    default: "VND",
+  },
+  originalAmount: {
+    type: Number,
+    default: null,
+  },
+  exchangeRate: {
+    type: Number,
+    default: null,
+  },
+  // Idempotency check
+  captureAttempts: {
+    type: Number,
+    default: 0,
+  },
+  lastCaptureAttempt: {
+    type: Date,
+    default: null,
   },
   date: {
     type: Date,

@@ -1,6 +1,10 @@
 import Stripe from "stripe";
+import { OrdersController } from "@paypal/paypal-server-sdk";
+import crypto from "crypto";
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
+import paypalClient, { PAYPAL_WEBHOOK_CONFIG, SUPPORTED_PAYPAL_EVENTS } from "../config/paypal.js";
+import { convertVNDToUSD, isPayPalSupportedCurrency } from "../services/currencyService.js";
 
 // Initialize Stripe with your secret key
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -144,6 +148,451 @@ export const handleStripeWebhook = async (req, res) => {
 };
 
 // Create order with payment method selection
+// ==================== PAYPAL FUNCTIONS ====================
+
+// Create PayPal order
+export const createPayPalOrder = async (req, res) => {
+  try {
+    const { orderId, currency = "VND" } = req.body;
+    const userId = req.user.id;
+
+    // Find the existing order
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
+    }
+
+    // Verify order belongs to user
+    if (order.userId.toString() !== userId) {
+      return res.json({
+        success: false,
+        message: "Unauthorized access to order",
+      });
+    }
+
+    // Check if order is already paid
+    if (order.paymentStatus === "paid") {
+      return res.json({ success: false, message: "Order is already paid" });
+    }
+
+    // Check if PayPal order already exists
+    if (order.paypalOrderId) {
+      return res.json({
+        success: false,
+        message: "PayPal order already exists for this order",
+      });
+    }
+
+    // Validate currency support
+    if (currency !== "VND" && !isPayPalSupportedCurrency(currency)) {
+      return res.json({
+        success: false,
+        message: "Currency not supported by PayPal",
+      });
+    }
+
+    let finalAmount = order.amount;
+    let finalCurrency = currency;
+    let exchangeRate = null;
+
+    // Convert VND to USD if needed
+    if (currency === "VND") {
+      const conversionResult = await convertVNDToUSD(order.amount);
+      
+      if (!conversionResult.success) {
+        return res.json({
+          success: false,
+          message: conversionResult.error || "Currency conversion failed. Please try again later or switch to USD.",
+        });
+      }
+
+      finalAmount = conversionResult.usdAmount;
+      finalCurrency = "USD";
+      exchangeRate = conversionResult.exchangeRate;
+    }
+
+    // Create PayPal order
+    const ordersController = new OrdersController(paypalClient);
+    
+    const paypalOrderRequest = {
+      intent: "CAPTURE",
+      purchaseUnits: [
+        {
+          amount: {
+            currencyCode: finalCurrency,
+            value: finalAmount.toString(),
+          },
+          description: `Order #${order._id}`,
+          customId: order._id.toString(),
+        },
+      ],
+      applicationContext: {
+        brandName: "eSpecialty Store",
+        landingPage: "NO_PREFERENCE",
+        userAction: "PAY_NOW",
+        returnUrl: `${process.env.CLIENT_URL}/payment-success?orderId=${order._id}`,
+        cancelUrl: `${process.env.CLIENT_URL}/checkout/${order._id}`,
+      },
+    };
+
+    const response = await ordersController.createOrder({
+      body: paypalOrderRequest,
+      prefer: "return=representation",
+    });
+
+    if (response.statusCode !== 201) {
+      console.error("PayPal order creation failed:", response);
+      return res.json({
+        success: false,
+        message: "PayPal service is currently unavailable. We've saved your order as pending. Please try again in a few minutes.",
+      });
+    }
+
+    const paypalOrder = response.result;
+    
+    // Update our order with PayPal details
+    order.paypalOrderId = paypalOrder.id;
+    order.paymentMethod = "paypal";
+    order.originalCurrency = currency;
+    order.originalAmount = currency === "VND" ? order.amount : null;
+    order.exchangeRate = exchangeRate;
+    order.amount = finalAmount; // Update to USD amount for PayPal
+    await order.save();
+
+    // Find approve URL
+    const approveUrl = paypalOrder.links?.find(link => link.rel === "approve")?.href;
+
+    res.json({
+      success: true,
+      paypalOrderId: paypalOrder.id,
+      approveUrl,
+      amount: {
+        vnd: currency === "VND" ? order.originalAmount || order.amount : null,
+        usd: finalAmount,
+      },
+      exchangeRate,
+      message: "PayPal order created successfully",
+    });
+
+  } catch (error) {
+    console.error("Create PayPal Order Error:", error);
+    
+    // Log for audit
+    console.error("PayPal Order Creation Audit:", {
+      orderId: req.body.orderId,
+      userId: req.user?.id,
+      currency: req.body.currency,
+      timestamp: new Date().toISOString(),
+      error: error.message,
+    });
+
+    res.json({
+      success: false,
+      message: "PayPal service is currently unavailable. Please try again later.",
+    });
+  }
+};
+
+// Capture PayPal payment
+export const capturePayPalPayment = async (req, res) => {
+  try {
+    const { paypalOrderId, orderId } = req.body;
+    const userId = req.user.id;
+
+    // Find the order
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
+    }
+
+    // Verify order belongs to user
+    if (order.userId.toString() !== userId) {
+      return res.json({
+        success: false,
+        message: "Unauthorized access to order",
+      });
+    }
+
+    // Verify PayPal order ID matches
+    if (order.paypalOrderId !== paypalOrderId) {
+      return res.json({
+        success: false,
+        message: "PayPal order ID mismatch",
+      });
+    }
+
+    // Idempotency check - prevent double capture
+    if (order.paymentStatus === "paid" && order.paypalCaptureId) {
+      return res.json({
+        success: true,
+        message: "Payment already captured",
+        order: order,
+        alreadyCaptured: true,
+      });
+    }
+
+    // Check capture attempts for rate limiting
+    const now = new Date();
+    const oneMinuteAgo = new Date(now.getTime() - 60000);
+    
+    if (order.lastCaptureAttempt && order.lastCaptureAttempt > oneMinuteAgo && order.captureAttempts >= 3) {
+      return res.json({
+        success: false,
+        message: "Too many capture attempts. Please wait before trying again.",
+      });
+    }
+
+    // Update capture attempt tracking
+    order.captureAttempts = (order.captureAttempts || 0) + 1;
+    order.lastCaptureAttempt = now;
+    await order.save();
+
+    // Capture the payment
+    const ordersController = new OrdersController(paypalClient);
+    
+    const captureResponse = await ordersController.captureOrder({
+      id: paypalOrderId,
+      prefer: "return=representation",
+    });
+
+    if (captureResponse.statusCode !== 201) {
+      console.error("PayPal capture failed:", captureResponse);
+      return res.json({
+        success: false,
+        message: "Payment capture failed. Please try again.",
+      });
+    }
+
+    const capturedOrder = captureResponse.result;
+    const capture = capturedOrder.purchaseUnits?.[0]?.payments?.captures?.[0];
+
+    if (!capture || capture.status !== "COMPLETED") {
+      return res.json({
+        success: false,
+        message: "Payment capture was not completed",
+      });
+    }
+
+    // Update order status
+    order.paymentStatus = "paid";
+    order.status = "confirmed";
+    order.paypalCaptureId = capture.id;
+    order.captureAttempts = 0; // Reset on success
+    order.lastCaptureAttempt = null;
+    await order.save();
+
+    res.json({
+      success: true,
+      message: "Payment captured successfully",
+      order: order,
+      captureId: capture.id,
+    });
+
+  } catch (error) {
+    console.error("Capture PayPal Payment Error:", error);
+    
+    // Log for audit
+    console.error("PayPal Capture Audit:", {
+      paypalOrderId: req.body.paypalOrderId,
+      orderId: req.body.orderId,
+      userId: req.user?.id,
+      timestamp: new Date().toISOString(),
+      error: error.message,
+    });
+
+    res.json({
+      success: false,
+      message: "Payment capture failed. Please try again.",
+    });
+  }
+};
+
+// Handle PayPal webhook
+export const handlePayPalWebhook = async (req, res) => {
+  try {
+    const webhookBody = req.body;
+    const webhookSignature = req.headers["paypal-transmission-signature"];
+    const webhookId = req.headers["paypal-transmission-id"];
+    const webhookTimestamp = req.headers["paypal-transmission-time"];
+    const certId = req.headers["paypal-cert-id"];
+
+    // Verify webhook signature (simplified - in production, use PayPal's verification)
+    const expectedSignature = crypto
+      .createHmac("sha256", PAYPAL_WEBHOOK_CONFIG.webhookSecret)
+      .update(JSON.stringify(webhookBody))
+      .digest("base64");
+
+    // Basic signature verification (in production, use PayPal's official verification)
+    if (webhookSignature !== expectedSignature) {
+      console.error("PayPal webhook signature verification failed");
+      return res.status(401).send("Unauthorized");
+    }
+
+    const eventType = webhookBody.event_type;
+    
+    // Check if we handle this event type
+    if (!SUPPORTED_PAYPAL_EVENTS.includes(eventType)) {
+      console.log(`Unhandled PayPal event type: ${eventType}`);
+      return res.json({ received: true });
+    }
+
+    console.log(`Processing PayPal webhook: ${eventType}`);
+
+    switch (eventType) {
+      case "PAYMENT.CAPTURE.COMPLETED":
+        await handlePaymentCaptureCompleted(webhookBody.resource);
+        break;
+
+      case "PAYMENT.CAPTURE.DENIED":
+        await handlePaymentCaptureDenied(webhookBody.resource);
+        break;
+
+      case "PAYMENT.CAPTURE.PENDING":
+        await handlePaymentCapturePending(webhookBody.resource);
+        break;
+
+      case "PAYMENT.CAPTURE.REFUNDED":
+        await handlePaymentCaptureRefunded(webhookBody.resource);
+        break;
+
+      case "PAYMENT.CAPTURE.REVERSED":
+        await handlePaymentCaptureReversed(webhookBody.resource);
+        break;
+
+      case "CHECKOUT.ORDER.APPROVED":
+        await handleCheckoutOrderApproved(webhookBody.resource);
+        break;
+
+      case "CHECKOUT.ORDER.COMPLETED":
+        await handleCheckoutOrderCompleted(webhookBody.resource);
+        break;
+
+      default:
+        console.log(`Unhandled PayPal event type: ${eventType}`);
+    }
+
+    res.json({ received: true });
+
+  } catch (error) {
+    console.error("PayPal webhook error:", error);
+    res.status(500).json({ error: "Webhook processing failed" });
+  }
+};
+
+// Webhook event handlers
+const handlePaymentCaptureCompleted = async (resource) => {
+  try {
+    const captureId = resource.id;
+    const order = await orderModel.findOne({ paypalCaptureId: captureId });
+    
+    if (order) {
+      order.paymentStatus = "paid";
+      order.status = "confirmed";
+      await order.save();
+      console.log(`Order ${order._id} payment confirmed via webhook`);
+    }
+  } catch (error) {
+    console.error("Error handling payment capture completed:", error);
+  }
+};
+
+const handlePaymentCaptureDenied = async (resource) => {
+  try {
+    const captureId = resource.id;
+    const order = await orderModel.findOne({ paypalCaptureId: captureId });
+    
+    if (order) {
+      order.paymentStatus = "failed";
+      await order.save();
+      console.log(`Order ${order._id} payment denied via webhook`);
+    }
+  } catch (error) {
+    console.error("Error handling payment capture denied:", error);
+  }
+};
+
+const handlePaymentCapturePending = async (resource) => {
+  try {
+    const captureId = resource.id;
+    const order = await orderModel.findOne({ paypalCaptureId: captureId });
+    
+    if (order && order.paymentStatus !== "paid") {
+      order.paymentStatus = "pending";
+      await order.save();
+      console.log(`Order ${order._id} payment pending via webhook`);
+    }
+  } catch (error) {
+    console.error("Error handling payment capture pending:", error);
+  }
+};
+
+const handlePaymentCaptureRefunded = async (resource) => {
+  try {
+    const captureId = resource.id;
+    const order = await orderModel.findOne({ paypalCaptureId: captureId });
+    
+    if (order) {
+      order.paymentStatus = "refunded";
+      order.status = "cancelled";
+      await order.save();
+      console.log(`Order ${order._id} payment refunded via webhook`);
+    }
+  } catch (error) {
+    console.error("Error handling payment capture refunded:", error);
+  }
+};
+
+const handlePaymentCaptureReversed = async (resource) => {
+  try {
+    const captureId = resource.id;
+    const order = await orderModel.findOne({ paypalCaptureId: captureId });
+    
+    if (order) {
+      order.paymentStatus = "failed";
+      order.status = "cancelled";
+      await order.save();
+      console.log(`Order ${order._id} payment reversed via webhook`);
+    }
+  } catch (error) {
+    console.error("Error handling payment capture reversed:", error);
+  }
+};
+
+const handleCheckoutOrderApproved = async (resource) => {
+  try {
+    const paypalOrderId = resource.id;
+    const order = await orderModel.findOne({ paypalOrderId });
+    
+    if (order) {
+      // Order approved but not yet captured
+      console.log(`PayPal order ${paypalOrderId} approved, waiting for capture`);
+    }
+  } catch (error) {
+    console.error("Error handling checkout order approved:", error);
+  }
+};
+
+const handleCheckoutOrderCompleted = async (resource) => {
+  try {
+    const paypalOrderId = resource.id;
+    const order = await orderModel.findOne({ paypalOrderId });
+    
+    if (order) {
+      // This should already be handled by capture completed, but good to have as backup
+      if (order.paymentStatus !== "paid") {
+        order.paymentStatus = "paid";
+        order.status = "confirmed";
+        await order.save();
+        console.log(`Order ${order._id} completed via webhook`);
+      }
+    }
+  } catch (error) {
+    console.error("Error handling checkout order completed:", error);
+  }
+};
+
+// ==================== END PAYPAL FUNCTIONS ====================
+
 export const createOrder = async (req, res) => {
   try {
     const { items, address, paymentMethod = "cod" } = req.body;
@@ -167,8 +616,9 @@ export const createOrder = async (req, res) => {
       "lastName",
       "email",
       "street",
+      "ward",
+      "district",
       "city",
-      "state",
       "zipcode",
       "country",
       "phone",
@@ -219,10 +669,11 @@ export const createOrder = async (req, res) => {
           address.lastName || address.name?.split(" ").slice(1).join(" ") || "",
         email: address.email || "",
         street: address.street || "",
+        ward: address.ward || "",
+        district: address.district || "",
         city: address.city || "",
-        state: address.state || "",
         zipcode: address.zipcode || address.zipCode || "",
-        country: address.country || "",
+        country: address.country || "Vietnam",
         phone: address.phone || "",
       },
       paymentMethod,
