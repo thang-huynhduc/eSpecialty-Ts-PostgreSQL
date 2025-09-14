@@ -344,8 +344,8 @@ const addAddress = async (req, res) => {
       req.body;
 
     // hard code for test payment
-    city = "Anytown";
-    district = "CA";
+    // city = "Anytown";
+    // district = "CA";
 
     // Validate required fields
     if (!label || !street || !ward || !district || !city || !zipCode || !country) {
