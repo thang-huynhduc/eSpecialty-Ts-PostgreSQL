@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
 import PremiumModal from "../components/PremiumModal";
@@ -25,6 +26,7 @@ import {
 } from "react-icons/fa";
 
 const Order = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.eSpecialtyReducer.userInfo);
@@ -63,13 +65,13 @@ const Order = () => {
         // Update order count in Redux
         dispatch(setOrderCount(data.orders.length));
       } else {
-        setError(data.message || "Failed to fetch orders");
-        toast.error("Failed to load orders");
+        setError(data.message || t("orders.error_loading_orders"));
+        toast.error(t("orders.error_loading_orders"));
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
-      setError("Failed to load orders");
-      toast.error("Failed to load orders");
+      setError(t("orders.error_loading_orders"));
+      toast.error(t("orders.error_loading_orders"));
     } finally {
       setLoading(false);
     }
@@ -282,7 +284,7 @@ const Order = () => {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-gray-900 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your orders...</p>
+            <p className="text-gray-600">{t("orders.loading_orders")}</p>
           </div>
         </div>
       </Container>
@@ -296,14 +298,14 @@ const Order = () => {
           <div className="text-center">
             <FaTimes className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Error Loading Orders
+              {t("orders.error_loading_orders")}
             </h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchUserOrders}
               className="bg-gray-900 text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
             >
-              Try Again
+              {t("orders.try_again")}
             </button>
           </div>
         </div>
@@ -319,14 +321,14 @@ const Order = () => {
           <div className="flex flex-col space-y-2">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <FaShoppingBag className="w-8 h-8" />
-              My Orders
+              {t("orders.my_orders")}
             </h1>
             <nav className="flex text-sm text-gray-500">
               <Link to="/" className="hover:text-gray-700 transition-colors">
-                Home
+                {t("orders.home")}
               </Link>
               <span className="mx-2">/</span>
-              <span className="text-gray-900">Orders</span>
+              <span className="text-gray-900">{t("orders.orders")}</span>
             </nav>
           </div>
         </Container>
@@ -343,15 +345,14 @@ const Order = () => {
             <div className="max-w-md mx-auto">
               <FaShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-6" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                No Orders Yet
+                {t("orders.no_orders_yet")}
               </h2>
               <p className="text-gray-600 mb-8">
-                You haven&apos;t placed any orders yet. Start shopping to see
-                your orders here!
+                {t("orders.no_orders_message")}
               </p>
               <Link to="/shop">
                 <button className="bg-gray-900 text-white px-8 py-3 rounded-md hover:bg-gray-800 transition-colors font-medium">
-                  Start Shopping
+                  {t("orders.start_shopping")}
                 </button>
               </Link>
             </div>

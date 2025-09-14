@@ -4,8 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { logo } from "../assets/images";
 import { FaUser, FaCog, FaChevronDown, FaUserShield } from "react-icons/fa";
 import { MdNotifications, MdDashboard } from "react-icons/md";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const Navbar = () => {
+  const { t } = useTranslation();
   const { user } = useSelector((state) => state.auth);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -43,15 +46,15 @@ const Navbar = () => {
   };
 
   const notifications = [
-    { id: 1, title: "New order received", time: "2 min ago", type: "order" },
-    { id: 2, title: "Low stock alert", time: "1 hour ago", type: "warning" },
-    { id: 3, title: "User registration", time: "3 hours ago", type: "user" },
+    { id: 1, title: t("notifications.new_order_received"), time: `2 ${t("notifications.min_ago")}`, type: "order" },
+    { id: 2, title: t("notifications.low_stock_alert"), time: `1 ${t("notifications.hour_ago")}`, type: "warning" },
+    { id: 3, title: t("notifications.user_registration"), time: `3 ${t("notifications.hours_ago")}`, type: "user" },
   ];
 
   const userMenuItems = [
-    { icon: FaUser, label: "Profile", path: "/profile" },
-    { icon: MdDashboard, label: "Dashboard", path: "/" },
-    { icon: FaCog, label: "Settings", path: "/settings" },
+    { icon: FaUser, label: t("navigation.profile"), path: "/profile" },
+    { icon: MdDashboard, label: t("navigation.dashboard"), path: "/" },
+    { icon: FaCog, label: t("navigation.settings"), path: "/settings" },
   ];
 
   return (
@@ -66,7 +69,7 @@ const Navbar = () => {
           />
           <div className="hidden sm:block">
             <p className="text-xs uppercase font-bold tracking-wide text-blue-600">
-              Admin Panel
+              {t("navigation.admin_panel")}
             </p>
             <p className="text-xs text-gray-500">Dashboard v1.0</p>
           </div>
@@ -77,8 +80,11 @@ const Navbar = () => {
           {/* Admin Badge */}
           <div className="hidden md:flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
             <FaUserShield className="text-blue-600 text-sm" />
-            <span className="text-sm font-medium text-blue-700">Admin</span>
+            <span className="text-sm font-medium text-blue-700">{t("navigation.admin")}</span>
           </div>
+
+          {/* Language Switcher */}
+          <LanguageSwitcher />
 
           {/* Notifications */}
           <div className="relative" ref={notificationRef}>
@@ -96,9 +102,9 @@ const Navbar = () => {
             {isNotificationOpen && (
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                 <div className="px-4 py-3 border-b border-gray-100">
-                  <h3 className="font-semibold text-gray-900">Notifications</h3>
+                  <h3 className="font-semibold text-gray-900">{t("notifications.notifications")}</h3>
                   <p className="text-sm text-gray-500">
-                    {notifications.length} new notifications
+                    {notifications.length} {t("notifications.new_notifications")}
                   </p>
                 </div>
                 <div className="max-h-64 overflow-y-auto">
@@ -118,7 +124,7 @@ const Navbar = () => {
                 </div>
                 <div className="px-4 py-2 border-t border-gray-100">
                   <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                    View all notifications
+                    {t("notifications.view_all_notifications")}
                   </button>
                 </div>
               </div>
@@ -135,7 +141,7 @@ const Navbar = () => {
                     <p className="font-semibold text-gray-900">
                       {user.name || user.email}
                     </p>
-                    <p className="text-xs text-gray-500">Administrator</p>
+                    <p className="text-xs text-gray-500">{t("navigation.administrator")}</p>
                   </div>
                 </div>
 
@@ -177,7 +183,7 @@ const Navbar = () => {
                     <div className="flex items-center gap-1 mt-2">
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></span>
-                        Online
+                        {t("common.online")}
                       </span>
                     </div>
                   </div>

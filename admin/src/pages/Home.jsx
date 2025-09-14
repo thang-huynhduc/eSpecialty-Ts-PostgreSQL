@@ -5,8 +5,10 @@ import axios from "axios";
 import Title from "../components/ui/title";
 import SkeletonLoader from "../components/SkeletonLoader";
 import { serverUrl } from "../../config";
+import { useTranslation } from "react-i18next";
 
 const Home = () => {
+  const { t } = useTranslation();
   const { token } = useSelector((state) => state.auth);
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -128,10 +130,9 @@ const Home = () => {
     return (
       <div className="space-y-8">
         <div>
-          <Title>Dashboard Overview</Title>
+          <Title>{t("dashboard.dashboard_overview")}</Title>
           <p className="text-gray-600 mt-2">
-            Welcome back! Here&apos;s what&apos;s happening with your store
-            today.
+            {t("dashboard.welcome_message")}
           </p>
         </div>
 
@@ -152,14 +153,14 @@ const Home = () => {
             </svg>
           </div>
           <h3 className="text-xl font-semibold text-red-800 mb-2">
-            Unable to Load Dashboard Data
+            {t("dashboard.unable_load_data")}
           </h3>
           <p className="text-red-600 mb-4">{stats.error}</p>
           <button
             onClick={fetchStatistics}
             className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
           >
-            Try Again
+            {t("dashboard.try_again")}
           </button>
         </div>
       </div>
@@ -169,17 +170,17 @@ const Home = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <Title>Dashboard Overview</Title>
-        <p className="text-gray-600 mt-2">
-          Welcome back! Here&apos;s what&apos;s happening with your store today.
-        </p>
-      </div>
+        <div>
+          <Title>{t("dashboard.dashboard_overview")}</Title>
+          <p className="text-gray-600 mt-2">
+            {t("dashboard.welcome_message")}
+          </p>
+        </div>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Total Products"
+          title={t("dashboard.total_products")}
           value={stats.totalProducts.toLocaleString()}
           change="+12%"
           changeType="positive"
@@ -202,7 +203,7 @@ const Home = () => {
         />
 
         <StatCard
-          title="Total Orders"
+          title={t("dashboard.total_orders")}
           value={stats.totalOrders.toLocaleString()}
           change="+8%"
           changeType="positive"
@@ -225,7 +226,7 @@ const Home = () => {
         />
 
         <StatCard
-          title="Total Users"
+          title={t("dashboard.total_users")}
           value={stats.totalUsers.toLocaleString()}
           change="+15%"
           changeType="positive"
@@ -248,7 +249,7 @@ const Home = () => {
         />
 
         <StatCard
-          title="Total Revenue"
+          title={t("dashboard.total_revenue")}
           value={formatCurrency(stats.totalRevenue)}
           change="+23%"
           changeType="positive"
@@ -276,9 +277,9 @@ const Home = () => {
         {/* Recent Orders */}
         <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-800">Recent Orders</h3>
+            <h3 className="text-xl font-bold text-gray-800">{t("dashboard.recent_orders")}</h3>
             <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-              View All
+              {t("dashboard.view_all")}
             </button>
           </div>
 
@@ -291,12 +292,12 @@ const Home = () => {
                 >
                   <div>
                     <p className="font-semibold text-gray-800">
-                      Order #{order._id?.slice(-8) || "N/A"}
+                      {t("dashboard.order")} #{order._id?.slice(-8) || "N/A"}
                     </p>
                     <p className="text-sm text-gray-600">
                       {order.userId?.name ||
                         order.address?.firstName ||
-                        "Customer"}
+                        t("dashboard.customer")}
                     </p>
                     <p className="text-xs text-gray-500">
                       {formatDate(order.date)}
@@ -321,7 +322,7 @@ const Home = () => {
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-center py-8">No recent orders</p>
+              <p className="text-gray-500 text-center py-8">{t("dashboard.no_recent_orders")}</p>
             )}
           </div>
         </div>
@@ -330,10 +331,10 @@ const Home = () => {
         <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-gray-800">
-              Popular Products
+              {t("dashboard.popular_products")}
             </h3>
             <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-              View All
+              {t("dashboard.view_all")}
             </button>
           </div>
 
@@ -349,10 +350,10 @@ const Home = () => {
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-gray-800">
-                      {product.name || "Product Name"}
+                      {product.name || t("dashboard.product_name")}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {product.category || "Category"}
+                      {product.category || t("common.category")}
                     </p>
                   </div>
                   <div className="text-right">
@@ -360,14 +361,14 @@ const Home = () => {
                       {formatCurrency(product.price || 0)}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Stock: {product.stock || 0}
+                      {t("dashboard.stock")}: {product.stock || 0}
                     </p>
                   </div>
                 </div>
               ))
             ) : (
               <p className="text-gray-500 text-center py-8">
-                No products available
+                {t("dashboard.no_products_available")}
               </p>
             )}
           </div>
@@ -376,7 +377,7 @@ const Home = () => {
 
       {/* Quick Actions */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
-        <h3 className="text-2xl font-bold mb-4">Quick Actions</h3>
+        <h3 className="text-2xl font-bold mb-4">{t("dashboard.quick_actions")}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 rounded-xl p-4 text-left">
             <div className="flex items-center space-x-3">
@@ -393,7 +394,7 @@ const Home = () => {
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-              <span className="font-semibold">Add New Product</span>
+              <span className="font-semibold">{t("dashboard.add_new_product")}</span>
             </div>
           </button>
 
@@ -412,7 +413,7 @@ const Home = () => {
                   d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                 />
               </svg>
-              <span className="font-semibold">View Orders</span>
+              <span className="font-semibold">{t("dashboard.view_orders")}</span>
             </div>
           </button>
 
@@ -431,7 +432,7 @@ const Home = () => {
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 />
               </svg>
-              <span className="font-semibold">Manage Users</span>
+              <span className="font-semibold">{t("dashboard.manage_users")}</span>
             </div>
           </button>
         </div>

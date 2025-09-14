@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 import { serverUrl } from "../../config";
 import { addUser, removeUser, resetOrderCount, setOrderCount } from "../redux/especialtySlice";
 import Container from "../components/Container";
@@ -26,6 +27,7 @@ import {
 } from "react-icons/fa";
 
 const Profile = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userInfo = useSelector((state) => state.eSpecialtyReducer.userInfo);
@@ -93,7 +95,7 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
-      toast.error("Failed to load profile data");
+        toast.error(t("common.error"));
     } finally {
       setProfileLoading(false);
     }
@@ -169,25 +171,25 @@ const Profile = () => {
       });
 
       if (response.data.success) {
-        toast.success(`Address ${editingAddress ? 'updated' : 'added'} successfully!`);
+        toast.success(editingAddress ? t("profile.update_address") : t("profile.add_address"));
         fetchUserAddresses();
         fetchUserProfile(); // Refresh profile data
         setShowAddressModal(false);
         setEditingAddress(null);
         resetAddressForm();
       } else {
-        toast.error(response.data.message || `Failed to ${editingAddress ? 'update' : 'add'} address`);
+        toast.error(response.data.message || (editingAddress ? t("profile.update_address") : t("profile.add_address")));
       }
     } catch (error) {
       console.error("Error with address:", error);
-      toast.error(`Failed to ${editingAddress ? 'update' : 'add'} address`);
+      toast.error(editingAddress ? t("profile.update_address") : t("profile.add_address"));
     } finally {
       setIsAddingAddress(false);
     }
   };
 
   const handleDeleteAddress = async (addressId) => {
-    if (!confirm("Are you sure you want to delete this address?")) return;
+    if (!confirm(t("profile.delete_address"))) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -198,15 +200,15 @@ const Profile = () => {
       });
 
       if (response.data.success) {
-        toast.success("Address deleted successfully!");
+        toast.success(t("profile.delete_address"));
         fetchUserAddresses();
         fetchUserProfile();
       } else {
-        toast.error(response.data.message || "Failed to delete address");
+        toast.error(response.data.message || t("profile.delete_address"));
       }
     } catch (error) {
       console.error("Error deleting address:", error);
-      toast.error("Failed to delete address");
+      toast.error(t("profile.delete_address"));
     }
   };
 
@@ -224,15 +226,15 @@ const Profile = () => {
       );
 
       if (response.data.success) {
-        toast.success("Default address updated!");
+        toast.success(t("profile.set_as_default"));
         fetchUserAddresses();
         fetchUserProfile();
       } else {
-        toast.error(response.data.message || "Failed to set default address");
+        toast.error(response.data.message || t("profile.set_as_default"));
       }
     } catch (error) {
       console.error("Error setting default address:", error);
-      toast.error("Failed to set default address");
+      toast.error(t("profile.set_as_default"));
     }
   };
 
@@ -330,7 +332,7 @@ const [initialValues, setInitialValues] = useState(null);
     localStorage.removeItem("token");
     dispatch(removeUser());
     dispatch(resetOrderCount());
-    toast.success("Logged out successfully");
+    toast.success(t("profile.logout"));
     navigate("/");
   };
 
@@ -367,15 +369,15 @@ const [initialValues, setInitialValues] = useState(null);
           address: response.data.user.address || ""
         });
         
-        toast.success("Profile updated successfully");
+        toast.success(t("profile.update_profile"));
         fetchUserAddresses();
         setIsEditing(false);
       } else {
-        toast.error(response.data.message || "Failed to update profile");
+        toast.error(response.data.message || t("profile.update_profile"));
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+      toast.error(t("profile.update_profile"));
     } finally {
       setSaveLoading(false);
     }
@@ -412,10 +414,10 @@ const [initialValues, setInitialValues] = useState(null);
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">
-                    Welcome back, {userInfo.name}!
+                    {t("profile.welcome_back")}, {userInfo.name}!
                   </h1>
                   <p className="text-gray-600">
-                    Manage your account and preferences
+                    {t("profile.manage_account")}
                   </p>
                 </div>
               </div>
@@ -424,7 +426,7 @@ const [initialValues, setInitialValues] = useState(null);
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
                 <FaSignOutAlt />
-                Logout
+                {t("profile.logout")}
               </button>
             </div>
           </motion.div>
@@ -441,7 +443,7 @@ const [initialValues, setInitialValues] = useState(null);
               >
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-900">
-                    Profile Information
+                    {t("profile.profile_information")}
                     {profileLoading && (
                       <span className="inline-block ml-2">
                         <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
@@ -454,7 +456,7 @@ const [initialValues, setInitialValues] = useState(null);
                       className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
                     >
                       <FaEdit />
-                      Edit
+                      {t("profile.edit")}
                     </button>
                   ) : (
                     <div className="flex gap-2">
@@ -463,7 +465,7 @@ const [initialValues, setInitialValues] = useState(null);
                         className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
                       >
                         <FaTimes />
-                        Cancel
+                        {t("profile.cancel")}
                       </button>
                       <button 
                         onClick={handleSubmit}
@@ -473,12 +475,12 @@ const [initialValues, setInitialValues] = useState(null);
                         {saveLoading ? (
                           <span className="flex items-center gap-2">
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            Saving...
+                            {t("profile.saving")}
                           </span>
                         ) : (
                           <>
                             <FaSave />
-                            Save
+                            {t("profile.save")}
                           </>
                         )}
                       </button>
@@ -490,47 +492,47 @@ const [initialValues, setInitialValues] = useState(null);
                   <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t("profile.full_name")}</label>
                         <input 
                           type="text" 
                           name="name" 
                           value={formData.name} 
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                          placeholder="Enter your name"
+                          placeholder={t("profile.enter_name")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t("profile.email_address")}</label>
                         <input 
                           type="email" 
                           name="email" 
                           value={formData.email} 
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                          placeholder="Enter your email"
+                          placeholder={t("profile.enter_email")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t("profile.phone_number")}</label>
                         <input 
                           type="text" 
                           name="phone" 
                           value={formData.phone} 
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                          placeholder="Enter your phone number"
+                          placeholder={t("profile.enter_phone")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t("profile.address")}</label>
                         <input 
                           type="text" 
                           name="address" 
                           value={formData.address} 
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                          placeholder="Enter your address"
+                          placeholder={t("profile.enter_address")}
                         />
                       </div>
                     </div>
