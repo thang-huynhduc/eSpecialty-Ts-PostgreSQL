@@ -22,13 +22,13 @@ const userSchema = new mongoose.Schema(
     ],
     addresses: [
       {
-        label: { type: String, required: true }, // e.g., 'Home', 'Work', 'Billing'
-        street: { type: String, required: true },
-        ward: { type: String, required: true }, // Phường/Xã
-        district: { type: String, required: true }, // Quận/Huyện
-        city: { type: String, required: true }, // Tỉnh/Thành phố
-        zipCode: { type: String, required: true },
-        country: { type: String, required: true, default: "Vietnam" },
+        label: { type: String}, // e.g., 'Home', 'Work', 'Billing'
+        street: { type: String},
+        ward: { type: String}, // Phường/Xã
+        district: { type: String}, // Quận/Huyện
+        city: { type: String}, // Tỉnh/Thành phố
+        zipCode: { type: String},
+        country: { type: String, default: "Vietnam" },
         phone: { type: String, default: "" },
         isDefault: { type: Boolean, default: false },
         _id: { type: mongoose.Schema.Types.ObjectId, auto: true },

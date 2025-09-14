@@ -1,16 +1,9 @@
 import { cn } from "./ui/cn";
 import PropTypes from "prop-types";
+import { formatVND } from "../utils/currency";
 
 const PriceFormat = ({ amount, className }) => {
-  // Handle undefined, null, or NaN values
-  const numericAmount =
-    typeof amount === "number" && !isNaN(amount) ? amount : 0;
-
-  const formattedAmount = new Number(numericAmount).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  });
+  const formattedAmount = formatVND(amount);
   return <span className={cn(className)}>{formattedAmount}</span>;
 };
 

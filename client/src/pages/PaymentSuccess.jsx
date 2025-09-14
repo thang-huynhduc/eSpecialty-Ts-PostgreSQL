@@ -382,7 +382,7 @@ const PaymentSuccess = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tax</span>
-                    <span className="font-medium">$0.00</span>
+                    <span className="font-medium">0đ</span>
                   </div>
                   <div className="flex justify-between text-lg font-semibold">
                     <span className="text-gray-900">Total Paid</span>

@@ -14,7 +14,7 @@ const Settings = () => {
           value: "Modern e-commerce platform",
           type: "text",
         },
-        { label: "Default Currency", value: "USD", type: "select" },
+        { label: "Default Currency", value: "VND", type: "select" },
         { label: "Timezone", value: "UTC-5", type: "select" },
       ],
     },
