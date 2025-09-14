@@ -1,11 +1,8 @@
 import { cn } from "./ui/cn";
+import { formatVND } from "../utils/currency";
 
 const PriceFormat = ({ amount, className }) => {
-  const formattedAmount = new Number(amount).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  });
+  const formattedAmount = formatVND(amount);
   return <span className={cn(className)}>{formattedAmount}</span>;
 };
 

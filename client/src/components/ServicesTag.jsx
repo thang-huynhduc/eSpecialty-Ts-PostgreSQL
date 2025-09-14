@@ -11,13 +11,13 @@ import { motion, AnimatePresence } from "framer-motion";
 const services = [
   {
     title: "Free Delivery",
-    subtitle: "Free shipping on all orders over $50",
+    subtitle: "Miễn phí vận chuyển cho đơn hàng trên 1.000.000đ",
     icon: <TbTruckDelivery />,
     details: {
       description:
-        "Enjoy free standard shipping on all orders over $50. We partner with reliable courier services to ensure your products reach you safely and on time.",
+        "Miễn phí vận chuyển tiêu chuẩn cho tất cả đơn hàng trên 1.000.000đ. Chúng tôi hợp tác với các dịch vụ chuyển phát uy tín để đảm bảo sản phẩm đến tay bạn an toàn và đúng hẹn.",
       features: [
-        "Free shipping on orders $50+",
+        "Miễn phí vận chuyển đơn hàng 1.000.000đ+",
         "Standard delivery: 3-5 business days",
         "Express delivery available",
         "Real-time tracking",

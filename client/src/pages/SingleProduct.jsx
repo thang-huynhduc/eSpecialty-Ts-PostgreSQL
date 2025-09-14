@@ -159,15 +159,27 @@ const SingleProduct = () => {
             <div className="flex items-center gap-4">
               {productInfo?.oldPrice && (
                 <span className="text-2xl text-gray-400 line-through">
-                  ${productInfo.oldPrice}
+                  {new Number(productInfo.oldPrice).toLocaleString("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                    minimumFractionDigits: 0,
+                  })}
                 </span>
               )}
               <span className="text-3xl font-light text-gray-900">
-                ${productInfo?.price}
+                {new Number(productInfo?.price).toLocaleString("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                  minimumFractionDigits: 0,
+                })}
               </span>
               {productInfo?.oldPrice && (
                 <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium">
-                  Save ${(productInfo.oldPrice - productInfo.price).toFixed(2)}
+                  Save {new Number(productInfo.oldPrice - productInfo.price).toLocaleString("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                    minimumFractionDigits: 0,
+                  })}
                 </span>
               )}
             </div>
@@ -435,15 +447,22 @@ const SingleProduct = () => {
                   <div className="flex items-center gap-2 mb-3">
                     {product.discountedPercentage > 0 && (
                       <span className="text-sm text-gray-400 line-through">
-                        $
-                        {(
+                        {new Number(
                           product.price /
                           (1 - product.discountedPercentage / 100)
-                        ).toFixed(2)}
+                        ).toLocaleString("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                          minimumFractionDigits: 0,
+                        })}
                       </span>
                     )}
                     <span className="text-lg font-light text-gray-900">
-                      ${product.price}
+                      {new Number(product.price).toLocaleString("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                        minimumFractionDigits: 0,
+                      })}
                     </span>
                     {product.discountedPercentage > 0 && (
                       <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium">
