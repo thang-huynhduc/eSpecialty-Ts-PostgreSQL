@@ -16,7 +16,6 @@ import Inventory from "./pages/Inventory";
 import Invoice from "./pages/Invoice";
 import Categories from "./pages/Categories";
 import Brands from "./pages/Brands";
-import ApiDocumentation from "./pages/ApiDocumentation";
 import Contacts from "./pages/Contacts";
 
 function App() {
@@ -57,7 +56,6 @@ function App() {
                       <Route path="/users" element={<Users token={token} />} />
                       <Route path="/contacts" element={<Contacts />} />
                       <Route path="/invoice" element={<Invoice />} />
-                      <Route path="/api-docs" element={<ApiDocumentation />} />
                     </Routes>
                   </div>
                 </div>
