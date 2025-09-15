@@ -116,13 +116,6 @@ const Sidebar = () => {
       badge: null,
     },
     {
-      title: t("navigation.api_docs"),
-      icon: <FaBook />,
-      path: "/api-docs",
-      description: t("api.api_documentation"),
-      badge: "📚",
-    },
-    {
       title: t("navigation.invoice"),
       icon: <FaFileInvoice />,
       path: "/invoice",
