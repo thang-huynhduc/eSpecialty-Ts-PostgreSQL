@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { resetCart } from "../redux/especialtySlice";
 import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
 import PayPalPayment from "../components/PayPalPayment";
@@ -20,6 +22,7 @@ const API_URL = import.meta.env.VITE_BACKEND_URL;
 const Checkout = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [paymentStep, setPaymentStep] = useState("selection"); // 'selection', 'paypal', 'processing'
@@ -67,7 +70,8 @@ const Checkout = () => {
 
 
   const handlePayPalSuccess = (captureId, orderData) => {
-    console.log("PayPal payment success:", { captureId, orderData });
+    // Clear cart after successful payment
+    dispatch(resetCart());
     
     // Refresh order details to get updated status
     fetchOrderDetails().then(() => {

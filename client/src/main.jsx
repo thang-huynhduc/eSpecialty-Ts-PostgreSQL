@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import App from "./App.jsx";
 import "./styles/index.css";
 import "./i18n";
+import "./test-env.js"; // Temporary for debugging
 import SignIn from "./pages/SignIn.jsx";
 import SignUp from "./pages/SignUp.jsx";
 import About from "./pages/About.jsx";

@@ -6,7 +6,13 @@ import toast from "react-hot-toast";
 import PriceFormat from "./PriceFormat";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
-const PayPalPayment = ({ orderId, amount, onSuccess, onCancel, onError }) => {
+const PayPalPayment = ({ 
+  orderId, 
+  amount, 
+  onSuccess, 
+  onCancel = () => {}, 
+  onError = () => {} 
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [orderData, setOrderData] = useState(null);
   const [error, setError] = useState(null);
@@ -46,7 +52,7 @@ const PayPalPayment = ({ orderId, amount, onSuccess, onCancel, onError }) => {
         currency: "VND"
       });
       
-      console.log("Order data prepared for PayPal:", { orderId, amount });
+      // Order data prepared successfully
     } catch (error) {
       console.error("Error preparing order data:", error);
       setError("Failed to prepare order data");
@@ -58,8 +64,6 @@ const PayPalPayment = ({ orderId, amount, onSuccess, onCancel, onError }) => {
   // Create PayPal order when user clicks the PayPal button
   const createOrder = async (data, actions) => {
     try {
-      console.log("Creating PayPal order...");
-      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `${API_URL}/api/payment/paypal/create-order`,
@@ -77,7 +81,6 @@ const PayPalPayment = ({ orderId, amount, onSuccess, onCancel, onError }) => {
       );
 
       const result = await response.json();
-      console.log("PayPal order creation response:", result);
 
       if (result.success) {
         // Store exchange data for display
@@ -92,10 +95,8 @@ const PayPalPayment = ({ orderId, amount, onSuccess, onCancel, onError }) => {
           }));
         }
         
-        console.log("PayPal order created successfully:", result.paypalOrderId);
         return result.paypalOrderId;
       } else {
-        console.error("PayPal order creation failed:", result.message);
         toast.error(result.message);
         throw new Error(result.message);
       }
@@ -109,7 +110,6 @@ const PayPalPayment = ({ orderId, amount, onSuccess, onCancel, onError }) => {
   const handleApprove = async (data, actions) => {
     try {
       setIsLoading(true);
-      console.log("Approving PayPal payment:", data);
       
       const token = localStorage.getItem("token");
       const response = await fetch(
@@ -128,7 +128,6 @@ const PayPalPayment = ({ orderId, amount, onSuccess, onCancel, onError }) => {
       );
 
       const result = await response.json();
-      console.log("PayPal capture response:", result);
 
       if (result.success) {
         if (result.alreadyCaptured) {
@@ -138,7 +137,6 @@ const PayPalPayment = ({ orderId, amount, onSuccess, onCancel, onError }) => {
         }
         onSuccess?.(result.captureId, result.order);
       } else {
-        console.error("PayPal capture failed:", result.message);
         toast.error(result.message);
         onError?.(result.message);
       }
@@ -152,7 +150,6 @@ const PayPalPayment = ({ orderId, amount, onSuccess, onCancel, onError }) => {
   };
 
   const handleCancel = (data) => {
-    console.log("PayPal payment cancelled:", data);
     toast.info("Payment was cancelled");
     onCancel?.();
   };
@@ -173,16 +170,6 @@ const PayPalPayment = ({ orderId, amount, onSuccess, onCancel, onError }) => {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600 text-sm">{error}</p>
           
-          {/* Debug information */}
-          {import.meta.env.DEV && (
-            <div className="mt-3 p-3 bg-gray-100 rounded text-xs">
-              <p><strong>Debug Info:</strong></p>
-              <p>Client ID: {import.meta.env.VITE_PAYPAL_CLIENT_ID ? 'Set' : 'Not Set'}</p>
-              <p>API URL: {API_URL}</p>
-              <p>Order ID: {orderId}</p>
-              <p>Amount: {amount}</p>
-            </div>
-          )}
           
           <button
             onClick={prepareOrderData}
@@ -278,9 +265,6 @@ PayPalPayment.propTypes = {
   onError: PropTypes.func,
 };
 
-PayPalPayment.defaultProps = {
-  onCancel: () => {},
-  onError: () => {},
-};
+// Removed defaultProps - using default parameters instead
 
 export default PayPalPayment;
