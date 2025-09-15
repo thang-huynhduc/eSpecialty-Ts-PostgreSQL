@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
-import PremiumModal from "../components/PremiumModal";
 import { addToCart, setOrderCount } from "../redux/especialtySlice";
 import toast from "react-hot-toast";
 import {
@@ -31,7 +30,6 @@ const Order = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     order: null,
@@ -105,12 +103,11 @@ const Order = () => {
   }, [orders, sortConfig]);
 
   const openOrderModal = () => {
-    // Show premium modal instead of order details
-    setIsPremiumModalOpen(true);
+    // Fix order details
   };
 
   const closeOrderModal = () => {
-    setIsPremiumModalOpen(false);
+    
   };
 
   const handleAddOrderToCart = async (order, e) => {
@@ -587,15 +584,6 @@ const Order = () => {
             </div>
           </div>
         )}
-
-        {/* Premium Modal */}
-        <PremiumModal
-          isOpen={isPremiumModalOpen}
-          onClose={closeOrderModal}
-          title="Order Details"
-          description="Access to order details and management features is available in the premium version of this code."
-        />
-
         {/* Add to Cart Confirmation Modal */}
         <AnimatePresence>
           {confirmModal.isOpen && confirmModal.order && (

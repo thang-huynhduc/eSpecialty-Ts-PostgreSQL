@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
-import PremiumModal from "../components/PremiumModal";
 import AddressSelector from "../components/AddressSelector";
 import { addToCart, setOrderCount } from "../redux/especialtySlice";
 import toast from "react-hot-toast";
@@ -34,7 +33,6 @@ const Order = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     order: null,
@@ -110,12 +108,11 @@ const Order = () => {
   }, [orders, sortConfig]);
 
   const openOrderModal = () => {
-    // Show premium modal instead of order details
-    setIsPremiumModalOpen(true);
+    // Fix Order
   };
 
   const closeOrderModal = () => {
-    setIsPremiumModalOpen(false);
+    // Fix order details
   };
 
   const handleAddressChange = (addressData) => {
@@ -587,10 +584,7 @@ const Order = () => {
           </div>
         )}
 
-        {/* Premium Modal with Address Selector */}
-        <PremiumModal
-          isOpen={isPremiumModalOpen}
-          onClose={closeOrderModal}
+        
           title={t("orders.address_modal_title")}
           description={showAddressSelector ? "" : t("orders.address_modal_desc")}
           customContent={
@@ -686,7 +680,7 @@ const Order = () => {
               </div>
             </div>
           }
-        />
+        
 
         {/* Add to Cart Confirmation Modal */}
         <AnimatePresence>
