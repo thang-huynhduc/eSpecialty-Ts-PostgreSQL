@@ -16,7 +16,7 @@ const config = {
     CLIENT_BASE_URL:
       import.meta.env.VITE_CLIENT_BASE_URL,
     ADMIN_BASE_URL:
-      import.meta.env.VITE_ADMIN_BASE_UR,
+      import.meta.env.VITE_ADMIN_BASE_URL,
     NODE_ENV: "production",
     DEBUG: false,
     LOG_LEVEL: "error",

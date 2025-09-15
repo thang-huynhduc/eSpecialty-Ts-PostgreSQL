@@ -44,12 +44,11 @@ const SpecialOffers = () => {
   };
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  // const endpoint = "http://localhost:8000/products/?_type=offers";
-  const endpoint = `${config?.baseUrl}/api/products?offer=true`;
+  const API_URL = import.meta.env.VITE_BACKEND_URL;
+  const endpoint = `${API_URL}/api/products?offer=true`;
 
   useEffect(() => {
     const getProducts = async () => {
-      setLoading(true);
       try {
         const data = await getData(endpoint);
         // Handle the new API response format that includes success field

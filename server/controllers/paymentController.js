@@ -175,12 +175,17 @@ export const createPayPalOrder = async (req, res) => {
       return res.json({ success: false, message: "Order is already paid" });
     }
 
-    // Check if PayPal order already exists
-    if (order.paypalOrderId) {
+    // Check if PayPal order already exists and payment is completed
+    if (order.paypalOrderId && order.paymentStatus === "paid") {
       return res.json({
         success: false,
-        message: "PayPal order already exists for this order",
+        message: "PayPal order already exists and payment is completed",
       });
+    }
+
+    // If PayPal order exists but not paid, we can create a new one
+    if (order.paypalOrderId && order.paymentStatus !== "paid") {
+      console.log("Existing PayPal order found but not paid, creating new order");
     }
 
     // Validate currency support
@@ -195,7 +200,7 @@ export const createPayPalOrder = async (req, res) => {
     let finalCurrency = currency;
     let exchangeRate = null;
 
-    // Convert VND to USD if needed
+    // Convert VND to USD
     if (currency === "VND") {
       const conversionResult = await convertVNDToUSD(order.amount);
       
@@ -250,7 +255,7 @@ export const createPayPalOrder = async (req, res) => {
 
     const paypalOrder = response.result;
     
-    // Update our order with PayPal details
+    // Update order with PayPal details
     order.paypalOrderId = paypalOrder.id;
     order.paymentMethod = "paypal";
     order.originalCurrency = currency;
@@ -313,12 +318,10 @@ export const capturePayPalPayment = async (req, res) => {
       });
     }
 
-    // Verify PayPal order ID matches
+    // Update PayPal order ID if it's different (handles case where new order was created)
     if (order.paypalOrderId !== paypalOrderId) {
-      return res.json({
-        success: false,
-        message: "PayPal order ID mismatch",
-      });
+      console.log(`Updating PayPal order ID from ${order.paypalOrderId} to ${paypalOrderId}`);
+      order.paypalOrderId = paypalOrderId;
     }
 
     // Idempotency check - prevent double capture

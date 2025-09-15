@@ -25,6 +25,7 @@ import {
   FaSortDown,
   FaShoppingCart,
 } from "react-icons/fa";
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Order = () => {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ const Order = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:8000/api/order/my-orders`,
+        `${API_URL}/api/order/my-orders`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

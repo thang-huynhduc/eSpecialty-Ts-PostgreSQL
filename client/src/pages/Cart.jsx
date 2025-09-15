@@ -53,6 +53,7 @@ const Cart = () => {
   const [addressData, setAddressData] = useState(null);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const API_URL = import.meta.env.VITE_BACKEND_URL; 
 
   useEffect(() => {
     let price = 0;
@@ -80,7 +81,7 @@ const Cart = () => {
   const fetchAddresses = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:8000/api/user/addresses", {
+      const response = await fetch(`${API_URL}/api/user/addresses`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -105,7 +106,7 @@ const Cart = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:8000/api/user/addresses", {
+      const response = await fetch(`${API_URL}/api/user/addresses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -157,7 +158,7 @@ const Cart = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:8000/api/order/create", {
+      const response = await fetch(`${API_URL}/api/order/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
