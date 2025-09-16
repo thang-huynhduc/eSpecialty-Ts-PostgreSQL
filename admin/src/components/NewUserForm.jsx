@@ -1,12 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import toast from "react-hot-toast";
 import Input, { Label } from "./ui/input";
 import axios from "axios";
 import { serverUrl } from "../../config";
-import { MdClose, MdLocationOn } from "react-icons/md";
+import { MdClose } from "react-icons/md";
 import PropTypes from "prop-types";
-import AddressModal from "./AddressModal";
 
 const NewUserForm = ({
   isOpen,
@@ -26,52 +25,32 @@ const NewUserForm = ({
     avatar: "",
   });
 
-  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [userAddresses, setUserAddresses] = useState([]);
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState("");
+  const [showAllAddresses, setShowAllAddresses] = useState(false);
+  const [showAllOrders, setShowAllOrders] = useState(false);
 
-  const fetchUserAddresses = useCallback(
-    async (userId) => {
-      try {
-        const response = await axios.get(
-          `${serverUrl}/api/user/${userId}/addresses`,
-          { headers: { token } }
-        );
+  const MAX_VISIBLE_ITEMS = 0; // Ngưỡng tối đa hiển thị khi thu gọn
 
-        if (response.data.success) {
-          setUserAddresses(response.data.addresses || []);
-        }
-      } catch (error) {
-        console.log("Fetch addresses error", error);
-        // Don't show error toast here as it's just for UI enhancement
-      }
-    },
-    [token]
-  );
   useEffect(() => {
-    // If a user is selected, pre-fill the form with their details
     if (selectedUser) {
+      console.log("Selected user:", selectedUser); // Log để kiểm tra
       setFormData({
         _id: selectedUser?._id || null,
         name: selectedUser.name || "",
         email: selectedUser.email || "",
-        password: "", // Leave password empty for security
+        password: "",
         role: selectedUser.role || "user",
         isActive:
           selectedUser.isActive !== undefined ? selectedUser.isActive : true,
         avatar: selectedUser.avatar || "",
       });
-
-      // Set avatar preview if user has avatar
       setAvatarPreview(selectedUser.avatar || "");
-
-      // Fetch user addresses for address management
-      if (selectedUser._id) {
-        fetchUserAddresses(selectedUser._id);
-      }
+      setUserAddresses(selectedUser.addresses || []);
+      setShowAllAddresses(false); // Reset trạng thái khi đổi user
+      setShowAllOrders(false); // Reset trạng thái khi đổi user
     } else {
-      // Reset form data when no user is selected
       setFormData({
         name: "",
         email: "",
@@ -83,14 +62,15 @@ const NewUserForm = ({
       setUserAddresses([]);
       setAvatarPreview("");
       setAvatarFile(null);
+      setShowAllAddresses(false);
+      setShowAllOrders(false);
     }
-  }, [selectedUser, fetchUserAddresses]);
+  }, [selectedUser]);
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
         toast.error("File size must be less than 5MB");
         return;
       }
@@ -101,8 +81,6 @@ const NewUserForm = ({
       }
 
       setAvatarFile(file);
-
-      // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result);
@@ -124,7 +102,7 @@ const NewUserForm = ({
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            token,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -150,10 +128,14 @@ const NewUserForm = ({
       return;
     }
 
+    if (selectedUser && !selectedUser._id) {
+      toast.error("Invalid user ID");
+      return;
+    }
+
     try {
       let avatarUrl = formData.avatar;
 
-      // Upload avatar if new file is selected
       if (avatarFile) {
         const uploadedUrl = await uploadAvatar();
         if (uploadedUrl) {
@@ -170,7 +152,6 @@ const NewUserForm = ({
         avatar: avatarUrl,
       };
 
-      // Only include password if it's provided
       if (formData.password) {
         userData.password = formData.password;
       }
@@ -178,14 +159,14 @@ const NewUserForm = ({
       if (selectedUser) {
         response = await axios.put(
           `${serverUrl}/api/user/update/${selectedUser._id}`,
-          userData,
-          { headers: { token } }
+          { ...userData, _id: selectedUser._id },
+          { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
         response = await axios.post(
           `${serverUrl}/api/user/register`,
           userData,
-          { headers: { token } }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
       }
 
@@ -219,13 +200,11 @@ const NewUserForm = ({
       className="relative z-[9999] focus:outline-none"
       onClose={close}
     >
-      {/* Background overlay */}
       <div
         className="fixed inset-0 bg-black/80 backdrop-blur-sm"
         aria-hidden="true"
       />
 
-      {/* Modal container */}
       <div className="fixed inset-0 z-[10000] w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-2 sm:p-4 lg:p-6">
           <DialogPanel
@@ -237,7 +216,6 @@ const NewUserForm = ({
                      transform transition-all duration-300 ease-out
                      data-[closed]:scale-95 data-[closed]:opacity-0"
           >
-            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
               <DialogTitle
                 as="h3"
@@ -259,7 +237,6 @@ const NewUserForm = ({
               </button>
             </div>
 
-            {/* Read-only notification */}
             {isReadOnly && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
@@ -273,7 +250,6 @@ const NewUserForm = ({
               onSubmit={handleAddOrUpdateUser}
               className="space-y-4 sm:space-y-6"
             >
-              {/* Basic Information */}
               <div className="space-y-3 sm:space-y-4">
                 <h4 className="text-base sm:text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 flex items-center gap-2">
                   <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
@@ -368,11 +344,9 @@ const NewUserForm = ({
                   />
                 </div>
 
-                {/* Avatar Upload */}
                 <div className="space-y-3">
                   <Label>Profile Avatar</Label>
                   <div className="flex items-center gap-4">
-                    {/* Avatar Preview */}
                     <div className="relative">
                       {avatarPreview || formData.avatar ? (
                         <img
@@ -389,7 +363,6 @@ const NewUserForm = ({
                       )}
                     </div>
 
-                    {/* Upload Button */}
                     {!isReadOnly && (
                       <div className="flex-1">
                         <input
@@ -428,71 +401,195 @@ const NewUserForm = ({
                 </div>
               </div>
 
-              {/* Address Information */}
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    Address Management
-                  </h4>
-                  {selectedUser && (
-                    <button
-                      type="button"
-                      onClick={() => setIsAddressModalOpen(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-50 text-green-600 
-                               rounded-md hover:bg-green-100 transition-colors font-medium"
-                      disabled={isReadOnly}
-                    >
-                      <MdLocationOn className="text-base" />
-                      Manage Addresses ({userAddresses.length})
-                    </button>
+              {selectedUser && (
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      Addresses (View Only)
+                    </h4>
+                    {userAddresses.length > MAX_VISIBLE_ITEMS && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllAddresses(!showAllAddresses)}
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        {showAllAddresses ? "Show Less" : "Show More"}
+                      </button>
+                    )}
+                  </div>
+
+                  {userAddresses.length > 0 ? (
+                    <div className="space-y-4">
+                      {userAddresses
+                        .slice(
+                          0,
+                          showAllAddresses ? undefined : MAX_VISIBLE_ITEMS
+                        )
+                        .map((addr, index) => (
+                          <div
+                            key={addr._id || index}
+                            className="bg-gray-50 p-4 rounded-lg border border-gray-200"
+                          >
+                            <div className="flex justify-between items-center mb-2">
+                              <h5 className="font-medium text-gray-800">
+                                {addr.label} {addr.isDefault && "(Default)"}
+                              </h5>
+                              {addr.isDefault && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                  Default
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              Đường: {addr.street}
+                            </p>
+                            {addr.ward && (
+                              <p className="text-sm text-gray-600">
+                                Phường/Xã: {addr.ward}
+                              </p>
+                            )}
+                            {addr.district && (
+                              <p className="text-sm text-gray-600">
+                                Quận/Huyện: {addr.district}
+                              </p>
+                            )}
+                            <p className="text-sm text-gray-600">
+                              Tỉnh/Thành Phố: {addr.city}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Zip Code: {addr.zipCode}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Quốc Gia: {addr.country}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Số Điện Thoại: {addr.phone || "N/A"}
+                            </p>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">
+                      No addresses available for this user.
+                    </p>
                   )}
                 </div>
+              )}
 
-                {/* Address Summary for existing users */}
-                {selectedUser && userAddresses.length > 0 && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h5 className="text-sm font-medium text-gray-700 mb-3">
-                      Current Addresses:
-                    </h5>
-                    <div className="space-y-2">
-                      {userAddresses.slice(0, 2).map((addr, index) => (
-                        <div
-                          key={addr._id || index}
-                          className="flex items-center justify-between text-sm"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs ${
-                                addr.isDefault
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "bg-gray-100 text-gray-600"
-                              }`}
-                            >
-                              {addr.label}
-                            </span>
-                            <span className="text-gray-600">
-                              {addr.city}, {addr.state}
-                            </span>
-                          </div>
-                          {addr.isDefault && (
-                            <span className="text-xs text-blue-600 font-medium">
-                              Default
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                      {userAddresses.length > 2 && (
-                        <p className="text-xs text-gray-500">
-                          +{userAddresses.length - 2} more addresses
-                        </p>
-                      )}
-                    </div>
+              {selectedUser && (
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                      Orders (View Only)
+                    </h4>
+                    {selectedUser.orders?.length > MAX_VISIBLE_ITEMS && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllOrders(!showAllOrders)}
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        {showAllOrders ? "Show Less" : "Show More"}
+                      </button>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Additional Info for existing users */}
+                  {selectedUser.orders && selectedUser.orders.length > 0 ? (
+                    <div className="space-y-4">
+                      {selectedUser.orders
+                        .slice(0, showAllOrders ? undefined : MAX_VISIBLE_ITEMS)
+                        .map((order, index) => (
+                          <div
+                            key={order._id || index}
+                            className="bg-gray-50 p-4 rounded-lg border border-gray-200"
+                          >
+                            <div className="flex justify-between items-center mb-2">
+                              <h5 className="font-medium text-gray-800">
+                                Order #{order._id}
+                              </h5>
+                              <span
+                                className={`text-xs px-2 py-1 rounded-full ${
+                                  order.status === "confirmed"
+                                    ? "bg-green-100 text-green-800"
+                                    : order.status === "pending"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {order.status.charAt(0).toUpperCase() +
+                                  order.status.slice(1)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              Date: {new Date(order.date).toLocaleDateString()}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Amount: {order.originalAmount ? `${order.originalAmount.toLocaleString()} ${order.originalCurrency}` : `${order.amount.toLocaleString()} USD`}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Payment Method: {order.paymentMethod.toUpperCase()}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Payment Status: {order.paymentStatus.charAt(0).toUpperCase() +
+                                order.paymentStatus.slice(1)}
+                            </p>
+                            <div className="mt-2">
+                              <p className="text-sm font-medium text-gray-800">
+                                Shipping Address:
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {[
+                                  order.address.street,
+                                  order.address.ward,
+                                  order.address.district,
+                                  order.address.city,
+                                  order.address.state,
+                                  order.address.country,
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ")}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                Phone: {order.address.phone || "N/A"}
+                              </p>
+                            </div>
+                            <div className="mt-2">
+                              <p className="text-sm font-medium text-gray-800">
+                                Items:
+                              </p>
+                              {order.items.map((item, itemIndex) => (
+                                <div
+                                  key={item._id || itemIndex}
+                                  className="flex items-center gap-2 mt-1"
+                                >
+                                  <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className="w-10 h-10 rounded-md object-cover"
+                                  />
+                                  <div>
+                                    <p className="text-sm text-gray-600">
+                                      {item.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {item.quantity} x {item.price.toLocaleString()} {order.originalCurrency || "USD"}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">
+                      No orders available for this user.
+                    </p>
+                  )}
+                </div>
+              )}
+
               {selectedUser && (
                 <div className="space-y-4">
                   <h4 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
@@ -549,28 +646,9 @@ const NewUserForm = ({
                         )}
                     </div>
                   )}
-
-                  {selectedUser.lastLogin && (
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <Label>Last Login</Label>
-                      <p className="font-medium text-gray-700">
-                        {new Date(selectedUser.lastLogin).toLocaleString()}
-                      </p>
-                    </div>
-                  )}
-
-                  {selectedUser.orders && selectedUser.orders.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <Label>Total Orders</Label>
-                      <p className="font-medium text-gray-700">
-                        {selectedUser.orders.length} orders
-                      </p>
-                    </div>
-                  )}
                 </div>
               )}
 
-              {/* Form Actions */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:pt-6 border-t border-gray-200 mt-6">
                 <button
                   type="button"
@@ -597,20 +675,6 @@ const NewUserForm = ({
           </DialogPanel>
         </div>
       </div>
-
-      {/* Address Management Modal */}
-      <AddressModal
-        isOpen={isAddressModalOpen}
-        close={() => setIsAddressModalOpen(false)}
-        userId={selectedUser?._id}
-        token={token}
-        onAddressesChange={() => {
-          if (selectedUser?._id) {
-            fetchUserAddresses(selectedUser._id);
-          }
-          getUsersList();
-        }}
-      />
     </Dialog>
   );
 };
