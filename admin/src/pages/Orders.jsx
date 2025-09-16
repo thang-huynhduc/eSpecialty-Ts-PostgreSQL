@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import Title from "../components/ui/title";
 import SkeletonLoader from "../components/SkeletonLoader";
+import PriceFormat from "../components/PriceFormat";
+import { formatVND } from "../utils/currency";
 import { serverUrl } from "../../config";
 import {
   FaEdit,
@@ -320,10 +322,9 @@ const Orders = () => {
                 Revenue
               </p>
               <p className="text-xl lg:text-2xl font-bold text-purple-600">
-                $
-                {orders
-                  .reduce((sum, order) => sum + order.amount, 0)
-                  .toFixed(2)}
+                <PriceFormat 
+                  amount={orders.reduce((sum, order) => sum + order.amount, 0)}
+                />
               </p>
             </div>
             <FaCreditCard className="w-6 h-6 lg:w-8 lg:h-8 text-purple-600" />
@@ -466,7 +467,7 @@ const Orders = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      ${order.amount.toFixed(2)}
+                      <PriceFormat amount={order.amount} />
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -618,7 +619,7 @@ const Orders = () => {
               <div className="mb-4">
                 <div className="text-xs text-gray-500 mb-1">Amount</div>
                 <div className="text-lg font-bold text-gray-900">
-                  ${order.amount.toFixed(2)}
+                  <PriceFormat amount={order.amount} />
                 </div>
               </div>
 

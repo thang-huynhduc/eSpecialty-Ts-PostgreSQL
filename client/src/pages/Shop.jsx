@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Container from "../components/Container";
 import ProductsSideNav from "../components/products/ProductsSideNav";
 import PaginationProductList from "../components/products/PaginationProductList";
@@ -7,6 +8,7 @@ import { config } from "../../config";
 import { getData } from "../helpers";
 
 const Shop = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -131,13 +133,13 @@ const Shop = () => {
       <div className="bg-gray-50 border-b border-gray-200">
         <Container className="py-4">
           <div className="flex flex-col space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900">Shop</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t("shop.shop_title")}</h1>
             <nav className="flex text-sm text-gray-500">
               <a href="/" className="hover:text-gray-700 transition-colors">
-                Home
+                {t("shop.home_breadcrumb")}
               </a>
               <span className="mx-2">/</span>
-              <span className="text-gray-900">Shop</span>
+              <span className="text-gray-900">{t("shop.shop_title")}</span>
             </nav>
           </div>
         </Container>
@@ -154,7 +156,7 @@ const Shop = () => {
                   onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
                   className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
                 >
-                  <span className="font-medium">Filters</span>
+                  <span className="font-medium">{t("shop.filters_button")}</span>
                   <svg
                     className={`w-5 h-5 transform transition-transform duration-200 ${
                       mobileFiltersOpen ? "rotate-180" : ""
@@ -207,12 +209,12 @@ const Shop = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 p-4 bg-gray-50 rounded-lg border">
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-600">
-                  Showing {(currentPage - 1) * itemsPerPage + 1}-
+                  {t("shop.showing_results")} {(currentPage - 1) * itemsPerPage + 1}-
                   {Math.min(
                     currentPage * itemsPerPage,
                     filteredProducts.length
                   )}{" "}
-                  of {filteredProducts.length} results
+                  {t("shop.of_results")} {filteredProducts.length} {t("shop.results_text")}
                 </span>
               </div>
 
@@ -220,7 +222,7 @@ const Shop = () => {
                 {/* Items per page */}
                 <div className="flex items-center gap-2">
                   <label htmlFor="perPage" className="text-sm text-gray-600">
-                    Show:
+                    {t("shop.show_label")}
                   </label>
                   <select
                     id="perPage"
@@ -237,7 +239,7 @@ const Shop = () => {
                 {/* Sort by */}
                 <div className="flex items-center gap-2">
                   <label htmlFor="sortBy" className="text-sm text-gray-600">
-                    Sort by:
+                    {t("shop.sort_by_label")}
                   </label>
                   <select
                     id="sortBy"
@@ -245,10 +247,10 @@ const Shop = () => {
                     onChange={(e) => setSortBy(e.target.value)}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   >
-                    <option value="newest">Newest</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="name">Name: A to Z</option>
+                    <option value="newest">{t("shop.newest_option")}</option>
+                    <option value="price-low">{t("shop.price_low_to_high_option")}</option>
+                    <option value="price-high">{t("shop.price_high_to_low_option")}</option>
+                    <option value="name">{t("shop.name_a_to_z_option")}</option>
                   </select>
                 </div>
 
@@ -261,7 +263,7 @@ const Shop = () => {
                         ? "bg-gray-900 text-white"
                         : "bg-white text-gray-600 hover:bg-gray-50"
                     } transition-colors`}
-                    aria-label="Grid view"
+                    aria-label={t("shop.grid_view")}
                   >
                     <svg
                       className="w-4 h-4"
@@ -282,7 +284,7 @@ const Shop = () => {
                         ? "bg-gray-900 text-white"
                         : "bg-white text-gray-600 hover:bg-gray-50"
                     } transition-colors`}
-                    aria-label="List view"
+                    aria-label={t("shop.list_view")}
                   >
                     <svg
                       className="w-4 h-4"
@@ -303,10 +305,10 @@ const Shop = () => {
             {/* Active Filters */}
             {(filters.category || filters.brand || filters.search) && (
               <div className="flex flex-wrap items-center gap-2 mb-6">
-                <span className="text-sm text-gray-600">Active filters:</span>
+                <span className="text-sm text-gray-600">{t("shop.active_filters_label")}</span>
                 {filters.category && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white text-sm rounded-full">
-                    Category: {filters.category}
+                    {t("shop.category_filter")} {filters.category}
                     <button
                       onClick={() => handleFilterChange({ category: "" })}
                       className="ml-1 hover:text-gray-300"
@@ -317,7 +319,7 @@ const Shop = () => {
                 )}
                 {filters.brand && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white text-sm rounded-full">
-                    Brand: {filters.brand}
+                    {t("shop.brand_filter")} {filters.brand}
                     <button
                       onClick={() => handleFilterChange({ brand: "" })}
                       className="ml-1 hover:text-gray-300"
@@ -328,7 +330,7 @@ const Shop = () => {
                 )}
                 {filters.search && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white text-sm rounded-full">
-                    Search: {filters.search}
+                    {t("shop.search_filter")} {filters.search}
                     <button
                       onClick={() => handleFilterChange({ search: "" })}
                       className="ml-1 hover:text-gray-300"
@@ -341,7 +343,7 @@ const Shop = () => {
                   onClick={clearFilters}
                   className="text-sm text-gray-600 hover:text-gray-900 underline"
                 >
-                  Clear all
+                  {t("shop.clear_all_filters")}
                 </button>
               </div>
             )}

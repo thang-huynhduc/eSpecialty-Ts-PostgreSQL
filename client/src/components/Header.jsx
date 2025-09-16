@@ -11,38 +11,41 @@ import SocialLinks from "./SocialLinks";
 import { IoMdCart } from "react-icons/io";
 import { useSelector } from "react-redux";
 import { FaUserAlt } from "react-icons/fa";
-export const headerNavigation = [
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./LanguageSwitcher";
+export const getHeaderNavigation = (t) => [
   {
-    title: "Home",
+    title: t("navigation.home"),
     link: "/",
   },
   {
-    title: "Shop",
+    title: t("navigation.shop"),
     link: "/shop",
   },
   {
-    title: "About",
+    title: t("navigation.about"),
     link: "/about",
   },
   {
-    title: "Contact",
+    title: t("navigation.contact"),
     link: "/contact",
   },
   // {
-  //   title: "Blog",
+  //   title: t("navigation.blog"),
   //   link: "/blog",
   // },
   // {
-  //   title: "FAQ",
+  //   title: t("navigation.faq"),
   //   link: "/faq",
   // },
   {
-    title: "Orders",
+    title: t("navigation.orders"),
     link: "/orders",
   },
 ];
 
 const Header = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const { products, userInfo, orderCount } = useSelector(
     (state) => state.eSpecialtyReducer
@@ -51,6 +54,8 @@ const Header = () => {
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
+
+  const headerNavigation = getHeaderNavigation(t);
 
   return (
     <div className="border-b border-gray-200 sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
@@ -76,7 +81,7 @@ const Header = () => {
             >
               <div className="relative flex items-center">
                 {item?.title}
-                {item?.title === "Orders" && userInfo && orderCount > 0 && (
+                {item?.title === t("navigation.orders") && userInfo && orderCount > 0 && (
                   <span className="absolute -right-1 -top-2 w-4 h-4 rounded-full text-xs bg-red-500 text-white flex items-center justify-center font-medium animate-pulse">
                     {orderCount}
                   </span>
@@ -124,6 +129,8 @@ const Header = () => {
               <FaUserAlt />
             </Link>
           )}
+
+          <LanguageSwitcher />
         </div>
 
         <button
@@ -144,7 +151,7 @@ const Header = () => {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <Title className="text-xl font-bold text-gray-900">
-                    Menu
+                    {t("navigation.menu")}
                   </Title>
                   <button
                     onClick={() => setIsOpen(false)}
@@ -178,7 +185,7 @@ const Header = () => {
                           />
                           {item?.title}
                         </div>
-                        {item?.title === "Orders" &&
+                        {item?.title === t("navigation.orders") &&
                           userInfo &&
                           orderCount > 0 && (
                             <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
@@ -196,7 +203,7 @@ const Header = () => {
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full bg-gray-300" />
-                      <span>Cart</span>
+                      <span>{t("navigation.cart")}</span>
                       {products?.length > 0 && (
                         <span className="ml-auto bg-black text-white text-xs px-2 py-1 rounded-full">
                           {products.length}
@@ -213,7 +220,7 @@ const Header = () => {
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-gray-300" />
-                        <span>Profile ({userInfo?.name})</span>
+                        <span>{t("navigation.profile")} ({userInfo?.name})</span>
                       </div>
                     </Link>
                   ) : (
@@ -224,7 +231,7 @@ const Header = () => {
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-gray-300" />
-                        Sign In
+                        {t("navigation.signin")}
                       </div>
                     </Link>
                   )}

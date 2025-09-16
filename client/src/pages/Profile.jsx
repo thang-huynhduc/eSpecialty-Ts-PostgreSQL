@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 import { serverUrl } from "../../config";
 import { addUser, removeUser, resetOrderCount, setOrderCount } from "../redux/especialtySlice";
 import Container from "../components/Container";
@@ -26,6 +27,7 @@ import {
 } from "react-icons/fa";
 
 const Profile = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userInfo = useSelector((state) => state.eSpecialtyReducer.userInfo);
@@ -93,7 +95,7 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
-      toast.error("Failed to load profile data");
+        toast.error(t("common.error"));
     } finally {
       setProfileLoading(false);
     }
@@ -169,25 +171,25 @@ const Profile = () => {
       });
 
       if (response.data.success) {
-        toast.success(`Address ${editingAddress ? 'updated' : 'added'} successfully!`);
+        toast.success(editingAddress ? t("profile.update_address_success") : t("profile.add_address_success")); 
         fetchUserAddresses();
         fetchUserProfile(); // Refresh profile data
         setShowAddressModal(false);
         setEditingAddress(null);
         resetAddressForm();
       } else {
-        toast.error(response.data.message || `Failed to ${editingAddress ? 'update' : 'add'} address`);
+        toast.error(response.data.message || (editingAddress ? t("profile.update_address_error") : t("profile.add_address_error")));
       }
     } catch (error) {
       console.error("Error with address:", error);
-      toast.error(`Failed to ${editingAddress ? 'update' : 'add'} address`);
+      toast.error(editingAddress ? t("profile.update_address_error") : t("profile.add_address_error"));
     } finally {
       setIsAddingAddress(false);
     }
   };
 
   const handleDeleteAddress = async (addressId) => {
-    if (!confirm("Are you sure you want to delete this address?")) return;
+    if (!confirm(t("profile.delete_address_confirm"))) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -198,15 +200,15 @@ const Profile = () => {
       });
 
       if (response.data.success) {
-        toast.success("Address deleted successfully!");
+        toast.success(t("profile.delete_address_success"));
         fetchUserAddresses();
         fetchUserProfile();
       } else {
-        toast.error(response.data.message || "Failed to delete address");
+        toast.error(response.data.message || t("profile.delete_address_error"));
       }
     } catch (error) {
       console.error("Error deleting address:", error);
-      toast.error("Failed to delete address");
+      toast.error(t("profile.delete_address_error"));
     }
   };
 
@@ -224,15 +226,15 @@ const Profile = () => {
       );
 
       if (response.data.success) {
-        toast.success("Default address updated!");
+        toast.success(t("profile.set_default_success"));
         fetchUserAddresses();
         fetchUserProfile();
       } else {
-        toast.error(response.data.message || "Failed to set default address");
+        toast.error(response.data.message || t("profile.set_default_error"));
       }
     } catch (error) {
       console.error("Error setting default address:", error);
-      toast.error("Failed to set default address");
+      toast.error(t("profile.set_default_error"));
     }
   };
 
@@ -330,7 +332,7 @@ const [initialValues, setInitialValues] = useState(null);
     localStorage.removeItem("token");
     dispatch(removeUser());
     dispatch(resetOrderCount());
-    toast.success("Logged out successfully");
+    toast.success(t("profile.logout"));
     navigate("/");
   };
 
@@ -367,15 +369,15 @@ const [initialValues, setInitialValues] = useState(null);
           address: response.data.user.address || ""
         });
         
-        toast.success("Profile updated successfully");
+        toast.success(t("profile.update_profile"));
         fetchUserAddresses();
         setIsEditing(false);
       } else {
-        toast.error(response.data.message || "Failed to update profile");
+        toast.error(response.data.message || t("profile.update_profile"));
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
+      toast.error(t("profile.update_profile"));
     } finally {
       setSaveLoading(false);
     }
@@ -412,10 +414,10 @@ const [initialValues, setInitialValues] = useState(null);
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">
-                    Welcome back, {userInfo.name}!
+                    {t("profile.welcome_back")}, {userInfo.name}!
                   </h1>
                   <p className="text-gray-600">
-                    Manage your account and preferences
+                    {t("profile.manage_account")}
                   </p>
                 </div>
               </div>
@@ -424,7 +426,7 @@ const [initialValues, setInitialValues] = useState(null);
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
               >
                 <FaSignOutAlt />
-                Logout
+                {t("profile.logout")}
               </button>
             </div>
           </motion.div>
@@ -441,7 +443,7 @@ const [initialValues, setInitialValues] = useState(null);
               >
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-900">
-                    Profile Information
+                    {t("profile.profile_information")}
                     {profileLoading && (
                       <span className="inline-block ml-2">
                         <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
@@ -454,7 +456,7 @@ const [initialValues, setInitialValues] = useState(null);
                       className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
                     >
                       <FaEdit />
-                      Edit
+                      {t("profile.edit")}
                     </button>
                   ) : (
                     <div className="flex gap-2">
@@ -463,7 +465,7 @@ const [initialValues, setInitialValues] = useState(null);
                         className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
                       >
                         <FaTimes />
-                        Cancel
+                        {t("profile.cancel")}
                       </button>
                       <button 
                         onClick={handleSubmit}
@@ -473,12 +475,12 @@ const [initialValues, setInitialValues] = useState(null);
                         {saveLoading ? (
                           <span className="flex items-center gap-2">
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            Saving...
+                            {t("profile.saving")}
                           </span>
                         ) : (
                           <>
                             <FaSave />
-                            Save
+                            {t("profile.save")}
                           </>
                         )}
                       </button>
@@ -490,47 +492,47 @@ const [initialValues, setInitialValues] = useState(null);
                   <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t("profile.full_name")}</label>
                         <input 
                           type="text" 
                           name="name" 
                           value={formData.name} 
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                          placeholder="Enter your name"
+                          placeholder={t("profile.enter_name")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t("profile.email_address")}</label>
                         <input 
                           type="email" 
                           name="email" 
                           value={formData.email} 
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                          placeholder="Enter your email"
+                          placeholder={t("profile.enter_email")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t("profile.phone_number")}</label>
                         <input 
                           type="text" 
                           name="phone" 
                           value={formData.phone} 
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                          placeholder="Enter your phone number"
+                          placeholder={t("profile.enter_phone")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t("profile.address")}</label>
                         <input 
                           type="text" 
                           name="address" 
                           value={formData.address} 
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                          placeholder="Enter your address"
+                          placeholder={t("profile.enter_address")}
                         />
                       </div>
                     </div>
@@ -538,29 +540,29 @@ const [initialValues, setInitialValues] = useState(null);
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Full Name</p>
-                      <p className="text-gray-900">{userInfo.name || "Not provided"}</p>
+                      <p className="text-sm font-medium text-gray-500 mb-1">{t("profile.full_name_label")}</p>
+                      <p className="text-gray-900">{userInfo.name || t("profile.not_provided")}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Email Address</p>
-                      <p className="text-gray-900">{userInfo.email || "Not provided"}</p>
+                      <p className="text-sm font-medium text-gray-500 mb-1">{t("profile.email_address_label")}</p>
+                      <p className="text-gray-900">{userInfo.email || t("profile.not_provided")}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Phone Number</p>
-                      <p className="text-gray-900">{userInfo.phone || "Not provided"}</p>
+                      <p className="text-sm font-medium text-gray-500 mb-1">{t("profile.phone_number_label")}</p>
+                      <p className="text-gray-900">{userInfo.phone || t("profile.not_provided")}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Address</p>
-                      <p className="text-gray-900">{userInfo.address || "Not provided"}</p>
+                      <p className="text-sm font-medium text-gray-500 mb-1">{t("profile.address_label_field")}</p>
+                      <p className="text-gray-900">{userInfo.address || t("profile.not_provided")}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Account Type</p>
-                      <p className="text-gray-900 capitalize">{userInfo.role || "User"}</p>
+                      <p className="text-sm font-medium text-gray-500 mb-1">{t("profile.account_type_label")}</p>
+                      <p className="text-gray-900 capitalize">{userInfo.role || t("profile.user")}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Member since</p>
+                      <p className="text-sm font-medium text-gray-500 mb-1">{t("profile.member_since_label")}</p>
                       <p className="text-gray-900">
-                        {userInfo.createdAt ? new Date(userInfo.createdAt).toLocaleDateString() : "8/4/2023"}
+                        {userInfo.createdAt ? new Date(userInfo.createdAt).toLocaleDateString() : t("profile.not_provided")}
                       </p>
                     </div>
                   </div>
@@ -575,27 +577,27 @@ const [initialValues, setInitialValues] = useState(null);
                 className="bg-white rounded-2xl shadow-sm p-8"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">Delivery Addresses</h2>
+                  <h2 className="text-xl font-bold text-gray-900">{t("profile.delivery_addresses_title")}</h2>
                   <button
                     onClick={() => openAddressModal()}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <FaPlus className="text-sm" />
-                    Add Address
+                    {t("profile.add_address")}
                   </button>
                 </div>
 
                 {addresses.length === 0 ? (
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                     <FaMapMarkerAlt className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No addresses found</h3>
-                    <p className="text-gray-500 mb-4">Add your first delivery address to get started</p>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">{t("profile.no_addresses_title")}</h3>
+                    <p className="text-gray-500 mb-4">{t("profile.add_first_address_desc")}</p>
                     <button
                       onClick={() => openAddressModal()}
                       className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       <FaPlus className="text-sm" />
-                      Add Address
+                      {t("profile.add_address")}
                     </button>
                   </div>
                 ) : (
@@ -614,7 +616,7 @@ const [initialValues, setInitialValues] = useState(null);
                             <h3 className="font-medium text-gray-900">{address.label}</h3>
                             {address.isDefault && (
                               <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                                Default
+                                {t("profile.default")}
                               </span>
                             )}
                           </div>
@@ -622,14 +624,14 @@ const [initialValues, setInitialValues] = useState(null);
                             <button
                               onClick={() => openAddressModal(address)}
                               className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                              title="Edit address"
+                              title={t("profile.edit_address")}
                             >
                               <FaEdit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteAddress(address._id)}
                               className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                              title="Delete address"
+                              title={t("profile.delete_address")}
                             >
                               <FaTrash className="w-4 h-4" />
                             </button>
@@ -641,7 +643,7 @@ const [initialValues, setInitialValues] = useState(null);
                           <p>{address.ward}, {address.district}</p>
                           <p>{address.city} {address.zipCode}</p>
                           <p>{address.country}</p>
-                          {address.phone && <p>Phone: {address.phone}</p>}
+                          {address.phone && <p>{t("profile.phone_number_label")}: {address.phone}</p>}
                         </div>
 
                         {!address.isDefault && (
@@ -649,7 +651,7 @@ const [initialValues, setInitialValues] = useState(null);
                             onClick={() => handleSetDefaultAddress(address._id)}
                             className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                           >
-                            Set as default
+                            {t("profile.set_as_default")}
                           </button>
                         )}
                       </div>
@@ -667,7 +669,7 @@ const [initialValues, setInitialValues] = useState(null);
               >
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-900">
-                    Recent Orders
+                    {t("profile.recent_orders_title")}
                     {ordersLoading && (
                       <span className="inline-block ml-2">
                         <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
@@ -679,7 +681,7 @@ const [initialValues, setInitialValues] = useState(null);
                     className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center gap-1"
                   >
                     <FaHistory className="text-xs" />
-                    View All Orders
+                    {t("profile.view_all_orders")}
                   </Link>
                 </div>
 
@@ -688,11 +690,11 @@ const [initialValues, setInitialValues] = useState(null);
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead>
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("profile.order_id_label")}</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("profile.date_label")}</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("profile.items_label")}</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("profile.total_label")}</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("profile.status_label")}</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -705,7 +707,7 @@ const [initialValues, setInitialValues] = useState(null);
                               {new Date(order.date).toLocaleDateString()}
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                              {order.items.length} {order.items.length !== 1 ? t("profile.items_plural") : t("profile.item_single")}
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                               <PriceFormat amount={order.amount} />
@@ -718,7 +720,7 @@ const [initialValues, setInitialValues] = useState(null);
                                     order.status === 'cancelled' ? 'bg-red-100 text-red-800' : 
                                     'bg-yellow-100 text-yellow-800'}`}
                               >
-                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                {t(`profile.${order.status}`)}
                               </span>
                             </td>
                           </tr>
@@ -729,13 +731,13 @@ const [initialValues, setInitialValues] = useState(null);
                 ) : (
                   <div className="text-center py-8">
                     <FaBoxOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">No orders yet</p>
+                    <p className="text-gray-500">{t("profile.no_orders_yet")}</p>
                     <Link 
                       to="/shop" 
                       className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm"
                     >
                       <FaShoppingBag className="text-xs" />
-                      Start Shopping
+                      {t("profile.start_shopping")}
                     </Link>
                   </div>
                 )}
@@ -750,26 +752,26 @@ const [initialValues, setInitialValues] = useState(null);
                 transition={{ delay: 0.3 }}
                 className="bg-white rounded-2xl shadow-sm p-6 mb-6"
               >
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Account Stats</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">{t("profile.account_stats_title")}</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Items in Cart</span>
+                    <span className="text-gray-600">{t("profile.items_in_cart_label")}</span>
                     <span className="font-medium text-gray-900">2</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Total Orders</span>
+                    <span className="text-gray-600">{t("profile.total_orders_label")}</span>
                     <span className="font-medium text-gray-900">{orderStats.total}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Pending Orders</span>
+                    <span className="text-gray-600">{t("profile.pending_orders_label")}</span>
                     <span className="font-medium text-gray-900">{orderStats.pending}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Completed Orders</span>
+                    <span className="text-gray-600">{t("profile.completed_orders_label")}</span>
                     <span className="font-medium text-gray-900">{orderStats.delivered}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Saved Addresses</span>
+                    <span className="text-gray-600">{t("profile.saved_addresses_label")}</span>
                     <span className="font-medium text-gray-900">{addresses.length}</span>
                   </div>
                 </div>
@@ -781,7 +783,7 @@ const [initialValues, setInitialValues] = useState(null);
                 transition={{ delay: 0.4 }}
                 className="bg-white rounded-2xl shadow-sm p-6"
               >
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">{t("profile.quick_actions_title")}</h3>
                 <div className="space-y-3">
                   <Link to="/cart" className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                     <div className="flex items-center gap-3">
@@ -789,8 +791,8 @@ const [initialValues, setInitialValues] = useState(null);
                         <FaShoppingCart className="text-blue-600" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">Shopping Cart</h4>
-                        <p className="text-xs text-gray-500">2 items in cart</p>
+                        <h4 className="font-medium text-gray-900">{t("profile.shopping_cart_title")}</h4>
+                        <p className="text-xs text-gray-500">2 {t("profile.items_in_cart_count")}</p>
                       </div>
                     </div>
                     <span className="text-blue-600">→</span>
@@ -802,8 +804,8 @@ const [initialValues, setInitialValues] = useState(null);
                         <FaBoxOpen className="text-green-600" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">My Orders</h4>
-                        <p className="text-xs text-gray-500">View order history</p>
+                        <h4 className="font-medium text-gray-900">{t("profile.my_orders_title")}</h4>
+                        <p className="text-xs text-gray-500">{t("profile.view_order_history_desc")}</p>
                       </div>
                     </div>
                     <span className="text-green-600">→</span>
@@ -815,8 +817,8 @@ const [initialValues, setInitialValues] = useState(null);
                         <FaHeart className="text-red-600" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">Wishlist</h4>
-                        <p className="text-xs text-gray-500">Saved items</p>
+                        <h4 className="font-medium text-gray-900">{t("profile.wishlist_title")}</h4>
+                        <p className="text-xs text-gray-500">{t("profile.saved_items_desc")}</p>
                       </div>
                     </div>
                     <span className="text-red-600">→</span>
@@ -828,8 +830,8 @@ const [initialValues, setInitialValues] = useState(null);
                         <FaShoppingBag className="text-purple-600" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">Shop Now</h4>
-                        <p className="text-xs text-gray-500">Browse products</p>
+                        <h4 className="font-medium text-gray-900">{t("profile.shop_now_title")}</h4>
+                        <p className="text-xs text-gray-500">{t("profile.browse_products_desc")}</p>
                       </div>
                     </div>
                     <span className="text-purple-600">→</span>
@@ -847,7 +849,7 @@ const [initialValues, setInitialValues] = useState(null);
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">
-                {editingAddress ? 'Edit Address' : 'Add New Address'}
+                {editingAddress ? t("profile.edit_address_title") : t("profile.add_new_address_title")}
               </h3>
               <button
                 onClick={() => setShowAddressModal(false)}
@@ -860,7 +862,7 @@ const [initialValues, setInitialValues] = useState(null);
             <form onSubmit={handleAddAddress} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address Label *
+                  {t("profile.address_label_required")}
                 </label>
                 <div className="relative">
                   <select
@@ -871,10 +873,10 @@ const [initialValues, setInitialValues] = useState(null);
                     className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white cursor-pointer"
                     required
                   >
-                    <option value="">Select address type</option>
-                    <option value="Home">Home</option>
-                    <option value="Work">Work</option>
-                    <option value="Hometown">Hometown</option>
+                    <option value="">{t("profile.select_address_type_placeholder")}</option>
+                    <option value="Home">{t("profile.home_option")}</option>
+                    <option value="Work">{t("profile.work_option")}</option>
+                    <option value="Hometown">{t("profile.hometown_option")}</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                     <svg
@@ -896,7 +898,7 @@ const [initialValues, setInitialValues] = useState(null);
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Street Address *
+                  {t("profile.street_address_required")}
                 </label>
                 <input
                   type="text"
@@ -904,7 +906,7 @@ const [initialValues, setInitialValues] = useState(null);
                   onChange={(e) =>
                     setAddressForm({ ...addressForm, street: e.target.value })
                   }
-                  placeholder="House number and street name"
+                  placeholder={t("profile.house_number_placeholder")}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
@@ -917,7 +919,7 @@ const [initialValues, setInitialValues] = useState(null);
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ZIP Code
+                  {t("profile.zip_code_label")}
                 </label>
                 <input
                   type="text"
@@ -928,14 +930,14 @@ const [initialValues, setInitialValues] = useState(null);
                       zipCode: e.target.value,
                     })
                   }
-                  placeholder="Optional"
+                  placeholder={t("profile.optional_label")}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
+                  {t("profile.phone_number_label_optional")}
                 </label>
                 <input
                   type="tel"
@@ -943,7 +945,7 @@ const [initialValues, setInitialValues] = useState(null);
                   onChange={(e) =>
                     setAddressForm({ ...addressForm, phone: e.target.value })
                   }
-                  placeholder="Optional"
+                  placeholder={t("profile.optional_label")}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -965,7 +967,7 @@ const [initialValues, setInitialValues] = useState(null);
                   htmlFor="isDefault"
                   className="ml-2 text-sm text-gray-700"
                 >
-                  Set as default address
+                  {t("profile.set_default_checkbox")}
                 </label>
               </div>
 
@@ -975,7 +977,7 @@ const [initialValues, setInitialValues] = useState(null);
                   onClick={() => setShowAddressModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  Cancel
+                  {t("profile.cancel_button")}
                 </button>
                 <button
                   type="submit"
@@ -983,8 +985,8 @@ const [initialValues, setInitialValues] = useState(null);
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
                   {isAddingAddress ? 
-                    (editingAddress ? 'Updating...' : 'Adding...') : 
-                    (editingAddress ? 'Update Address' : 'Add Address')
+                    (editingAddress ? t("profile.updating_button") : t("profile.adding_button")) : 
+                    (editingAddress ? t("profile.update_address_button") : t("profile.add_address_button"))
                   }
                 </button>
               </div>

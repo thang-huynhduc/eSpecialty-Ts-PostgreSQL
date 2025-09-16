@@ -17,7 +17,11 @@ const checkDatabase = async () => {
       console.log("\nExisting products:");
       products.slice(0, 10).forEach((p, index) => {
         console.log(
-          `${index + 1}. ${p.name} - $${p.price} (Category: ${
+          `${index + 1}. ${p.name} - ${new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+            minimumFractionDigits: 0,
+          }).format(p.price)} (Category: ${
             p.category
           }) - Type: ${p._type || "N/A"}`
         );

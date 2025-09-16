@@ -19,8 +19,10 @@ import {
 import { MdDashboard, MdAnalytics, MdInventory } from "react-icons/md";
 import { BiPackage } from "react-icons/bi";
 import { HiOutlineClipboardList } from "react-icons/hi";
+import { useTranslation } from "react-i18next";
 
 const Sidebar = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [expandedCategories, setExpandedCategories] = useState({
@@ -36,95 +38,88 @@ const Sidebar = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    toast.success("Logged out successfully");
+    toast.success(t("auth.logged_out_successfully"));
     navigate("/login");
   };
 
   const sidebarItems = [
     {
-      title: "Overview",
+      title: t("dashboard.dashboard_overview"),
       icon: <MdDashboard />,
       path: "/",
-      description: "Dashboard overview",
+      description: t("dashboard.dashboard_overview"),
       badge: null,
     },
     {
-      title: "Analytics",
+      title: t("navigation.analytics"),
       icon: <MdAnalytics />,
       path: "/analytics",
-      description: "View analytics & insights",
-      badge: "New",
+      description: t("analytics.view_analytics"),
+      badge: t("common.new"),
     },
     {
-      title: "Products",
+      title: t("navigation.products"),
       icon: <BiPackage />,
       path: "#",
       isCategory: true,
       children: [
         {
-          title: "Add Product",
+          title: t("navigation.add_product"),
           icon: <IoMdAdd />,
           path: "/add",
-          description: "Add new products",
+          description: t("products.add_new_products"),
         },
         {
-          title: "Product List",
+          title: t("navigation.product_list"),
           icon: <FaList />,
           path: "/list",
-          description: "Manage all products",
+          description: t("products.manage_products"),
         },
         {
-          title: "Inventory",
+          title: t("navigation.inventory"),
           icon: <MdInventory />,
           path: "/inventory",
-          description: "Stock management",
+          description: t("products.stock_management"),
         },
         {
-          title: "Categories",
+          title: t("navigation.categories"),
           icon: <FaTags />,
           path: "/categories",
-          description: "Manage categories",
+          description: t("products.manage_categories"),
         },
         {
-          title: "Brands",
+          title: t("navigation.brands"),
           icon: <FaBox />,
           path: "/brands",
-          description: "Manage brands",
+          description: t("products.manage_brands"),
         },
       ],
     },
     {
-      title: "Orders",
+      title: t("navigation.orders"),
       icon: <HiOutlineClipboardList />,
       path: "/orders",
-      description: "Manage customer orders",
+      description: t("orders.manage_customer_orders"),
       badge: null,
     },
     {
-      title: "Users",
+      title: t("navigation.users"),
       icon: <FaUsers />,
       path: "/users",
-      description: "User management",
+      description: t("users.user_management"),
     },
     {
-      title: "Contacts",
+      title: t("navigation.contacts"),
       icon: <FaEnvelope />,
       path: "/contacts",
-      description: "Customer messages & support",
+      description: t("contacts.customer_messages"),
       badge: null,
     },
     {
-      title: "API Docs",
-      icon: <FaBook />,
-      path: "/api-docs",
-      description: "API documentation",
-      badge: "📚",
-    },
-    {
-      title: "Invoice",
+      title: t("navigation.invoice"),
       icon: <FaFileInvoice />,
       path: "/invoice",
-      description: "Generate & manage invoices",
+      description: t("invoice.generate_manage_invoices"),
     },
   ];
 
@@ -218,7 +213,7 @@ const Sidebar = () => {
             </h1>
             <p className="text-xs text-gray-500 flex items-center gap-1">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              Dashboard Active
+              {t("navigation.dashboard_active")}
             </p>
           </div>
         </div>
@@ -255,7 +250,7 @@ const Sidebar = () => {
             className="w-full flex items-center justify-center sm:justify-start gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 group"
           >
             <FaSignOutAlt className="text-sm sm:text-base group-hover:scale-110 transition-transform duration-200" />
-            <span className="hidden sm:inline font-medium">Logout</span>
+            <span className="hidden sm:inline font-medium">{t("navigation.logout")}</span>
           </button>
         </div>
 
@@ -264,7 +259,7 @@ const Sidebar = () => {
           <div className="hidden sm:block">
             <div className="flex items-center justify-center gap-2 mb-1">
               <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-              <span>System Healthy</span>
+              <span>{t("common.system_healthy")}</span>
             </div>
             <p className="text-gray-500">© 2025 eSpecialty Admin v1.0.0</p>
           </div>

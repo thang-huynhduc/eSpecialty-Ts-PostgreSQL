@@ -2,9 +2,9 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
-import PremiumModal from "../components/PremiumModal";
 import AddressSelector from "../components/AddressSelector";
 import { addToCart, setOrderCount } from "../redux/especialtySlice";
 import toast from "react-hot-toast";
@@ -25,6 +25,7 @@ import {
 } from "react-icons/fa";
 
 const Order = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.eSpecialtyReducer.userInfo);
@@ -32,7 +33,6 @@ const Order = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     order: null,
@@ -63,13 +63,13 @@ const Order = () => {
         // Update order count in Redux
         dispatch(setOrderCount(data.orders.length));
       } else {
-        setError(data.message || "Failed to fetch orders");
-        toast.error("Failed to load orders");
+        setError(data.message || t("orders.error_loading_orders"));
+        toast.error(t("orders.error_loading_orders"));
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
-      setError("Failed to load orders");
-      toast.error("Failed to load orders");
+      setError(t("orders.error_loading_orders"));
+      toast.error(t("orders.error_loading_orders"));
     } finally {
       setLoading(false);
     }
@@ -108,12 +108,11 @@ const Order = () => {
   }, [orders, sortConfig]);
 
   const openOrderModal = () => {
-    // Show premium modal instead of order details
-    setIsPremiumModalOpen(true);
+    // Fix Order
   };
 
   const closeOrderModal = () => {
-    setIsPremiumModalOpen(false);
+    // Fix order details
   };
 
   const handleAddressChange = (addressData) => {
@@ -167,19 +166,11 @@ const Order = () => {
       // Create more descriptive success message
       let message = "";
       if (addedCount > 0 && updatedCount > 0) {
-        message = `${addedCount} new item${
-          addedCount !== 1 ? "s" : ""
-        } added and ${updatedCount} existing item${
-          updatedCount !== 1 ? "s" : ""
-        } updated in cart!`;
+        message = `${addedCount} ${addedCount !== 1 ? t("orders.new_items_added_plural") : t("orders.new_items_added")} ${t("orders.items_added_updated")} ${updatedCount} ${updatedCount !== 1 ? t("orders.existing_items_updated_plural") : t("orders.existing_items_updated")} ${t("orders.updated_in_cart")}`;
       } else if (addedCount > 0) {
-        message = `${addedCount} item${
-          addedCount !== 1 ? "s" : ""
-        } added to cart!`;
+        message = `${addedCount} ${addedCount !== 1 ? t("orders.new_items_added_plural") : t("orders.new_items_added")} ${t("orders.items_added_to_cart")}`;
       } else {
-        message = `${updatedCount} item${
-          updatedCount !== 1 ? "s" : ""
-        } updated in cart!`;
+        message = `${updatedCount} ${updatedCount !== 1 ? t("orders.existing_items_updated_plural") : t("orders.existing_items_updated")} ${t("orders.items_updated_in_cart")}`;
       }
 
       toast.success(message, {
@@ -189,27 +180,27 @@ const Order = () => {
 
       // Show additional toast with option to view cart
       setTimeout(() => {
-        toast(
-          (t) => (
-            <div className="flex items-center gap-3">
-              <span>View your updated cart?</span>
-              <button
-                onClick={() => {
-                  navigate("/cart");
-                  toast.dismiss(t.id);
-                }}
-                className="bg-gray-900 text-white px-3 py-1 rounded text-sm hover:bg-gray-800"
-              >
-                View Cart
-              </button>
-              <button
-                onClick={() => toast.dismiss(t.id)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
-            </div>
-          ),
+          toast(
+            (toastInstance) => (
+              <div className="flex items-center gap-3">
+                <span>{t("orders.view_updated_cart")}</span>
+                <button
+                  onClick={() => {
+                    navigate("/cart");
+                    toast.dismiss(toastInstance.id);
+                  }}
+                  className="bg-gray-900 text-white px-3 py-1 rounded text-sm hover:bg-gray-800"
+                >
+                  {t("orders.view_cart_button")}
+                </button>
+                <button
+                  onClick={() => toast.dismiss(toastInstance.id)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+            ),
           {
             duration: 6000,
             icon: "👀",
@@ -220,7 +211,7 @@ const Order = () => {
       setConfirmModal({ isOpen: false, order: null });
     } catch (error) {
       console.error("Error adding items to cart:", error);
-      toast.error("Failed to add items to cart");
+      toast.error(t("orders.failed_add_to_cart"));
       setConfirmModal({ isOpen: false, order: null });
     }
   };
@@ -282,7 +273,7 @@ const Order = () => {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-gray-900 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your orders...</p>
+            <p className="text-gray-600">{t("orders.loading_orders")}</p>
           </div>
         </div>
       </Container>
@@ -296,14 +287,14 @@ const Order = () => {
           <div className="text-center">
             <FaTimes className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Error Loading Orders
+              {t("orders.error_loading_orders")}
             </h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchUserOrders}
               className="bg-gray-900 text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
             >
-              Try Again
+              {t("orders.try_again")}
             </button>
           </div>
         </div>
@@ -319,14 +310,14 @@ const Order = () => {
           <div className="flex flex-col space-y-2">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <FaShoppingBag className="w-8 h-8" />
-              My Orders
+              {t("orders.my_orders")}
             </h1>
             <nav className="flex text-sm text-gray-500">
               <Link to="/" className="hover:text-gray-700 transition-colors">
-                Home
+                {t("orders.home")}
               </Link>
               <span className="mx-2">/</span>
-              <span className="text-gray-900">Orders</span>
+              <span className="text-gray-900">{t("orders.orders")}</span>
             </nav>
           </div>
         </Container>
@@ -343,15 +334,14 @@ const Order = () => {
             <div className="max-w-md mx-auto">
               <FaShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-6" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                No Orders Yet
+                {t("orders.no_orders_yet")}
               </h2>
               <p className="text-gray-600 mb-8">
-                You haven&apos;t placed any orders yet. Start shopping to see
-                your orders here!
+                {t("orders.no_orders_message")}
               </p>
               <Link to="/shop">
                 <button className="bg-gray-900 text-white px-8 py-3 rounded-md hover:bg-gray-800 transition-colors font-medium">
-                  Start Shopping
+                  {t("orders.start_shopping")}
                 </button>
               </Link>
             </div>
@@ -360,13 +350,13 @@ const Order = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <p className="text-gray-600">
-                {orders.length} order{orders.length !== 1 ? "s" : ""} found
+                {orders.length} {orders.length !== 1 ? t("orders.orders_found_multiple") : t("orders.orders_found_single")}
               </p>
               <button
                 onClick={fetchUserOrders}
                 className="text-blue-600 hover:text-blue-700 font-medium text-sm"
               >
-                Refresh
+                {t("orders.refresh_button")}
               </button>
             </div>
 
@@ -381,7 +371,7 @@ const Order = () => {
                           onClick={() => handleSort("_id")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          Order ID
+                          {t("orders.order_id_header")}
                           {sortConfig.key === "_id" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -398,7 +388,7 @@ const Order = () => {
                           onClick={() => handleSort("date")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          Date
+                          {t("orders.date_header")}
                           {sortConfig.key === "date" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -411,14 +401,14 @@ const Order = () => {
                         </button>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Items
+                        {t("orders.items_header")}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <button
                           onClick={() => handleSort("amount")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          Total
+                          {t("orders.total_header")}
                           {sortConfig.key === "amount" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -435,7 +425,7 @@ const Order = () => {
                           onClick={() => handleSort("status")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          Status
+                          {t("orders.status_header")}
                           {sortConfig.key === "status" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -448,10 +438,10 @@ const Order = () => {
                         </button>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Payment
+                        {t("orders.payment_header")}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        {t("orders.actions_header")}
                       </th>
                     </tr>
                   </thead>
@@ -505,13 +495,12 @@ const Order = () => {
                             </div>
                             <div>
                               <div className="text-sm text-gray-900">
-                                {order.items.length} item
-                                {order.items.length !== 1 ? "s" : ""}
+                                {order.items.length} {order.items.length !== 1 ? t("orders.items_count") : t("orders.item_count")}
                               </div>
                               <div className="text-sm text-gray-500 truncate max-w-xs">
                                 {order.items[0]?.name}
                                 {order.items.length > 1 &&
-                                  `, +${order.items.length - 1} more`}
+                                  `, +${order.items.length - 1} ${t("orders.more_items")}`}
                               </div>
                             </div>
                           </div>
@@ -555,21 +544,21 @@ const Order = () => {
                                 openOrderModal(order);
                               }}
                               className="text-blue-600 hover:text-blue-900 transition-colors"
-                              title="View Details"
+                              title={t("orders.view_details_tooltip")}
                             >
                               <FaEye className="w-4 h-4" />
                             </button>
                             <button
                               onClick={(e) => handleAddOrderToCart(order, e)}
                               className="text-green-600 hover:text-green-900 transition-colors"
-                              title="Add to Cart"
+                              title={t("orders.add_to_cart_tooltip")}
                             >
                               <FaShoppingCart className="w-4 h-4" />
                             </button>
                             <Link
                               to={`/checkout/${order._id}`}
                               className="text-gray-600 hover:text-gray-900 transition-colors"
-                              title="Order Details"
+                              title={t("orders.order_details_tooltip")}
                               onClick={(e) => e.stopPropagation()}
                             >
                               <FaShoppingBag className="w-4 h-4" />
@@ -578,7 +567,7 @@ const Order = () => {
                               <Link
                                 to={`/checkout/${order._id}`}
                                 className="text-orange-600 hover:text-orange-900 transition-colors"
-                                title="Pay Now"
+                                title={t("orders.pay_now_tooltip")}
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <FaCreditCard className="w-4 h-4" />
@@ -595,59 +584,56 @@ const Order = () => {
           </div>
         )}
 
-        {/* Premium Modal with Address Selector */}
-        <PremiumModal
-          isOpen={isPremiumModalOpen}
-          onClose={closeOrderModal}
-          title="Địa chỉ của tôi"
-          description={showAddressSelector ? "" : "Vui lòng chọn địa chỉ giao hàng của bạn."}
+        
+          title={t("orders.address_modal_title")}
+          description={showAddressSelector ? "" : t("orders.address_modal_desc")}
           customContent={
             <div className="mt-4">
               <button 
                 onClick={() => setShowAddressSelector(!showAddressSelector)}
                 className="mb-4 text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
               >
-                {showAddressSelector ? "Ẩn bộ chọn địa chỉ" : "Thêm địa chỉ mới"}
+                {showAddressSelector ? t("orders.hide_address_selector") : t("orders.add_new_address")}
               </button>
               
               {showAddressSelector && (
                 <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-4">
-                  <h3 className="text-lg font-medium mb-4">Thông tin địa chỉ</h3>
+                  <h3 className="text-lg font-medium mb-4">{t("orders.address_info_title")}</h3>
                   
                   <div className="space-y-4 mb-4">
                     <div>
                       <label htmlFor="fullname" className="block text-sm font-medium text-gray-700 mb-1">
-                        Họ và tên liên hệ: <span className="text-red-500">*</span>
+                        {t("orders.contact_name_label")}
                       </label>
                       <input
                         type="text"
                         id="fullname"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Nhập họ và tên"
+                        placeholder={t("orders.contact_name_placeholder")}
                       />
                     </div>
                     
                     <div>
                       <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                        Điện thoại: <span className="text-red-500">*</span>
+                        {t("orders.phone_label")}
                       </label>
                       <input
                         type="tel"
                         id="phone"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Nhập số điện thoại"
+                        placeholder={t("orders.phone_placeholder")}
                       />
                     </div>
                     
                     <div>
                       <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                        Địa chỉ: <span className="text-red-500">*</span>
+                        {t("orders.address_label")}
                       </label>
                       <input
                         type="text"
                         id="address"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Số nhà, tên đường"
+                        placeholder={t("orders.address_placeholder")}
                       />
                     </div>
                     
@@ -659,12 +645,12 @@ const Order = () => {
                       onClick={() => setShowAddressSelector(false)}
                       className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
                     >
-                      Hủy
+                      {t("orders.cancel_address")}
                     </button>
                     <button
                       className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
                     >
-                      Lưu địa chỉ
+                      {t("orders.save_address")}
                     </button>
                   </div>
                 </div>
@@ -674,8 +660,8 @@ const Order = () => {
               <div className="space-y-3">
                 <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer">
                   <div className="flex justify-between">
-                    <div className="font-medium">Nhà riêng</div>
-                    <div className="text-blue-600">Mặc định</div>
+                    <div className="font-medium">{t("orders.home_address")}</div>
+                    <div className="text-blue-600">{t("orders.default_address")}</div>
                   </div>
                   <div className="text-gray-600 mt-1">Nguyễn Văn A</div>
                   <div className="text-gray-600">0987654321</div>
@@ -684,7 +670,7 @@ const Order = () => {
                 
                 <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer">
                   <div className="flex justify-between">
-                    <div className="font-medium">Công ty</div>
+                    <div className="font-medium">{t("orders.company_address")}</div>
                     <div></div>
                   </div>
                   <div className="text-gray-600 mt-1">Nguyễn Văn A</div>
@@ -694,7 +680,7 @@ const Order = () => {
               </div>
             </div>
           }
-        />
+        
 
         {/* Add to Cart Confirmation Modal */}
         <AnimatePresence>
@@ -718,24 +704,22 @@ const Order = () => {
                     <FaShoppingCart className="h-6 w-6 text-yellow-600" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Add Order to Cart
+                    {t("orders.order_to_cart_title")}
                   </h3>
                   <p className="text-sm text-gray-500 mb-6">
-                    Are you sure you want to move all items from order{" "}
+                    {t("orders.order_to_cart_desc")}{" "}
                     <span className="font-semibold">
                       #{confirmModal.order._id.slice(-8).toUpperCase()}
                     </span>{" "}
-                    to your cart? This will add{" "}
-                    {confirmModal.order.items.length} item
-                    {confirmModal.order.items.length !== 1 ? "s" : ""} to your
-                    cart.
+                    {t("orders.order_to_cart_desc2")}{" "}
+                    {confirmModal.order.items.length} {confirmModal.order.items.length !== 1 ? t("orders.items_count") : t("orders.item_count")} {t("orders.order_to_cart_desc3")}
                   </p>
 
                   {/* Order Items Preview */}
                   <div className="bg-gray-50 rounded-lg p-3 mb-6 max-h-40 overflow-y-auto">
                     <div className="text-xs text-gray-500 mb-2 flex justify-between font-medium">
-                      <span>Items to add:</span>
-                      <span>Qty × Price</span>
+                      <span>{t("orders.items_to_add_label")}</span>
+                      <span>{t("orders.qty_price_label")}</span>
                     </div>
                     {confirmModal.order.items.map((item, index) => {
                       const isInCart = cartProducts.find(
@@ -761,8 +745,7 @@ const Order = () => {
                               </span>
                               {isInCart && (
                                 <span className="text-xs text-blue-600">
-                                  Already in cart (qty: {isInCart.quantity}) -
-                                  will be updated
+                                  {t("orders.already_in_cart_label")} {isInCart.quantity}{t("orders.will_be_updated_label")}
                                 </span>
                               )}
                             </div>
@@ -777,7 +760,7 @@ const Order = () => {
                     })}
                     <div className="pt-2 mt-2 border-t border-gray-300">
                       <div className="flex justify-between text-sm font-medium">
-                        <span>Total Value:</span>
+                        <span>{t("orders.total_value_label")}</span>
                         <PriceFormat amount={confirmModal.order.amount} />
                       </div>
                     </div>
@@ -788,14 +771,14 @@ const Order = () => {
                       onClick={cancelAddToCart}
                       className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                     >
-                      Cancel
+                      {t("orders.cancel_modal")}
                     </button>
                     <button
                       onClick={confirmAddToCart}
                       className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                     >
                       <FaShoppingCart className="w-4 h-4" />
-                      Add to Cart
+                      {t("orders.add_to_cart_modal")}
                     </button>
                   </div>
                 </div>

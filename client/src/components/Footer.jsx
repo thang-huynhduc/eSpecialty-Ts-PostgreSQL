@@ -4,8 +4,10 @@ import Container from "./Container";
 import { Button } from "./ui/button";
 import { paymentCard } from "../assets/images";
 import SocialLinks from "./SocialLinks";
+import { useTranslation } from "react-i18next";
 
 const Footer = () => {
+  const { t } = useTranslation();
   const [emailInfo, setEmailInfo] = useState("");
   const [subscription, setSubscription] = useState(false);
   const [errMsg, setErrMsg] = useState("");
@@ -18,9 +20,9 @@ const Footer = () => {
 
   const handleSubscription = () => {
     if (emailInfo === "") {
-      setErrMsg("Please provide an Email !");
+      setErrMsg(t("footer.email_required"));
     } else if (!emailValidation(emailInfo)) {
-      setErrMsg("Please give a valid Email!");
+      setErrMsg(t("footer.email_invalid"));
     } else {
       setSubscription(true);
       setErrMsg("");
@@ -37,7 +39,7 @@ const Footer = () => {
           <div className="lg:col-span-1">
             <h3 className="text-2xl font-bold text-gray-900 mb-6">eSpecialty</h3>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              E-commerce shopping experience
+              {t("footer.brand_description")}
             </p>
             <SocialLinks
               className="text-gray-400 hover:text-gray-900"
@@ -48,7 +50,7 @@ const Footer = () => {
           {/* Quick Links */}
           <div>
             <h4 className="text-lg font-semibold text-gray-900 mb-6">
-              Quick Links
+              {t("footer.quick_links")}
             </h4>
             <ul className="space-y-3">
               <li>
@@ -56,7 +58,7 @@ const Footer = () => {
                   href="/about"
                   className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
                 >
-                  About Us
+                  {t("footer.about_us")}
                 </a>
               </li>
               <li>
@@ -64,7 +66,7 @@ const Footer = () => {
                   href="/shop"
                   className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
                 >
-                  Shop
+                  {t("footer.shop")}
                 </a>
               </li>
               <li>
@@ -72,7 +74,7 @@ const Footer = () => {
                   href="/contact"
                   className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
                 >
-                  Contact
+                  {t("footer.contact")}
                 </a>
               </li>
               <li>
@@ -80,7 +82,7 @@ const Footer = () => {
                   href="/blog"
                   className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
                 >
-                  Blog
+                  {t("footer.blog")}
                 </a>
               </li>
               <li>
@@ -88,7 +90,7 @@ const Footer = () => {
                   href="/faq"
                   className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
                 >
-                  FAQ
+                  {t("footer.faq")}
                 </a>
               </li>
             </ul>
@@ -97,7 +99,7 @@ const Footer = () => {
           {/* Categories */}
           <div>
             <h4 className="text-lg font-semibold text-gray-900 mb-6">
-              Categories
+              {t("footer.categories")}
             </h4>
             <ul className="space-y-3">
               <li>
@@ -105,7 +107,7 @@ const Footer = () => {
                   href="/shop?category=Electronics"
                   className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
                 >
-                  Electronics
+                  {t("footer.electronics")}
                 </a>
               </li>
               <li>
@@ -113,7 +115,7 @@ const Footer = () => {
                   href="/shop?category=Fashion"
                   className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
                 >
-                  Fashion
+                  {t("footer.fashion")}
                 </a>
               </li>
               <li>
@@ -121,7 +123,7 @@ const Footer = () => {
                   href="/shop?category=Home & Garden"
                   className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
                 >
-                  Home & Garden
+                  {t("footer.home_garden")}
                 </a>
               </li>
               <li>
@@ -129,7 +131,7 @@ const Footer = () => {
                   href="/shop?category=Sports"
                   className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
                 >
-                  Sports
+                  {t("footer.sports")}
                 </a>
               </li>
               <li>
@@ -137,7 +139,7 @@ const Footer = () => {
                   href="/shop?category=Beauty"
                   className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
                 >
-                  Beauty
+                  {t("footer.beauty")}
                 </a>
               </li>
             </ul>
@@ -146,10 +148,10 @@ const Footer = () => {
           {/* Newsletter */}
           <div>
             <h4 className="text-lg font-semibold text-gray-900 mb-6">
-              Stay Updated
+              {t("footer.stay_updated")}
             </h4>
             <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-              Subscribe to get updates on new products and exclusive offers.
+              {t("footer.newsletter_description")}
             </p>
 
             {subscription ? (
@@ -159,7 +161,7 @@ const Footer = () => {
                 className="p-4 bg-green-50 border border-green-200 rounded-lg"
               >
                 <p className="text-green-700 text-sm font-medium">
-                  ✓ Successfully subscribed!
+                  {t("footer.subscribe_success")}
                 </p>
               </motion.div>
             ) : (
@@ -170,7 +172,7 @@ const Footer = () => {
                     value={emailInfo}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all duration-200 text-sm"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder={t("footer.email_placeholder")}
                   />
                   {errMsg && (
                     <p className="text-red-500 text-xs mt-2 animate-pulse">
@@ -182,7 +184,7 @@ const Footer = () => {
                   onClick={handleSubscription}
                   className="w-full bg-gray-900 hover:bg-gray-800 text-white py-3 rounded-lg transition-colors duration-200"
                 >
-                  Subscribe
+                  {t("footer.subscribe")}
                 </Button>
               </div>
             )}
@@ -194,12 +196,12 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             {/* Copyright */}
             <p className="text-gray-500 text-sm">
-              © 2025 especialty. All rights reserved.
+              {t("footer.copyright")}
             </p>
 
             {/* Payment Methods */}
             <div className="flex items-center gap-4">
-              <span className="text-gray-500 text-sm">We accept:</span>
+              <span className="text-gray-500 text-sm">{t("footer.we_accept")}:</span>
               <img
                 src={paymentCard}
                 alt="Payment methods"
@@ -209,7 +211,7 @@ const Footer = () => {
 
             {/* Legal Links */}
             <div className="flex gap-6">
-              {["Privacy Policy", "Terms of Service"].map((link) => (
+              {[t("footer.privacy_policy"), t("footer.terms_of_service")].map((link) => (
                 <a
                   key={link}
                   href="#"

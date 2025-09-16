@@ -181,10 +181,10 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
           <h4 className="text-sm font-medium text-gray-700">Quick Filters:</h4>
           <div className="flex flex-wrap gap-2">
             {[
-              { label: "Under $50", min: 0, max: 50 },
-              { label: "$50-$100", min: 50, max: 100 },
-              { label: "$100-$200", min: 100, max: 200 },
-              { label: "Over $200", min: 200, max: 1000 },
+              { label: "Dưới 1.000.000đ", min: 0, max: 1000000 },
+              { label: "1.000.000đ - 2.500.000đ", min: 1000000, max: 2500000 },
+              { label: "2.500.000đ - 5.000.000đ", min: 2500000, max: 5000000 },
+              { label: "Trên 5.000.000đ", min: 5000000, max: 50000000 },
             ].map((range) => (
               <button
                 key={range.label}
