@@ -11,6 +11,8 @@ import {
   FaUser,
   FaEye,
   FaSync,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import NewUserForm from "../components/NewUserForm";
 import SkeletonLoader from "../components/SkeletonLoader";
@@ -28,21 +30,21 @@ const Users = ({ token }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
 
   const isAdmin = currentUser?.role === "admin";
 
-  // Initialize user data from localStorage or fetch from server
   useEffect(() => {
     const initializeUser = async () => {
       if (!currentUser && token) {
-        // First try to restore from localStorage
         const storedUser = JSON.parse(localStorage.getItem("user") || "null");
         if (storedUser) {
           dispatch(setUser(storedUser));
           return;
         }
 
-        // If no localStorage data, fetch from server
         try {
           const response = await axios.get(serverUrl + "/api/user/profile", {
             headers: {
@@ -71,7 +73,11 @@ const Users = ({ token }) => {
     try {
       setLoading(true);
 
+      const params = { page: currentPage, limit };
+      if (roleFilter !== "all") params.role = roleFilter;
+
       const response = await axios.get(serverUrl + "/api/user/users", {
+        params,
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = response?.data;
@@ -79,6 +85,7 @@ const Users = ({ token }) => {
       if (data?.success) {
         setUsersList(data?.users);
         setFilteredUsers(data?.users);
+        setTotalPages(data.totalPages);
       } else {
         toast.error(data?.message || "Failed to fetch users");
         console.log("❌ API Error:", data);
@@ -96,17 +103,15 @@ const Users = ({ token }) => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, currentPage, roleFilter]);
 
   useEffect(() => {
     getUsersList();
   }, [getUsersList]);
 
-  // Filter users based on search term and role
   useEffect(() => {
     let filtered = usersList;
 
-    // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(
         (user) =>
@@ -115,13 +120,8 @@ const Users = ({ token }) => {
       );
     }
 
-    // Filter by role
-    if (roleFilter !== "all") {
-      filtered = filtered.filter((user) => user.role === roleFilter);
-    }
-
     setFilteredUsers(filtered);
-  }, [usersList, searchTerm, roleFilter]);
+  }, [usersList, searchTerm]);
 
   const handleRemoveUser = async (_id) => {
     const confirmRemoval = window.confirm(
@@ -133,7 +133,7 @@ const Users = ({ token }) => {
         const response = await axios.post(
           serverUrl + "/api/user/remove",
           { _id },
-          { headers: { token } }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = response?.data;
         if (data?.success) {
@@ -151,29 +151,13 @@ const Users = ({ token }) => {
     }
   };
 
-  const handleEditUser = (user) => {
-    if (!isAdmin) {
-      toast.error("Only administrators can edit users");
-      return;
-    }
+  const handleRowClick = (user) => {
     setSelectedUser(user);
     setIsOpen(true);
   };
 
-  const handleViewUser = (user) => {
-    if (isAdmin) {
-      setSelectedUser(user);
-      setIsOpen(true);
-    } else {
-      // For non-admin users, show read-only view
-      toast.info("Read-only view - Only administrators can edit users");
-    }
-  };
-
-  // Skeleton loader component
   const UserSkeleton = () => (
     <>
-      {/* Desktop Table Skeleton */}
       <div className="hidden lg:block bg-white rounded-lg border border-gray-200 overflow-hidden animate-pulse">
         <div className="bg-gray-50 px-6 py-3">
           <div className="grid grid-cols-6 gap-4">
@@ -215,22 +199,21 @@ const Users = ({ token }) => {
           ))}
         </div>
       </div>
-
-      {/* Mobile/Tablet Card Skeleton */}
       <div className="lg:hidden">
         <SkeletonLoader type="user" count={6} />
       </div>
     </>
   );
 
-  const openLoginForm = () => {
-    setIsOpen(true);
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -253,8 +236,8 @@ const Users = ({ token }) => {
               {isAdmin && (
                 <button
                   onClick={() => {
-                    setIsOpen(true);
                     setSelectedUser(null);
+                    setIsOpen(true);
                   }}
                   className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors font-medium"
                 >
@@ -266,7 +249,6 @@ const Users = ({ token }) => {
           </div>
         </div>
 
-        {/* Search and Filter Bar */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
@@ -294,29 +276,37 @@ const Users = ({ token }) => {
             </div>
           </div>
 
-          {/* Results summary */}
           <div className="mt-4 flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              Showing {filteredUsers.length} of {usersList.length} users
+              Showing {filteredUsers.length} users
             </div>
-            <div className="text-xs text-gray-500 hidden sm:block">
-              {filteredUsers.length > 0 && (
-                <>
-                  <span className="lg:hidden">Card View</span>
-                  <span className="hidden lg:inline">Table View</span>
-                </>
-              )}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 bg-gray-100 rounded-lg disabled:opacity-50"
+              >
+                <FaChevronLeft />
+              </button>
+              <span className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 bg-gray-100 rounded-lg disabled:opacity-50"
+              >
+                <FaChevronRight />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Loading State */}
         {isLoading ? (
           <UserSkeleton />
         ) : filteredUsers?.length > 0 ? (
           <>
-            {/* Desktop Table View */}
-            <div className="hidden lg:block bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="hidden lg:block bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -343,7 +333,11 @@ const Users = ({ token }) => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredUsers.map((user) => (
-                      <tr key={user._id} className="hover:bg-gray-50">
+                      <tr
+                        key={user._id}
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => handleRowClick(user)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="relative">
@@ -429,7 +423,6 @@ const Users = ({ token }) => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {/* Show new addresses array if available, otherwise fallback to legacy address */}
                           {user.addresses && user.addresses.length > 0 ? (
                             <div>
                               {user.addresses
@@ -440,7 +433,7 @@ const Users = ({ token }) => {
                                       {addr.label}
                                     </div>
                                     <div>
-                                      {[addr.city, addr.country]
+                                      {[addr.street, addr.city, addr.country]
                                         .filter(Boolean)
                                         .join(", ")}
                                     </div>
@@ -458,18 +451,6 @@ const Users = ({ token }) => {
                                 </div>
                               )}
                             </div>
-                          ) : user.address &&
-                            (user.address.city || user.address.country) ? (
-                            <div>
-                              {[user.address.city, user.address.country]
-                                .filter(Boolean)
-                                .join(", ")}
-                              {user.address.phone && (
-                                <div className="text-xs text-gray-500">
-                                  {user.address.phone}
-                                </div>
-                              )}
-                            </div>
                           ) : (
                             <span className="text-gray-400">No addresses</span>
                           )}
@@ -482,14 +463,20 @@ const Users = ({ token }) => {
                             {isAdmin ? (
                               <>
                                 <button
-                                  onClick={() => handleEditUser(user)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRowClick(user);
+                                  }}
                                   className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
                                 >
                                   <FaEdit />
                                   Edit
                                 </button>
                                 <button
-                                  onClick={() => handleRemoveUser(user._id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveUser(user._id);
+                                  }}
                                   className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
                                 >
                                   <FaTrash />
@@ -498,7 +485,10 @@ const Users = ({ token }) => {
                               </>
                             ) : (
                               <button
-                                onClick={() => handleViewUser(user)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRowClick(user);
+                                }}
                                 className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-50 text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
                               >
                                 <FaEye />
@@ -514,15 +504,14 @@ const Users = ({ token }) => {
               </div>
             </div>
 
-            {/* Mobile/Tablet Card View */}
             <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {filteredUsers.map((user) => (
                 <div
                   key={user._id}
-                  className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200"
+                  className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                  onClick={() => handleRowClick(user)}
                 >
                   <div className="p-4 sm:p-6">
-                    {/* User Header */}
                     <div className="flex items-center space-x-4 mb-4">
                       <div className="relative">
                         {user.avatar ? (
@@ -552,7 +541,6 @@ const Users = ({ token }) => {
                         <p className="text-sm text-gray-500 truncate">
                           {user.email}
                         </p>
-                        {/* Mobile role indicator */}
                         <div className="sm:hidden mt-1">
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
@@ -573,9 +561,7 @@ const Users = ({ token }) => {
                       </div>
                     </div>
 
-                    {/* User Details */}
                     <div className="space-y-3 mb-4">
-                      {/* Desktop role display */}
                       <div className="hidden sm:flex items-center justify-between">
                         <span className="text-sm text-gray-500">Role:</span>
                         <span
@@ -629,7 +615,6 @@ const Users = ({ token }) => {
                         </div>
                       )}
 
-                      {/* Cart Items Count */}
                       {user.userCart &&
                         Object.keys(user.userCart).length > 0 && (
                           <div className="flex items-center justify-between">
@@ -642,7 +627,6 @@ const Users = ({ token }) => {
                           </div>
                         )}
 
-                      {/* Location info */}
                       {user.addresses && user.addresses.length > 0 && (
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-500">
@@ -652,11 +636,12 @@ const Users = ({ token }) => {
                             {user.addresses
                               .filter((addr) => addr.isDefault)
                               .map((addr) =>
-                                [addr.city, addr.country]
+                                [addr.street, addr.city, addr.country]
                                   .filter(Boolean)
                                   .join(", ")
                               )[0] ||
                               [
+                                user.addresses[0].street,
                                 user.addresses[0].city,
                                 user.addresses[0].country,
                               ]
@@ -671,7 +656,6 @@ const Users = ({ token }) => {
                         </div>
                       )}
 
-                      {/* Phone number if available */}
                       {user.addresses &&
                         user.addresses.some((addr) => addr.phone) && (
                           <div className="flex items-center justify-between">
@@ -697,19 +681,24 @@ const Users = ({ token }) => {
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex gap-2">
                       {isAdmin ? (
                         <>
                           <button
-                            onClick={() => handleEditUser(user)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRowClick(user);
+                            }}
                             className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium"
                           >
                             <FaEdit />
                             Edit
                           </button>
                           <button
-                            onClick={() => handleRemoveUser(user._id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveUser(user._id);
+                            }}
                             className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium"
                           >
                             <FaTrash />
@@ -718,7 +707,10 @@ const Users = ({ token }) => {
                         </>
                       ) : (
                         <button
-                          onClick={() => handleViewUser(user)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRowClick(user);
+                          }}
                           className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors font-medium"
                         >
                           <FaEye />
@@ -732,7 +724,6 @@ const Users = ({ token }) => {
             </div>
           </>
         ) : (
-          /* Empty State */
           <div className="bg-white rounded-lg border border-gray-200 p-8 sm:p-12 text-center">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <FaUser className="text-2xl text-gray-400" />
@@ -751,7 +742,7 @@ const Users = ({ token }) => {
             </p>
             {isAdmin && (
               <button
-                onClick={openLoginForm}
+                onClick={() => setIsOpen(true)}
                 className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium"
               >
                 Add User
@@ -760,7 +751,6 @@ const Users = ({ token }) => {
           </div>
         )}
 
-        {/* User Form Modal */}
         <NewUserForm
           isOpen={isOpen}
           setIsOpen={setIsOpen}
