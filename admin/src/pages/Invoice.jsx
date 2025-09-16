@@ -646,7 +646,7 @@ const Invoice = () => {
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Thông Tin Khách Hàng:</h3>
                   <p className="text-gray-600">{invoiceData.customer.firstName} {invoiceData.customer.lastName}</p>
-                  <p className="text-gray-600">{invoiceData.customer.street}</p>
+                  <p className="text-gray-600">{invoiceData.customer.street}, {invoiceData.customer.ward}, {invoiceData.customer.district}</p>
                   <p className="text-gray-600">{invoiceData.customer.city}, {invoiceData.customer.state}</p>
                   <p className="text-gray-600">{invoiceData.customer.zipcode}, {invoiceData.customer.country}</p>
                   <p className="text-gray-600">Phone: {invoiceData.customer.phone}</p>
