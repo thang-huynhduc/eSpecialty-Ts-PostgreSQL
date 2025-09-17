@@ -68,7 +68,6 @@ const Checkout = () => {
     }
   };
 
-
   const handlePayPalSuccess = (captureId, orderData) => {
     // Clear cart after successful payment
     dispatch(resetCart());
@@ -101,6 +100,12 @@ const Checkout = () => {
 
   const handlePayOnline = () => {
     setPaymentStep("paypal");
+  };
+
+  const handleItemClick = (item) => {
+      navigate(`/product/${item.productId._id}`, {
+    state: { item },
+  })
   };
 
   const getStatusColor = (status) => {
@@ -236,22 +241,26 @@ const Checkout = () => {
               </div>
               <div className="divide-y divide-gray-200">
                 {order.items.map((item, index) => (
-                  <div key={index} className="p-6 flex items-center space-x-4">
+                  <div 
+                    key={index}
+                    className="p-6 flex items-center space-x-4"
+                  >
                     <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                       {item.image && (
                         <img
                           src={item.image}
                           alt={item.name}
                           className="w-full h-full object-cover"
+                          onClick={() => handleItemClick(item)}
                         />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-medium text-gray-900 truncate">
+                      <h3 className="text-lg font-medium text-gray-900 truncate cursor-pointer" onClick={() => handleItemClick(item)}>
                         {item.name}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        Quantity: {item.quantity}
+                        Số Lượng: {item.quantity}
                       </p>
                     </div>
                     <div className="text-right">
@@ -259,7 +268,7 @@ const Checkout = () => {
                         <PriceFormat amount={item.price} />
                       </div>
                       <div className="text-sm text-gray-600">
-                        Total:{" "}
+                        Tổng:{" "}
                         <PriceFormat amount={item.price * item.quantity} />
                       </div>
                     </div>
@@ -297,9 +306,8 @@ const Checkout = () => {
                     <p>{order.address.street}</p>
                     <p>{order.address.ward}, {order.address.district}</p>
                     <p>
-                      {order.address.city} {order.address.zipcode}
+                      {order.address.city} {order.address.country}
                     </p>
-                    <p>{order.address.country}</p>
                   </div>
                 </div>
               </div>
