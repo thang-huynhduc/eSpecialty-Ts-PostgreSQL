@@ -2,15 +2,12 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTranslation } from "react-i18next";
 import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
-import AddressSelector from "../components/AddressSelector";
-import { addToCart, setOrderCount } from "../redux/especialtySlice";
+import { setOrderCount } from "../redux/especialtySlice";
 import toast from "react-hot-toast";
 import {
   FaShoppingBag,
-  FaEye,
   FaCreditCard,
   FaMoneyBillWave,
   FaClock,
@@ -21,25 +18,23 @@ import {
   FaSort,
   FaSortUp,
   FaSortDown,
-  FaShoppingCart,
+  FaExclamationTriangle,
+  FaSyncAlt
 } from "react-icons/fa";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Order = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.eSpecialtyReducer.userInfo);
-  const cartProducts = useSelector((state) => state.eSpecialtyReducer.products);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [confirmModal, setConfirmModal] = useState({
+  const [cancelModal, setCancelModal] = useState({
     isOpen: false,
     order: null,
   });
-  const [showAddressSelector, setShowAddressSelector] = useState(false);
-  const [selectedAddressData, setSelectedAddressData] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     key: "date",
     direction: "desc",
@@ -61,16 +56,15 @@ const Order = () => {
       const data = await response.json();
       if (data.success) {
         setOrders(data.orders);
-        // Update order count in Redux
         dispatch(setOrderCount(data.orders.length));
       } else {
-        setError(data.message || t("orders.error_loading_orders"));
-        toast.error(t("orders.error_loading_orders"));
+        setError(data.message || "Lỗi khi tải danh sách đơn hàng");
+        toast.error("Lỗi khi tải danh sách đơn hàng");
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
-      setError(t("orders.error_loading_orders"));
-      toast.error(t("orders.error_loading_orders"));
+      setError("Lỗi khi tải danh sách đơn hàng");
+      toast.error("Lỗi khi tải danh sách đơn hàng");
     } finally {
       setLoading(false);
     }
@@ -108,117 +102,64 @@ const Order = () => {
     return sortableOrders;
   }, [orders, sortConfig]);
 
-  const openOrderModal = () => {
-    // Fix Order
+  // 1. Xử lý click vào hàng để chuyển đến checkout
+  const handleRowClick = (orderId) => {
+    navigate(`/checkout/${orderId}`);
   };
 
-  const closeOrderModal = () => {
-    // Fix order details
-  };
-
-  const handleAddressChange = (addressData) => {
-    setSelectedAddressData(addressData);
-  };
-
-  const handleAddOrderToCart = async (order, e) => {
-    e.stopPropagation(); // Prevent modal from opening
-
-    // Open confirmation modal
-    setConfirmModal({
+  // 2. Xử lý hủy đơn hàng - chỉ cho phép khi status = "pending"
+  const handleCancelOrder = (order, e) => {
+    e.stopPropagation();
+    setCancelModal({
       isOpen: true,
       order: order,
     });
   };
 
-  const confirmAddToCart = async () => {
-    const order = confirmModal.order;
+  const confirmCancelOrder = async () => {
+    const order = cancelModal.order;
+    if (!order) return;
 
     try {
-      let addedCount = 0;
-      let updatedCount = 0;
-
-      // Add each item to cart
-      order.items.forEach((item) => {
-        const existingCartItem = cartProducts.find(
-          (cartItem) => cartItem._id === (item.productId || item._id)
-        );
-
-        const cartItem = {
-          _id: item.productId || item._id, // Handle both productId and _id
-          name: item.name,
-          price: item.price,
-          image: item.image,
-          quantity: item.quantity,
-          // Add additional fields that might be needed for cart functionality
-          description: item.description,
-          category: item.category,
-          brand: item.brand,
-        };
-
-        if (existingCartItem) {
-          updatedCount++;
-        } else {
-          addedCount++;
+      setCancelling(true);
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://localhost:8000/api/order/cancel`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            orderId: order._id,
+          }),
         }
+      );
 
-        dispatch(addToCart(cartItem));
-      });
-
-      // Create more descriptive success message
-      let message = "";
-      if (addedCount > 0 && updatedCount > 0) {
-        message = `${addedCount} ${addedCount !== 1 ? t("orders.new_items_added_plural") : t("orders.new_items_added")} ${t("orders.items_added_updated")} ${updatedCount} ${updatedCount !== 1 ? t("orders.existing_items_updated_plural") : t("orders.existing_items_updated")} ${t("orders.updated_in_cart")}`;
-      } else if (addedCount > 0) {
-        message = `${addedCount} ${addedCount !== 1 ? t("orders.new_items_added_plural") : t("orders.new_items_added")} ${t("orders.items_added_to_cart")}`;
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Đơn hàng đã được hủy thành công");
+        // Cập nhật state local
+        setOrders(orders.map(o => 
+          o._id === order._id 
+            ? { ...o, status: "cancelled", paymentStatus: data.order.paymentStatus, updatedAt: data.order.updatedAt }
+            : o
+        ));
       } else {
-        message = `${updatedCount} ${updatedCount !== 1 ? t("orders.existing_items_updated_plural") : t("orders.existing_items_updated")} ${t("orders.items_updated_in_cart")}`;
+        toast.error(data.message || "Không thể hủy đơn hàng");
       }
-
-      toast.success(message, {
-        duration: 4000,
-        icon: "🛒",
-      });
-
-      // Show additional toast with option to view cart
-      setTimeout(() => {
-          toast(
-            (toastInstance) => (
-              <div className="flex items-center gap-3">
-                <span>{t("orders.view_updated_cart")}</span>
-                <button
-                  onClick={() => {
-                    navigate("/cart");
-                    toast.dismiss(toastInstance.id);
-                  }}
-                  className="bg-gray-900 text-white px-3 py-1 rounded text-sm hover:bg-gray-800"
-                >
-                  {t("orders.view_cart_button")}
-                </button>
-                <button
-                  onClick={() => toast.dismiss(toastInstance.id)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-            ),
-          {
-            duration: 6000,
-            icon: "👀",
-          }
-        );
-      }, 1000);
-
-      setConfirmModal({ isOpen: false, order: null });
     } catch (error) {
-      console.error("Error adding items to cart:", error);
-      toast.error(t("orders.failed_add_to_cart"));
-      setConfirmModal({ isOpen: false, order: null });
+      console.error("Error cancelling order:", error);
+      toast.error("Không thể hủy đơn hàng");
+    } finally {
+      setCancelling(false);
+      setCancelModal({ isOpen: false, order: null });
     }
   };
 
-  const cancelAddToCart = () => {
-    setConfirmModal({ isOpen: false, order: null });
+  const cancelCancelOrder = () => {
+    setCancelModal({ isOpen: false, order: null });
   };
 
   const getStatusColor = (status) => {
@@ -262,6 +203,7 @@ const Order = () => {
       case "paid":
         return "bg-green-100 text-green-800 border-green-200";
       case "failed":
+      case "refunded":
         return "bg-red-100 text-red-800 border-red-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -274,7 +216,7 @@ const Order = () => {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-gray-900 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">{t("orders.loading_orders")}</p>
+            <p className="text-gray-600">Đang tải danh sách đơn hàng...</p>
           </div>
         </div>
       </Container>
@@ -288,14 +230,14 @@ const Order = () => {
           <div className="text-center">
             <FaTimes className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {t("orders.error_loading_orders")}
+              Lỗi khi tải danh sách đơn hàng
             </h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchUserOrders}
               className="bg-gray-900 text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
             >
-              {t("orders.try_again")}
+              Thử lại
             </button>
           </div>
         </div>
@@ -311,14 +253,14 @@ const Order = () => {
           <div className="flex flex-col space-y-2">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <FaShoppingBag className="w-8 h-8" />
-              {t("orders.my_orders")}
+              Đơn hàng của tôi
             </h1>
             <nav className="flex text-sm text-gray-500">
               <Link to="/" className="hover:text-gray-700 transition-colors">
-                {t("orders.home")}
+                Trang chủ
               </Link>
               <span className="mx-2">/</span>
-              <span className="text-gray-900">{t("orders.orders")}</span>
+              <span className="text-gray-900">Đơn hàng</span>
             </nav>
           </div>
         </Container>
@@ -335,14 +277,14 @@ const Order = () => {
             <div className="max-w-md mx-auto">
               <FaShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-6" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {t("orders.no_orders_yet")}
+                Chưa có đơn hàng nào
               </h2>
               <p className="text-gray-600 mb-8">
-                {t("orders.no_orders_message")}
+                Hãy bắt đầu mua sắm để tạo đơn hàng đầu tiên của bạn
               </p>
               <Link to="/shop">
                 <button className="bg-gray-900 text-white px-8 py-3 rounded-md hover:bg-gray-800 transition-colors font-medium">
-                  {t("orders.start_shopping")}
+                  Bắt đầu mua sắm
                 </button>
               </Link>
             </div>
@@ -351,13 +293,13 @@ const Order = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <p className="text-gray-600">
-                {orders.length} {orders.length !== 1 ? t("orders.orders_found_multiple") : t("orders.orders_found_single")}
+                {orders.length} đơn hàng
               </p>
               <button
                 onClick={fetchUserOrders}
-                className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
               >
-                {t("orders.refresh_button")}
+                <FaSyncAlt className="w-4 h-4" /> Làm mới
               </button>
             </div>
 
@@ -372,7 +314,7 @@ const Order = () => {
                           onClick={() => handleSort("_id")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          {t("orders.order_id_header")}
+                          Mã đơn
                           {sortConfig.key === "_id" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -389,7 +331,7 @@ const Order = () => {
                           onClick={() => handleSort("date")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          {t("orders.date_header")}
+                          Ngày đặt
                           {sortConfig.key === "date" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -402,14 +344,14 @@ const Order = () => {
                         </button>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t("orders.items_header")}
+                        Sản phẩm
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <button
                           onClick={() => handleSort("amount")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          {t("orders.total_header")}
+                          Tổng tiền
                           {sortConfig.key === "amount" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -426,7 +368,7 @@ const Order = () => {
                           onClick={() => handleSort("status")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          {t("orders.status_header")}
+                          Trạng thái
                           {sortConfig.key === "status" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -439,10 +381,10 @@ const Order = () => {
                         </button>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t("orders.payment_header")}
+                        Thanh toán
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {t("orders.actions_header")}
+                        Hành động
                       </th>
                     </tr>
                   </thead>
@@ -454,7 +396,7 @@ const Order = () => {
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3 }}
                         className="hover:bg-gray-50 cursor-pointer"
-                        onClick={() => openOrderModal(order)}
+                        onClick={() => handleRowClick(order._id)}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
@@ -463,10 +405,13 @@ const Order = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {new Date(order.date).toLocaleDateString()}
+                            {new Date(order.date).toLocaleDateString("vi-VN")}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {new Date(order.date).toLocaleTimeString()}
+                            {new Date(order.date).toLocaleTimeString("vi-VN", {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -496,12 +441,12 @@ const Order = () => {
                             </div>
                             <div>
                               <div className="text-sm text-gray-900">
-                                {order.items.length} {order.items.length !== 1 ? t("orders.items_count") : t("orders.item_count")}
+                                {order.items.length} sản phẩm
                               </div>
                               <div className="text-sm text-gray-500 truncate max-w-xs">
                                 {order.items[0]?.name}
                                 {order.items.length > 1 &&
-                                  `, +${order.items.length - 1} ${t("orders.more_items")}`}
+                                  `, +${order.items.length - 1} khác`}
                               </div>
                             </div>
                           </div>
@@ -518,8 +463,7 @@ const Order = () => {
                             )}`}
                           >
                             {getStatusIcon(order.status)}
-                            {order.status.charAt(0).toUpperCase() +
-                              order.status.slice(1)}
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -533,46 +477,21 @@ const Order = () => {
                             ) : (
                               <FaCreditCard className="w-3 h-3" />
                             )}
-                            {order.paymentStatus.charAt(0).toUpperCase() +
-                              order.paymentStatus.slice(1)}
+                            {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                            
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex gap-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openOrderModal(order);
-                              }}
-                              className="text-blue-600 hover:text-blue-900 transition-colors"
-                              title={t("orders.view_details_tooltip")}
-                            >
-                              <FaEye className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={(e) => handleAddOrderToCart(order, e)}
-                              className="text-green-600 hover:text-green-900 transition-colors"
-                              title={t("orders.add_to_cart_tooltip")}
-                            >
-                              <FaShoppingCart className="w-4 h-4" />
-                            </button>
-                            <Link
-                              to={`/checkout/${order._id}`}
-                              className="text-gray-600 hover:text-gray-900 transition-colors"
-                              title={t("orders.order_details_tooltip")}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <FaShoppingBag className="w-4 h-4" />
-                            </Link>
-                            {order.paymentStatus === "pending" && (
-                              <Link
-                                to={`/checkout/${order._id}`}
-                                className="text-orange-600 hover:text-orange-900 transition-colors"
-                                title={t("orders.pay_now_tooltip")}
-                                onClick={(e) => e.stopPropagation()}
+                            {/* Chỉ hiển thị nút hủy khi trạng thái là pending */}
+                            {order.status === "pending" && (
+                              <button
+                                onClick={(e) => handleCancelOrder(order, e)}
+                                className="text-red-600 hover:text-red-900 transition-colors flex flex-row gap-2 justify-center items-center"
+                                title="Hủy đơn hàng"
                               >
-                                <FaCreditCard className="w-4 h-4" />
-                              </Link>
+                                <FaTimes className="w-4 h-4" /> Hủy Đơn
+                              </button>
                             )}
                           </div>
                         </td>
@@ -585,113 +504,15 @@ const Order = () => {
           </div>
         )}
 
-        
-          title={t("orders.address_modal_title")}
-          description={showAddressSelector ? "" : t("orders.address_modal_desc")}
-          customContent={
-            <div className="mt-4">
-              <button 
-                onClick={() => setShowAddressSelector(!showAddressSelector)}
-                className="mb-4 text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-              >
-                {showAddressSelector ? t("orders.hide_address_selector") : t("orders.add_new_address")}
-              </button>
-              
-              {showAddressSelector && (
-                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-4">
-                  <h3 className="text-lg font-medium mb-4">{t("orders.address_info_title")}</h3>
-                  
-                  <div className="space-y-4 mb-4">
-                    <div>
-                      <label htmlFor="fullname" className="block text-sm font-medium text-gray-700 mb-1">
-                        {t("orders.contact_name_label")}
-                      </label>
-                      <input
-                        type="text"
-                        id="fullname"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder={t("orders.contact_name_placeholder")}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                        {t("orders.phone_label")}
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder={t("orders.phone_placeholder")}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                        {t("orders.address_label")}
-                      </label>
-                      <input
-                        type="text"
-                        id="address"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder={t("orders.address_placeholder")}
-                      />
-                    </div>
-                    
-                    <AddressSelector onAddressChange={handleAddressChange} />
-                  </div>
-                  
-                  <div className="flex justify-end gap-3">
-                    <button
-                      onClick={() => setShowAddressSelector(false)}
-                      className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
-                    >
-                      {t("orders.cancel_address")}
-                    </button>
-                    <button
-                      className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                    >
-                      {t("orders.save_address")}
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Display saved addresses here */}
-              <div className="space-y-3">
-                <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer">
-                  <div className="flex justify-between">
-                    <div className="font-medium">{t("orders.home_address")}</div>
-                    <div className="text-blue-600">{t("orders.default_address")}</div>
-                  </div>
-                  <div className="text-gray-600 mt-1">Nguyễn Văn A</div>
-                  <div className="text-gray-600">0987654321</div>
-                  <div className="text-gray-600 mt-1">123 Đường ABC, Phường XYZ, Quận 1, TP HCM</div>
-                </div>
-                
-                <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer">
-                  <div className="flex justify-between">
-                    <div className="font-medium">{t("orders.company_address")}</div>
-                    <div></div>
-                  </div>
-                  <div className="text-gray-600 mt-1">Nguyễn Văn A</div>
-                  <div className="text-gray-600">0987654321</div>
-                  <div className="text-gray-600 mt-1">456 Đường DEF, Phường UVW, Quận 2, TP HCM</div>
-                </div>
-              </div>
-            </div>
-          }
-        
-
-        {/* Add to Cart Confirmation Modal */}
+        {/* Cancel Order Confirmation Modal */}
         <AnimatePresence>
-          {confirmModal.isOpen && confirmModal.order && (
+          {cancelModal.isOpen && cancelModal.order && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              onClick={cancelAddToCart}
+              onClick={cancelCancelOrder}
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
@@ -701,85 +522,45 @@ const Order = () => {
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="text-center">
-                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
-                    <FaShoppingCart className="h-6 w-6 text-yellow-600" />
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <FaExclamationTriangle className="h-6 w-6 text-red-600" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {t("orders.order_to_cart_title")}
+                    Xác nhận hủy đơn hàng
                   </h3>
                   <p className="text-sm text-gray-500 mb-6">
-                    {t("orders.order_to_cart_desc")}{" "}
+                    Bạn có chắc chắn muốn hủy đơn hàng{" "}
                     <span className="font-semibold">
-                      #{confirmModal.order._id.slice(-8).toUpperCase()}
-                    </span>{" "}
-                    {t("orders.order_to_cart_desc2")}{" "}
-                    {confirmModal.order.items.length} {confirmModal.order.items.length !== 1 ? t("orders.items_count") : t("orders.item_count")} {t("orders.order_to_cart_desc3")}
+                      #{cancelModal.order._id.slice(-8).toUpperCase()}
+                    </span>? 
+                    <br />
+                    Hành động này không thể hoàn tác.
                   </p>
-
-                  {/* Order Items Preview */}
-                  <div className="bg-gray-50 rounded-lg p-3 mb-6 max-h-40 overflow-y-auto">
-                    <div className="text-xs text-gray-500 mb-2 flex justify-between font-medium">
-                      <span>{t("orders.items_to_add_label")}</span>
-                      <span>{t("orders.qty_price_label")}</span>
-                    </div>
-                    {confirmModal.order.items.map((item, index) => {
-                      const isInCart = cartProducts.find(
-                        (cartItem) =>
-                          cartItem._id === (item.productId || item._id)
-                      );
-                      return (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between text-sm py-1 border-b border-gray-200 last:border-b-0"
-                        >
-                          <div className="flex items-center flex-1 min-w-0">
-                            {item.image && (
-                              <img
-                                src={item.image}
-                                alt={item.name}
-                                className="w-8 h-8 object-cover rounded mr-2 flex-shrink-0"
-                              />
-                            )}
-                            <div className="flex flex-col flex-1 min-w-0">
-                              <span className="text-gray-700 truncate">
-                                {item.name}
-                              </span>
-                              {isInCart && (
-                                <span className="text-xs text-blue-600">
-                                  {t("orders.already_in_cart_label")} {isInCart.quantity}{t("orders.will_be_updated_label")}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-gray-500 ml-2 flex items-center gap-2">
-                            <span className="text-xs">x{item.quantity}</span>
-                            <span className="text-xs">×</span>
-                            <PriceFormat amount={item.price} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <div className="pt-2 mt-2 border-t border-gray-300">
-                      <div className="flex justify-between text-sm font-medium">
-                        <span>{t("orders.total_value_label")}</span>
-                        <PriceFormat amount={confirmModal.order.amount} />
-                      </div>
-                    </div>
-                  </div>
 
                   <div className="flex gap-3">
                     <button
-                      onClick={cancelAddToCart}
-                      className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                      onClick={cancelCancelOrder}
+                      disabled={cancelling}
+                      className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
-                      {t("orders.cancel_modal")}
+                      Không hủy
                     </button>
                     <button
-                      onClick={confirmAddToCart}
-                      className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                      onClick={confirmCancelOrder}
+                      disabled={cancelling}
+                      className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      <FaShoppingCart className="w-4 h-4" />
-                      {t("orders.add_to_cart_modal")}
+                      {cancelling ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Đang hủy...
+                        </>
+                      ) : (
+                        <>
+                          <FaTimes className="w-4 h-4" />
+                          Hủy đơn hàng
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
