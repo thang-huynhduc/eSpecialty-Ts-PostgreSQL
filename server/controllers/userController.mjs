@@ -36,11 +36,11 @@ const userLogin = async (req, res) => {
     const { email, password } = req.body;
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.json({ success: false, message: "User doesn't exist" });
+      return res.json({ success: false, message: "Incorrect email or password" });
     }
 
     if (!user.isActive) {
-      return res.json({ success: false, message: "Account is deactivated" });
+      return res.json({ success: false, message: "Account is inactive, please contact admin" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -62,7 +62,7 @@ const userLogin = async (req, res) => {
         message: "User logged in successfully",
       });
     } else {
-      res.json({ success: false, message: "Invalid credentials, try again" });
+      res.json({ success: false, message: "Invalid correct email or password" });
     }
   } catch (error) {
     console.log("User Login Error", error);

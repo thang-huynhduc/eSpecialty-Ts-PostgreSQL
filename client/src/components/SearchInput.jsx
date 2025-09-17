@@ -5,6 +5,7 @@ import { IoCloseOutline } from "react-icons/io5";
 import { CiSearch } from "react-icons/ci";
 import { useNavigate } from "react-router-dom";
 import { getData } from "../helpers";
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const SearchInput = () => {
   const [search, setSearch] = useState("");
@@ -19,7 +20,7 @@ const SearchInput = () => {
       return;
     }
 
-    const endpoint = `http://localhost:8000/api/products?_search=${search}`;
+    const endpoint = `${API_URL}/api/products?_search=${search}`;
 
     try {
       setLoading(true);

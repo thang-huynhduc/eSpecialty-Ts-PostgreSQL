@@ -1,10 +1,10 @@
 import axios from "axios";
 import NodeCache from "node-cache";
 
-// Cache for 10 minutes (600 seconds)
-const cache = new NodeCache({ stdTTL: 600 });
+// Cache for 1 hour (3600 seconds)
+const cache = new NodeCache({ stdTTL: 3600 });
 
-// Free currency conversion API (you can replace with your preferred service)
+// Free currency conversion API 
 const EXCHANGE_API_URL = "https://api.exchangerate-api.com/v4/latest/VND";
 const FALLBACK_VND_TO_USD = 0.000041; // Fallback rate: ~24,400 VND = 1 USD
 

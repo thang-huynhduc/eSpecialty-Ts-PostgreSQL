@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { resetCart } from "../redux/especialtySlice";
 import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
 import PayPalPayment from "../components/PayPalPayment";
@@ -15,10 +17,12 @@ import {
   FaArrowLeft,
   FaPaypal,
 } from "react-icons/fa";
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Checkout = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [paymentStep, setPaymentStep] = useState("selection"); // 'selection', 'paypal', 'processing'
@@ -27,7 +31,7 @@ const Checkout = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:8000/api/order/user/${orderId}`,
+        `${API_URL}/api/order/user/${orderId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -66,11 +70,23 @@ const Checkout = () => {
 
 
   const handlePayPalSuccess = (captureId, orderData) => {
-    // Redirect to success page with payment details
-    toast.success("PayPal payment completed successfully!");
-    navigate(
-      `/payment-success?order_id=${orderId}&capture_id=${captureId}&payment_method=paypal`
-    );
+    // Clear cart after successful payment
+    dispatch(resetCart());
+    
+    // Refresh order details to get updated status
+    fetchOrderDetails().then(() => {
+      toast.success("PayPal payment completed successfully!");
+      navigate(
+        `/payment-success?order_id=${orderId}&capture_id=${captureId}&payment_method=paypal`
+      );
+    }).catch(error => {
+      console.error("Error refreshing order details:", error);
+      // Still navigate even if refresh fails
+      toast.success("PayPal payment completed successfully!");
+      navigate(
+        `/payment-success?order_id=${orderId}&capture_id=${captureId}&payment_method=paypal`
+      );
+    });
   };
 
   const handlePayPalCancel = () => {
