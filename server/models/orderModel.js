@@ -93,36 +93,11 @@ const orderSchema = new mongoose.Schema({
     enum: ["pending", "paid", "failed", "refunded"],
     default: "pending",
   },
-  // PayPal specific fields
-  paypalOrderId: {
-    type: String,
-    default: null,
-  },
-  paypalCaptureId: {
-    type: String,
-    default: null,
-  },
-  // Currency information
-  originalCurrency: {
-    type: String,
-    default: "VND",
-  },
-  originalAmount: {
-    type: Number,
-    default: null,
-  },
-  exchangeRate: {
-    type: Number,
-    default: null,
-  },
-  // Idempotency check
-  captureAttempts: {
-    type: Number,
-    default: 0,
-  },
-  lastCaptureAttempt: {
-    type: Date,
-    default: null,
+  // Payment tracking (moved to PaymentDetails collection)
+  // This field helps track if payment details exist
+  hasPaymentDetails: {
+    type: Boolean,
+    default: false,
   },
   date: {
     type: Date,

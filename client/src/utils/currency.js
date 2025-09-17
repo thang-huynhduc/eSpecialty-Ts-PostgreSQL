@@ -22,20 +22,65 @@ export const formatVNDSimple = (amount) => {
   return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
 };
 
-// Convert USD to approximate VND (for reference only)
+// Convert USD to approximate VND (for display purposes only)
 export const usdToVND = (usdAmount, exchangeRate = 24400) => {
   return Math.round(usdAmount * exchangeRate);
 };
 
-// Convert VND to USD (for payment processing)
+// Convert VND to USD (for payment processing - internal use only)
 export const vndToUSD = (vndAmount, exchangeRate = 0.000041) => {
   return Math.round(vndAmount * exchangeRate * 100) / 100;
+};
+
+// Always display amounts in VND - main currency formatter
+export const displayAmount = (amount, currency = 'VND') => {
+  // Always convert to VND for display, regardless of internal currency
+  if (currency === 'USD') {
+    // If we somehow get USD amount, convert it back to VND for display
+    return formatVND(usdToVND(amount));
+  }
+  return formatVND(amount);
+};
+
+// Get display currency (always VND)
+export const getDisplayCurrency = () => 'VND';
+
+// Format amount for admin/client display (always VND)
+export const formatForDisplay = (originalAmount, processedAmount = null, originalCurrency = 'VND', processedCurrency = null) => {
+  // Always return VND amount for display
+  if (originalCurrency === 'VND') {
+    return {
+      amount: originalAmount,
+      currency: 'VND',
+      formatted: formatVND(originalAmount)
+    };
+  }
+  
+  // If original was not VND, try to use processed amount converted back
+  if (processedAmount && processedCurrency === 'USD') {
+    const vndAmount = usdToVND(processedAmount);
+    return {
+      amount: vndAmount,
+      currency: 'VND',
+      formatted: formatVND(vndAmount)
+    };
+  }
+  
+  // Fallback to original amount as VND
+  return {
+    amount: originalAmount,
+    currency: 'VND',
+    formatted: formatVND(originalAmount)
+  };
 };
 
 export default {
   formatVND,
   formatVNDSimple,
   usdToVND,
-  vndToUSD
+  vndToUSD,
+  displayAmount,
+  getDisplayCurrency,
+  formatForDisplay
 };
 

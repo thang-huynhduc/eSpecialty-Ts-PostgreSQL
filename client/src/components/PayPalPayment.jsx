@@ -45,7 +45,7 @@ const PayPalPayment = ({
       setIsLoading(true);
       setError(null);
       
-      // Just prepare the data, don't create PayPal order yet
+      //Prepare the data, don't create PayPal order yet
       setOrderData({
         orderId,
         amount,
