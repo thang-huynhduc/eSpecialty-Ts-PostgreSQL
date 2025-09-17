@@ -1,12 +1,13 @@
-const { ghn } = require('../config/ghn.js');
+import { ghn } from '../config/ghn.js';
 
 class GHNService {
   async getProvinces() {
     try {
-      const response = await ghn.getProvinces();
+      const response = await ghn.address.getProvinces();
+      console.log('GHN getProvinces response:', response);
       return {
         success: true,
-        data: response.data || []
+        data: response || []
       };
     } catch (error) {
       console.error('GHN getProvinces error:', error);
@@ -20,10 +21,10 @@ class GHNService {
 
   async getDistricts(provinceId) {
     try {
-      const response = await ghn.getDistricts(provinceId);
+      const response = await ghn.address.getDistricts(provinceId);
       return {
         success: true,
-        data: response.data || []
+        data: response|| []
       };
     } catch (error) {
       console.error('GHN getDistricts error:', error);
@@ -37,10 +38,10 @@ class GHNService {
 
   async getWards(districtId) {
     try {
-      const response = await ghn.getWards(districtId);
+      const response = await ghn.address.getWards(districtId);
       return {
         success: true,
-        data: response.data || []
+        data: response || []
       };
     } catch (error) {
       console.error('GHN getWards error:', error);
@@ -82,7 +83,7 @@ class GHNService {
       const response = await ghn.calculateFee(shippingData);
       return {
         success: true,
-        data: response.data || {}
+        data: response || {}
       };
     } catch (error) {
       console.error('GHN calculateShippingFee error:', error);
@@ -102,7 +103,7 @@ class GHNService {
       });
       return {
         success: true,
-        data: response.data || []
+        data: response || []
       };
     } catch (error) {
       console.error('GHN getServices error:', error);
@@ -119,7 +120,7 @@ class GHNService {
       const response = await ghn.createOrder(orderData);
       return {
         success: true,
-        data: response.data || {}
+        data: response || {}
       };
     } catch (error) {
       console.error('GHN createOrder error:', error);
@@ -136,7 +137,7 @@ class GHNService {
       const response = await ghn.getOrderInfo(orderCode);
       return {
         success: true,
-        data: response.data || {}
+        data: response || {}
       };
     } catch (error) {
       console.error('GHN getOrderInfo error:', error);
@@ -153,7 +154,7 @@ class GHNService {
       const response = await ghn.cancelOrder(orderCodes);
       return {
         success: true,
-        data: response.data || {}
+        data: response || {}
       };
     } catch (error) {
       console.error('GHN cancelOrder error:', error);
@@ -166,4 +167,4 @@ class GHNService {
   }
 }
 
-module.exports = new GHNService();
+export default new GHNService();

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const AddressSelector = ({ onAddressChange, initialValues = null }) => {
   const [provinces, setProvinces] = useState([]);
