@@ -262,6 +262,87 @@ const getUserOrderById = async (req, res) => {
     });
   }
 };
+// Cancel order (user)
+const cancelOrder = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    const userId = req.user?.id; // From auth middleware
+
+    // Validate authentication
+    if (!userId) {
+      return res.json({
+        success: false,
+        message: "User not authenticated",
+      });
+    }
+
+    if (!orderId) {
+      return res.json({
+        success: false,
+        message: "Order ID is required",
+      });
+    }
+
+    // Find the order and verify ownership
+    const order = await orderModel.findOne({ _id: orderId, userId });
+    
+    if (!order) {
+      return res.json({
+        success: false,
+        message: "Order not found or you don't have permission to cancel this order",
+      });
+    }
+
+    // Check if order can be cancelled (only pending orders)
+    if (order.status !== "pending") {
+      return res.json({
+        success: false,
+        message: `Cannot cancel order with status: ${order.status}. Only pending orders can be cancelled.`,
+      });
+    }
+
+    // Check if order is already cancelled
+    if (order.status === "cancelled") {
+      return res.json({
+        success: false,
+        message: "Order is already cancelled",
+      });
+    }
+
+    // Update order status to cancelled
+    order.status = "cancelled";
+    order.updatedAt = Date.now();
+    
+    // If payment was made, mark for refund
+    if (order.paymentStatus === "paid") {
+      order.paymentStatus = "refunded";
+    } else {
+      order.paymentStatus = "failed"; // Mark as failed if payment was pending
+    }
+
+    await order.save();
+
+    // Log the cancellation (optional)
+    console.log(`Order ${orderId} cancelled by user ${userId} at ${new Date().toISOString()}`);
+
+    res.json({
+      success: true,
+      message: "Order cancelled successfully",
+      order: {
+        _id: order._id,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        updatedAt: order.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.log("Cancel Order Error:", error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 // Update order status (Admin)
 const updateOrderStatus = async (req, res) => {
@@ -436,4 +517,5 @@ export {
   updateOrderStatus,
   getOrderStats,
   deleteOrder,
+  cancelOrder
 };
