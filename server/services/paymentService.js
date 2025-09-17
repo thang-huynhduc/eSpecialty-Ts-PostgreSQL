@@ -1,6 +1,8 @@
 import paymentDetailsModel from "../models/paymentDetailsModel.js";
 import orderModel from "../models/orderModel.js";
 import { convertVNDToUSD } from "./currencyService.js";
+import { OrdersController } from "@paypal/paypal-server-sdk";
+import paypalClient from "../config/paypal.js";
 
 /**
  * Create PayPal order with currency conversion
@@ -191,9 +193,8 @@ export const getPaymentDetailsForAdmin = async (orderId) => {
   }
 };
 
-// Actual PayPal SDK integration
-import { OrdersController } from "@paypal/paypal-server-sdk";
-import paypalClient from "../config/paypal.js";
+// PayPal SDK integration
+
 
 const createPayPalOrderViaSDK = async (orderData) => {
   const ordersController = new OrdersController(paypalClient);

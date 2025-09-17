@@ -336,16 +336,12 @@ const getUsers = async (req, res) => {
 // Add new address for user
 const addAddress = async (req, res) => {
   try {
-    const userId = req.user?.id; // Get from auth middleware for user routes
-    const paramUserId = req.params?.userId; // Get from params for admin routes
+    const userId = req.user?.id; 
+    const paramUserId = req.params?.userId; 
     const targetUserId = userId || paramUserId;
     console.log("req.body", req.body);
     let { label, street, ward, district, city, zipCode, country, phone, isDefault } =
       req.body;
-
-    // hard code for test payment
-    // city = "Anytown";
-    // district = "CA";
 
     // Validate required fields
     if (!label || !street || !ward || !district || !city || !zipCode || !country) {

@@ -54,15 +54,15 @@ const orderSchema = new mongoose.Schema({
     },
     ward: {
       type: String,
-      required: true, // Phường/Xã
+      required: true,
     },
     district: {
       type: String,
-      required: true, // Quận/Huyện
+      required: true,
     },
     city: {
       type: String,
-      required: true, // Tỉnh/Thành phố
+      required: true,
     },
     zipcode: {
       type: String,
@@ -76,6 +76,15 @@ const orderSchema = new mongoose.Schema({
     phone: {
       type: String,
       required: true,
+    },
+    provinceId: {
+      type: Number,
+    },
+    districtId: {
+      type: Number,
+    },
+    wardCode: {
+      type: String,
     },
   },
   status: {
@@ -97,6 +106,19 @@ const orderSchema = new mongoose.Schema({
   hasPaymentDetails: {
     type: Boolean,
     default: false,
+  },
+  shippingFee: {
+    type: Number,
+    default: 0,
+  },
+  ghnOrderCode: {
+    type: String,
+  },
+  ghnStatus: {
+    type: String,
+  },
+  ghnExpectedDeliveryTime: {
+    type: Date,
   },
   date: {
     type: Date,

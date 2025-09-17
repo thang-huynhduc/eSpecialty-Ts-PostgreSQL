@@ -1,6 +1,7 @@
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import productModel from "../models/productModel.js";
+import ghnService from "../services/ghnService.js";
 
 // Create a new order
 const createOrder = async (req, res) => {
@@ -118,6 +119,20 @@ const createOrder = async (req, res) => {
       });
     }
 
+    // Calculate shipping fee if address has required GHN fields
+    let shippingFee = 0;
+    if (address.districtId && address.wardCode) {
+      const shippingResult = await ghnService.calculateShippingFee({
+        toDistrictId: address.districtId,
+        toWardCode: address.wardCode,
+        weight: items.reduce((total, item) => total + (item.weight || 500) * item.quantity, 0),
+      });
+      
+      if (shippingResult.success) {
+        shippingFee = shippingResult.data.total || 0;
+      }
+    }
+
     // Create new order with properly mapped fields
     const newOrder = new orderModel({
       userId,
@@ -129,24 +144,63 @@ const createOrder = async (req, res) => {
         image: item.images?.[0] || item.image,
       })),
       amount,
+      shippingFee,
       address: {
         firstName: getAddressValue("firstName"),
         lastName: getAddressValue("lastName"),
         email: address.email || "",
         street: address.street || address.address || "",
-        ward: address.ward || "",
-        district: address.district || "",
-        city: address.city || address.province || "",
+        ward: address.ward || address.wardName || "",
+        district: address.district || address.districtName || "",
+        city: address.city || address.provinceName || "",
         zipcode: getAddressValue("zipcode"),
         country: address.country || "Vietnam",
         phone: address.phone || address.phoneNumber || "",
+        provinceId: address.provinceId,
+        districtId: address.districtId,
+        wardCode: address.wardCode,
       },
-      paymentMethod: "cod", // Default to cash on delivery
+      paymentMethod: "cod",
       status: "pending",
       paymentStatus: "pending",
     });
 
     await newOrder.save();
+
+    // Create GHN order if payment method is not COD and address has GHN data
+    if (newOrder.paymentMethod !== "cod" && address.districtId && address.wardCode) {
+      try {
+        const ghnOrderData = {
+          to_name: `${newOrder.address.firstName} ${newOrder.address.lastName}`,
+          to_phone: newOrder.address.phone,
+          to_address: newOrder.address.street,
+          to_ward_code: newOrder.address.wardCode,
+          to_district_id: newOrder.address.districtId,
+          weight: items.reduce((total, item) => total + (item.weight || 500) * item.quantity, 0),
+          length: 20,
+          width: 20,
+          height: 10,
+          service_type_id: 2,
+          payment_type_id: 1,
+          note: `Đơn hàng #${newOrder._id}`,
+          required_note: "KHONGCHOXEMHANG",
+          items: items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            weight: item.weight || 500
+          }))
+        };
+
+        const ghnResult = await ghnService.createOrder(ghnOrderData);
+        if (ghnResult.success) {
+          newOrder.ghnOrderCode = ghnResult.data.order_code;
+          newOrder.ghnExpectedDeliveryTime = new Date(ghnResult.data.expected_delivery_time);
+          await newOrder.save();
+        }
+      } catch (ghnError) {
+        console.log("GHN Order Creation Error:", ghnError);
+      }
+    }
 
     // Add order to user's orders array
     await userModel.findByIdAndUpdate(userId, {
@@ -158,6 +212,7 @@ const createOrder = async (req, res) => {
       message: "Order created successfully",
       order: newOrder,
       orderId: newOrder._id,
+      shippingFee,
     });
   } catch (error) {
     console.log("Create Order Error:", error);
