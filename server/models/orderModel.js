@@ -93,8 +93,7 @@ const orderSchema = new mongoose.Schema({
     enum: ["pending", "paid", "failed", "refunded"],
     default: "pending",
   },
-  // Payment tracking (moved to PaymentDetails collection)
-  // This field helps track if payment details exist
+  // Payment tracking
   hasPaymentDetails: {
     type: Boolean,
     default: false,

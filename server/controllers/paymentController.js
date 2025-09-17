@@ -1,4 +1,3 @@
-import Stripe from "stripe";
 import { OrdersController } from "@paypal/paypal-server-sdk";
 import crypto from "crypto";
 import orderModel from "../models/orderModel.js";
@@ -8,8 +7,7 @@ import { convertVNDToUSD, isPayPalSupportedCurrency } from "../services/currency
 import { createPayPalOrder as createPayPalOrderService, capturePayPalPayment as capturePayPalPaymentService } from "../services/paymentService.js";
 import paymentDetailsModel from "../models/paymentDetailsModel.js";
 
-// Initialize Stripe with your secret key
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
 
 // Create payment intent for Stripe
 export const createPaymentIntent = async (req, res) => {
