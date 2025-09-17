@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 const AddressSelector = ({ onAddressChange, initialValues = null }) => {
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
@@ -42,45 +44,48 @@ const AddressSelector = ({ onAddressChange, initialValues = null }) => {
     setIsInitializing(true);
     try {
       const province = provinces.find(
-        (p) => p.name.toLowerCase() === initialValues.provinceName?.toLowerCase()
+        (p) => p.ProvinceName.toLowerCase() === initialValues.provinceName?.toLowerCase() ||
+               p.ProvinceID === initialValues.provinceId
       );
 
       if (province) {
-        setSelectedProvince(province.code);
+        setSelectedProvince(province.ProvinceID);
 
-        const districtResponse = await fetch(
-          `https://provinces.open-api.vn/api/p/${province.code}?depth=2`
-        );
-        const districtData = await districtResponse.json();
-        const fetchedDistricts = districtData.districts || [];
-        // Only update districts if different
-        setDistricts((prev) =>
-          JSON.stringify(prev) !== JSON.stringify(fetchedDistricts) ? fetchedDistricts : prev
-        );
-
-        const district = fetchedDistricts.find(
-          (d) => d.name.toLowerCase() === initialValues.districtName?.toLowerCase()
-        );
-
-        if (district) {
-          setSelectedDistrict(district.code);
-
-          const wardResponse = await fetch(
-            `https://provinces.open-api.vn/api/d/${district.code}?depth=2`
-          );
-          const wardData = await wardResponse.json();
-          const fetchedWards = wardData.wards || [];
-          // Only update wards if different
-          setWards((prev) =>
-            JSON.stringify(prev) !== JSON.stringify(fetchedWards) ? fetchedWards : prev
+        const districtResponse = await fetch(`${API_BASE_URL}/api/ghn/districts/${province.ProvinceID}`);
+        const districtResult = await districtResponse.json();
+        
+        if (districtResult.success) {
+          const fetchedDistricts = districtResult.data || [];
+          setDistricts((prev) =>
+            JSON.stringify(prev) !== JSON.stringify(fetchedDistricts) ? fetchedDistricts : prev
           );
 
-          const ward = fetchedWards.find(
-            (w) => w.name.toLowerCase() === initialValues.wardName?.toLowerCase()
+          const district = fetchedDistricts.find(
+            (d) => d.DistrictName.toLowerCase() === initialValues.districtName?.toLowerCase() ||
+                   d.DistrictID === initialValues.districtId
           );
 
-          if (ward) {
-            setSelectedWard(ward.code);
+          if (district) {
+            setSelectedDistrict(district.DistrictID);
+
+            const wardResponse = await fetch(`${API_BASE_URL}/api/ghn/wards/${district.DistrictID}`);
+            const wardResult = await wardResponse.json();
+            
+            if (wardResult.success) {
+              const fetchedWards = wardResult.data || [];
+              setWards((prev) =>
+                JSON.stringify(prev) !== JSON.stringify(fetchedWards) ? fetchedWards : prev
+              );
+
+              const ward = fetchedWards.find(
+                (w) => w.WardName.toLowerCase() === initialValues.wardName?.toLowerCase() ||
+                       w.WardCode === initialValues.wardCode
+              );
+
+              if (ward) {
+                setSelectedWard(ward.WardCode);
+              }
+            }
           }
         }
       }
@@ -114,17 +119,17 @@ const AddressSelector = ({ onAddressChange, initialValues = null }) => {
       selectedDistrict &&
       selectedWard
     ) {
-      const province = memoizedProvinces.find((p) => String(p.code) === String(selectedProvince));
-      const district = memoizedDistricts.find((d) => String(d.code) === String(selectedDistrict));
-      const ward = memoizedWards.find((w) => String(w.code) === String(selectedWard));
+      const province = memoizedProvinces.find((p) => String(p.ProvinceID) === String(selectedProvince));
+      const district = memoizedDistricts.find((d) => String(d.DistrictID) === String(selectedDistrict));
+      const ward = memoizedWards.find((w) => String(w.WardCode) === String(selectedWard));
 
       return {
-        provinceCode: selectedProvince,
-        provinceName: province?.name || "",
-        districtCode: selectedDistrict,
-        districtName: district?.name || "",
+        provinceId: selectedProvince,
+        provinceName: province?.ProvinceName || "",
+        districtId: selectedDistrict,
+        districtName: district?.DistrictName || "",
         wardCode: selectedWard,
-        wardName: ward?.name || "",
+        wardName: ward?.WardName || "",
       };
     }
     return null;
@@ -148,9 +153,14 @@ const AddressSelector = ({ onAddressChange, initialValues = null }) => {
   const fetchProvinces = async () => {
     setLoading((prev) => ({ ...prev, provinces: true }));
     try {
-      const response = await fetch("https://provinces.open-api.vn/api/p/");
-      const data = await response.json();
-      setProvinces((prev) => (JSON.stringify(prev) !== JSON.stringify(data) ? data : prev));
+      const response = await fetch(`${API_BASE_URL}/api/ghn/provinces`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setProvinces((prev) => (JSON.stringify(prev) !== JSON.stringify(result.data) ? result.data : prev));
+      } else {
+        console.error("Error fetching provinces:", result.message);
+      }
     } catch (error) {
       console.error("Error fetching provinces:", error);
     } finally {
@@ -158,16 +168,20 @@ const AddressSelector = ({ onAddressChange, initialValues = null }) => {
     }
   };
 
-  const fetchDistricts = async (provinceCode) => {
+  const fetchDistricts = async (provinceId) => {
     setLoading((prev) => ({ ...prev, districts: true }));
     try {
-      const response = await fetch(
-        `https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`
-      );
-      const data = await response.json();
-      setDistricts((prev) =>
-        JSON.stringify(prev) !== JSON.stringify(data.districts || []) ? data.districts || [] : prev
-      );
+      const response = await fetch(`${API_BASE_URL}/api/ghn/districts/${provinceId}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setDistricts((prev) =>
+          JSON.stringify(prev) !== JSON.stringify(result.data) ? result.data : prev
+        );
+      } else {
+        console.error("Error fetching districts:", result.message);
+        setDistricts([]);
+      }
     } catch (error) {
       console.error("Error fetching districts:", error);
       setDistricts([]);
@@ -176,16 +190,20 @@ const AddressSelector = ({ onAddressChange, initialValues = null }) => {
     }
   };
 
-  const fetchWards = async (districtCode) => {
+  const fetchWards = async (districtId) => {
     setLoading((prev) => ({ ...prev, wards: true }));
     try {
-      const response = await fetch(
-        `https://provinces.open-api.vn/api/d/${districtCode}?depth=2`
-      );
-      const data = await response.json();
-      setWards((prev) =>
-        JSON.stringify(prev) !== JSON.stringify(data.wards || []) ? data.wards || [] : prev
-      );
+      const response = await fetch(`${API_BASE_URL}/api/ghn/wards/${districtId}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        setWards((prev) =>
+          JSON.stringify(prev) !== JSON.stringify(result.data) ? result.data : prev
+        );
+      } else {
+        console.error("Error fetching wards:", result.message);
+        setWards([]);
+      }
     } catch (error) {
       console.error("Error fetching wards:", error);
       setWards([]);
@@ -227,8 +245,8 @@ const AddressSelector = ({ onAddressChange, initialValues = null }) => {
           >
             <option value="">Chọn Tỉnh/Thành phố</option>
             {provinces.map((province) => (
-              <option key={province.code} value={province.code}>
-                {province.name}
+              <option key={province.ProvinceID} value={province.ProvinceID}>
+                {province.ProvinceName}
               </option>
             ))}
           </select>
@@ -270,8 +288,8 @@ const AddressSelector = ({ onAddressChange, initialValues = null }) => {
           >
             <option value="">Chọn Quận/Huyện</option>
             {districts.map((district) => (
-              <option key={district.code} value={district.code}>
-                {district.name}
+              <option key={district.DistrictID} value={district.DistrictID}>
+                {district.DistrictName}
               </option>
             ))}
           </select>
@@ -313,8 +331,8 @@ const AddressSelector = ({ onAddressChange, initialValues = null }) => {
           >
             <option value="">Chọn Phường/Xã</option>
             {wards.map((ward) => (
-              <option key={ward.code} value={ward.code}>
-                {ward.name}
+              <option key={ward.WardCode} value={ward.WardCode}>
+                {ward.WardName}
               </option>
             ))}
           </select>
