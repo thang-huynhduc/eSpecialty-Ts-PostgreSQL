@@ -16,6 +16,7 @@ const productSchema = new mongoose.Schema(
     offer: { type: Boolean },
     description: { type: String, required: true },
     tags: { type: Array },
+    stockThreshold: { type: Number, default: 10 },
   },
   {
     timestamps: true,
