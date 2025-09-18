@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { serverUrl } from "../../config";
+import debounce from "lodash.debounce"; 
 import {
   FaEdit,
   FaTrash,
@@ -10,19 +10,41 @@ import {
   FaBox,
   FaTimes,
   FaSync,
+  FaAngleLeft,
+  FaAngleRight,
 } from "react-icons/fa";
 import { IoMdClose, IoMdCloudUpload } from "react-icons/io";
 import { Link } from "react-router-dom";
+import PropTypes from "prop-types";
 import PriceFormat from "../components/PriceFormat";
 import Container from "../components/Container";
-import PropTypes from "prop-types";
 import Input, { Label } from "../components/ui/input";
 import SmallLoader from "../components/SmallLoader";
+import { serverUrl } from "../../config";
 
 const List = ({ token }) => {
-  const [list, setList] = useState([]);
+  // States for data
+  const [products, setProducts] = useState([]);
   const [isLoading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
+  // States for filters
+  const [filters, setFilters] = useState({
+    _search: "",
+    category: "",
+    brand: "",
+    minPrice: "",
+    maxPrice: "",
+    minStock: "",
+    _type: "",
+    offer: "",
+    isAvailable: "true",
+  });
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const perPage = 25;
 
   // Modal states
   const [showEditModal, setShowEditModal] = useState(false);
@@ -30,10 +52,6 @@ const List = ({ token }) => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [deletingProduct, setDeletingProduct] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // Categories and brands for edit modal
-  const [categories, setCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
 
   // Edit form data
   const [formData, setFormData] = useState({
@@ -57,31 +75,60 @@ const List = ({ token }) => {
     image3: null,
     image4: null,
   });
-  const fetchList = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(serverUrl + "/api/product/list");
-      const data = response?.data;
 
-      if (data?.success) {
-        setList(data?.products);
-      } else {
-        toast.error(data?.message);
+  // Fetch products with filters and pagination
+  const fetchProducts = useCallback(
+    async (page = 1) => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams({
+          ...filters,
+          _page: page,
+          _perPage: perPage,
+        });
+        const response = await axios.get(`${serverUrl}/api/product/list?${params}`);
+        const data = response?.data;
+
+        if (data?.success) {
+          setProducts(data.products);
+          setCurrentPage(data.currentPage);
+          setTotalPages(data.totalPages);
+          setTotalItems(data.totalItems);
+        } else {
+          toast.error(data?.message);
+        }
+      } catch (error) {
+        console.log("Product List fetching error", error?.message);
+        toast.error(error?.message);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.log("Product List fetching error", error?.message);
-      toast.error(error?.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [filters, perPage]
+  
+  );
+  const fetchProductsRef = useRef(fetchProducts);
 
-  // Fetch categories and brands for edit modal
+    // Update ref mỗi khi fetchProducts thay đổi
+  useEffect(() => {
+    fetchProductsRef.current = fetchProducts;
+  }, [fetchProducts]);
+
+  // Debounced fetchProducts
+  const debouncedFetchProducts = useMemo(
+    () =>
+      debounce((page) => {
+        fetchProductsRef.current(page); // Sử dụng ref để luôn gọi function mới nhất
+      }, 500),
+    [] // Empty dependency: chỉ tạo một lần
+  );
+
+  // Fetch categories and brands
   const fetchCategoriesAndBrands = async () => {
     try {
       const [categoriesRes, brandsRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/category`),
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/api/brand`),
+        fetch(`${serverUrl}/api/category`),
+        fetch(`${serverUrl}/api/brand`),
       ]);
 
       const categoriesData = await categoriesRes.json();
@@ -100,9 +147,30 @@ const List = ({ token }) => {
   };
 
   useEffect(() => {
-    fetchList();
     fetchCategoriesAndBrands();
+    fetchProducts(1); // Initial load
   }, []);
+
+  // Handle filter changes
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(1); // Reset to page 1 when filters change
+  };
+
+  // Apply debounced fetch khi filters change (giữ nguyên logic, nhưng giờ debounced ổn định)
+  useEffect(() => {
+    debouncedFetchProducts(1);
+    return () => {
+      debouncedFetchProducts.cancel(); // Hủy debounce khi component unmount
+    };
+  }, [filters, debouncedFetchProducts]); // Giữ dependency, nhưng debounced không thay đổi nữa
+
+  // Pagination handlers
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      fetchProducts(page); // Gọi trực tiếp fetchProducts cho phân trang
+    }
+  };
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -273,7 +341,7 @@ const List = ({ token }) => {
       const responseData = response?.data;
       if (responseData?.success) {
         toast.success("Product updated successfully");
-        await fetchList();
+        await fetchProducts(currentPage);
         closeEditModal();
       } else {
         toast.error(responseData?.message || "Failed to update product");
@@ -286,20 +354,21 @@ const List = ({ token }) => {
     }
   };
 
+  // Handle product deletion
   const handleRemoveProduct = async () => {
     if (!deletingProduct) return;
 
     try {
       setSubmitting(true);
       const response = await axios.post(
-        serverUrl + "/api/product/remove",
+        `${serverUrl}/api/product/remove`,
         { _id: deletingProduct._id },
         { headers: { token } }
       );
       const data = response?.data;
       if (data?.success) {
         toast.success(data?.message);
-        await fetchList();
+        await fetchProducts(currentPage);
         closeDeleteModal();
       } else {
         toast.error(data?.message);
@@ -311,15 +380,6 @@ const List = ({ token }) => {
       setSubmitting(false);
     }
   };
-
-  // Filter products based on search
-  const filteredList = list.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.brand &&
-        product.brand.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
 
   return (
     <Container>
@@ -334,7 +394,7 @@ const List = ({ token }) => {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={fetchList}
+              onClick={() => fetchProducts(currentPage)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
               title="Refresh Products"
             >
@@ -351,20 +411,226 @@ const List = ({ token }) => {
           </div>
         </div>
 
-        {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-            />
+        {/* Filters Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-medium mb-4">Filters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="search">Search</Label>
+              <div className="relative">
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="search"
+                  type="text"
+                  placeholder="Search products..."
+                  value={filters._search}
+                  onChange={(e) => handleFilterChange("_search", e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <select
+                id="category"
+                value={filters.category}
+                onChange={(e) => handleFilterChange("category", e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Categories</option>
+                {categories.map((cat) => (
+                  <option key={cat._id} value={cat.name}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="brand">Brand</Label>
+              <select
+                id="brand"
+                value={filters.brand}
+                onChange={(e) => handleFilterChange("brand", e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Brands</option>
+                {brands.map((br) => (
+                  <option key={br._id} value={br.name}>
+                    {br.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="minPrice">Min Price</Label>
+              <Input
+                id="minPrice"
+                type="number"
+                min="0"
+                value={filters.minPrice}
+                onChange={(e) => handleFilterChange("minPrice", e.target.value)}
+                placeholder="0"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Label htmlFor="maxPrice">Max Price</Label>
+              <Input
+                id="maxPrice"
+                type="number"
+                min="0"
+                value={filters.maxPrice}
+                onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
+                placeholder="∞"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Label htmlFor="minStock">Min Stock</Label>
+              <Input
+                id="minStock"
+                type="number"
+                min="0"
+                value={filters.minStock}
+                onChange={(e) => handleFilterChange("minStock", e.target.value)}
+                placeholder="0"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <Label htmlFor="_type">Product Type</Label>
+              <select
+                id="_type"
+                value={filters._type}
+                onChange={(e) => handleFilterChange("_type", e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All Types</option>
+                <option value="new_arrivals">New Arrivals</option>
+                <option value="best_sellers">Best Sellers</option>
+                <option value="special_offers">Special Offers</option>
+                <option value="promotions">Promotions</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="offer">Special Offer</Label>
+              <select
+                id="offer"
+                value={filters.offer}
+                onChange={(e) => handleFilterChange("offer", e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">All</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
           </div>
+          <button
+            onClick={() =>
+              setFilters({
+                _search: "",
+                category: "",
+                brand: "",
+                minPrice: "",
+                maxPrice: "",
+                minStock: "",
+                _type: "",
+                offer: "",
+                isAvailable: "true",
+              })
+            }
+            className="mt-4 px-4 py-2 text-sm text-blue-600 border border-blue-300 rounded hover:bg-blue-50 transition-colors"
+          >
+            Clear All Filters
+          </button>
         </div>
 
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg shadow-sm">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing <span className="font-medium">{(currentPage - 1) * perPage + 1}</span> to{" "}
+                  <span className="font-medium">{Math.min(currentPage * perPage, totalItems)}</span> of{" "}
+                  <span className="font-medium">{totalItems}</span> results
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    onClick={() => goToPage(1)}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <span className="sr-only">First</span>
+                    <FaAngleLeft className="h-5 w-5" aria-hidden="true" />
+                    <FaAngleLeft className="h-3 w-3 -ml-1" aria-hidden="true" />
+                  </button>
+                  <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <span className="sr-only">Previous</span>
+                    <FaAngleLeft className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = currentPage > 3 ? currentPage - 2 + i : i + 1;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => goToPage(pageNum)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          currentPage === pageNum
+                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <span className="sr-only">Next</span>
+                    <FaAngleRight className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  <button
+                    onClick={() => goToPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <span className="sr-only">Last</span>
+                    <FaAngleRight className="h-5 w-5" aria-hidden="true" />
+                    <FaAngleRight className="h-3 w-3 -mr-1" aria-hidden="true" />
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Products List */}
         {isLoading ? (
           <>
@@ -448,18 +714,18 @@ const List = ({ token }) => {
               ))}
             </div>
           </>
-        ) : filteredList.length === 0 ? (
+        ) : products.length === 0 ? (
           <div className="text-center py-12">
             <FaBox className="mx-auto text-6xl text-gray-300 mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              {searchTerm ? "No products found" : "No products yet"}
+              {Object.values(filters).some((v) => v) ? "No products found" : "No products yet"}
             </h3>
             <p className="text-gray-500 mb-6">
-              {searchTerm
-                ? "Try adjusting your search terms"
+              {Object.values(filters).some((v) => v)
+                ? "Try adjusting your filters"
                 : "Start by adding your first product"}
             </p>
-            {!searchTerm && (
+            {!Object.values(filters).some((v) => v) && (
               <Link
                 to="/add"
                 className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
@@ -497,7 +763,7 @@ const List = ({ token }) => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredList.map((product) => (
+                    {products.map((product) => (
                       <tr key={product._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <img
@@ -537,9 +803,7 @@ const List = ({ token }) => {
                           </div>
                           <div
                             className={`text-xs ${
-                              product.stock > 0
-                                ? "text-green-600"
-                                : "text-red-600"
+                              product.stock > 0 ? "text-green-600" : "text-red-600"
                             }`}
                           >
                             {product.stock > 0 ? "In Stock" : "Out of Stock"}
@@ -572,7 +836,7 @@ const List = ({ token }) => {
 
             {/* Mobile Card View */}
             <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {filteredList.map((product) => (
+              {products.map((product) => (
                 <div
                   key={product._id}
                   className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
@@ -614,9 +878,7 @@ const List = ({ token }) => {
                           </div>
                           <div
                             className={`text-xs ${
-                              product.stock > 0
-                                ? "text-green-600"
-                                : "text-red-600"
+                              product.stock > 0 ? "text-green-600" : "text-red-600"
                             }`}
                           >
                             {product.stock > 0 ? "In Stock" : "Out of Stock"}
@@ -683,9 +945,7 @@ const List = ({ token }) => {
                               {imageFiles[imageKey] ? (
                                 <>
                                   <img
-                                    src={URL.createObjectURL(
-                                      imageFiles[imageKey]
-                                    )}
+                                    src={URL.createObjectURL(imageFiles[imageKey])}
                                     alt={`Preview ${index + 1}`}
                                     className="w-full h-20 object-cover rounded-md mb-2"
                                   />
@@ -904,42 +1164,38 @@ const List = ({ token }) => {
                 <div>
                   <Label>Tags</Label>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-2">
-                    {[
-                      "Fashion",
-                      "Electronics",
-                      "Sports",
-                      "Accessories",
-                      "Others",
-                    ].map((tag) => (
-                      <div className="flex items-center space-x-2" key={tag}>
-                        <input
-                          id={`edit-${tag.toLowerCase()}`}
-                          type="checkbox"
-                          value={tag}
-                          checked={formData.tags.includes(tag)}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFormData((prevData) => ({
-                                ...prevData,
-                                tags: [...prevData.tags, tag],
-                              }));
-                            } else {
-                              setFormData((prevData) => ({
-                                ...prevData,
-                                tags: prevData.tags.filter((t) => t !== tag),
-                              }));
-                            }
-                          }}
-                        />
-                        <label
-                          htmlFor={`edit-${tag.toLowerCase()}`}
-                          className="text-sm text-gray-700 cursor-pointer"
-                        >
-                          {tag}
-                        </label>
-                      </div>
-                    ))}
+                    {["Fashion", "Electronics", "Sports", "Accessories", "Others"].map(
+                      (tag) => (
+                        <div className="flex items-center space-x-2" key={tag}>
+                          <input
+                            id={`edit-${tag.toLowerCase()}`}
+                            type="checkbox"
+                            value={tag}
+                            checked={formData.tags.includes(tag)}
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData((prevData) => ({
+                                  ...prevData,
+                                  tags: [...prevData.tags, tag],
+                                }));
+                              } else {
+                                setFormData((prevData) => ({
+                                  ...prevData,
+                                  tags: prevData.tags.filter((t) => t !== tag),
+                                }));
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={`edit-${tag.toLowerCase()}`}
+                            className="text-sm text-gray-700 cursor-pointer"
+                          >
+                            {tag}
+                          </label>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
 
@@ -991,9 +1247,7 @@ const List = ({ token }) => {
                     <h3 className="text-lg font-semibold text-gray-900">
                       Delete Product
                     </h3>
-                    <p className="text-gray-600">
-                      This action cannot be undone.
-                    </p>
+                    <p className="text-gray-600">This action cannot be undone.</p>
                   </div>
                 </div>
 
