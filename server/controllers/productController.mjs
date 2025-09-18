@@ -115,7 +115,7 @@ const addProduct = async (req, res) => {
   }
 };
 
-// List products with filtering
+// List products with filtering and pagination
 const listProducts = async (req, res) => {
   try {
     const {
@@ -127,6 +127,9 @@ const listProducts = async (req, res) => {
       offer,
       onSale,
       isAvailable,
+      minPrice,
+      maxPrice,
+      minStock,
       _page = 1,
       _perPage = 25,
     } = req.query;
@@ -135,19 +138,13 @@ const listProducts = async (req, res) => {
     if (_id) {
       const dbProduct = await productModel.findById(_id);
       if (dbProduct) {
-        // Format product for frontend compatibility
         const formattedProduct = {
           ...dbProduct.toObject(),
-          image:
-            dbProduct.images && dbProduct.images.length > 0
-              ? dbProduct.images[0]
-              : "",
+          image: dbProduct.images && dbProduct.images.length > 0 ? dbProduct.images[0] : "",
         };
         return res.json({ success: true, product: formattedProduct });
       } else {
-        return res
-          .status(404)
-          .json({ success: false, message: "Product not found" });
+        return res.status(404).json({ success: false, message: "Product not found" });
       }
     }
 
@@ -179,12 +176,24 @@ const listProducts = async (req, res) => {
       filter.offer = true;
     }
 
-    // Filter by onSale
+    // Filter by onSale 
     if (onSale === "true") {
       filter.onSale = true;
     }
 
-    // Search by name or description
+    // Filter by price range
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
+
+    // Filter by min stock
+    if (minStock) {
+      filter.stock = { $gte: Number(minStock) };
+    }
+
+    // Search by name, description, or tags
     if (_search) {
       const searchRegex = new RegExp(_search, "i");
       filter.$or = [
@@ -194,40 +203,37 @@ const listProducts = async (req, res) => {
       ];
     }
 
-    // Get database products
-    let dbProducts = await productModel.find(filter).sort({ createdAt: -1 });
-
-    // Format database products for frontend compatibility
-    let formattedDbProducts = dbProducts.map((product) => ({
-      ...product.toObject(),
-      image:
-        product.images && product.images.length > 0 ? product.images[0] : "",
-    }));
-
-    // Apply pagination
+    // Pagination params
     const page = parseInt(_page, 10) || 1;
     const perPage = parseInt(_perPage, 10) || 25;
-    const startIndex = (page - 1) * perPage;
-    const endIndex = page * perPage;
-    const paginatedProducts = formattedDbProducts.slice(startIndex, endIndex);
+    const skip = (page - 1) * perPage;
 
-    // Return response based on whether pagination is requested
-    if (_page || _perPage) {
-      res.json({
-        success: true,
-        products: paginatedProducts,
-        currentPage: page,
-        perPage,
-        totalItems: formattedDbProducts.length,
-        totalPages: Math.ceil(formattedDbProducts.length / perPage),
-      });
-    } else {
-      res.json({
-        success: true,
-        products: formattedDbProducts,
-        total: formattedDbProducts.length,
-      });
-    }
+    // Get total count after filtering (hiệu quả, không tải data)
+    const totalItems = await productModel.countDocuments(filter);
+
+    // Get paginated products from DB directly
+    let dbProducts = await productModel
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(perPage)
+      .lean(); 
+
+    // Format for frontend
+    let formattedDbProducts = dbProducts.map((product) => ({
+      ...product,
+      image: product.images && product.images.length > 0 ? product.images[0] : "",
+    }));
+
+    // Response
+    res.json({
+      success: true,
+      products: formattedDbProducts,
+      currentPage: page,
+      perPage,
+      totalItems,
+      totalPages: Math.ceil(totalItems / perPage),
+    });
   } catch (error) {
     console.log("List products error:", error);
     res.json({ success: false, message: error.message });
