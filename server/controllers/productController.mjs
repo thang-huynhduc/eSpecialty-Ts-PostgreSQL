@@ -211,8 +211,8 @@ const listProducts = async (req, res) => {
     const endIndex = page * perPage;
     const paginatedProducts = formattedDbProducts.slice(startIndex, endIndex);
 
-    // Return response based on whether pagination is requested
-    if (_page || _perPage) {
+    // Return response based on whether pagination is explicitly requested
+    if (req.query._page || req.query._perPage) {
       res.json({
         success: true,
         products: paginatedProducts,
