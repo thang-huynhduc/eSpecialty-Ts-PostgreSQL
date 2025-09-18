@@ -10,8 +10,8 @@ import { getData } from "../helpers";
 const Shop = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]); // Toàn bộ sản phẩm để filter
+  const [filteredProducts, setFilteredProducts] = useState([]); // Sản phẩm sau khi filter
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     category: "",
@@ -20,12 +20,10 @@ const Shop = () => {
     search: "",
   });
   const [sortBy, setSortBy] = useState("newest");
-  const [viewMode, setViewMode] = useState("grid"); // grid or list
+  const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
-  const endpoint = `${config?.baseUrl}/api/products`;
 
   // Handle URL parameters for category filtering
   useEffect(() => {
@@ -40,27 +38,47 @@ const Shop = () => {
     }
   }, [location.search]);
 
+  // Fetch toàn bộ sản phẩm 
   useEffect(() => {
-    const getProducts = async () => {
+    const fetchAllProducts = async () => {
       setLoading(true);
       try {
-        const data = await getData(endpoint);
-        setProducts(data?.products || []);
-        setFilteredProducts(data?.products || []);
+        let allProducts = [];
+        let currentPage = 1;
+        let hasMore = true;
+
+        while (hasMore) {
+          const endpoint = `${config?.baseUrl}/api/products?_page=${currentPage}&_perPage=50`;
+          const data = await getData(endpoint);
+          const products = data?.products || [];
+
+          if (products.length === 0) {
+            hasMore = false;
+          } else {
+            allProducts = [...allProducts, ...products];
+            currentPage++;
+            // Sản phẩm trả về ít hơn _perPage  
+            if (products.length < 50) {
+              hasMore = false;
+            }
+          }
+        }
+
+        setAllProducts(allProducts);
       } catch (error) {
         console.error("Error fetching products:", error);
-        setProducts([]);
-        setFilteredProducts([]);
+        setAllProducts([]);
       } finally {
         setLoading(false);
       }
     };
-    getProducts();
-  }, [endpoint]);
 
-  // Filter and sort products
+    fetchAllProducts();
+  }, []); // Chỉ chạy một lần khi component mount
+
+  // Filter và sort sản phẩm khi có thay đổi
   useEffect(() => {
-    let filtered = [...products];
+    let filtered = [...allProducts];
 
     // Apply filters
     if (filters.category) {
@@ -85,6 +103,18 @@ const Shop = () => {
       );
     }
 
+    // Apply price range filter if needed
+    if (filters.priceRange) {
+      // Implement price range logic here
+      // Example: if priceRange is "0-100"
+      const [minPrice, maxPrice] = filters.priceRange.split("-").map(Number);
+      if (!isNaN(minPrice) && !isNaN(maxPrice)) {
+        filtered = filtered.filter(
+          (product) => product.price >= minPrice && product.price <= maxPrice
+        );
+      }
+    }
+
     // Apply sorting
     switch (sortBy) {
       case "price-low":
@@ -103,12 +133,12 @@ const Shop = () => {
     }
 
     setFilteredProducts(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
-  }, [products, filters, sortBy]);
+    setCurrentPage(1); // Reset về trang đầu khi filter thay đổi
+  }, [allProducts, filters, sortBy]);
 
   const handleFilterChange = (newFilters) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
-    // Auto-close mobile filters when a filter is applied (optional UX enhancement)
+    // Auto-close mobile filters when a filter is applied
     if (window.innerWidth < 1024) {
       setTimeout(() => setMobileFiltersOpen(false), 500);
     }
@@ -121,7 +151,7 @@ const Shop = () => {
       priceRange: "",
       search: "",
     });
-    // Auto-close mobile filters when clearing (optional UX enhancement)
+    // Auto-close mobile filters when clearing
     if (window.innerWidth < 1024) {
       setTimeout(() => setMobileFiltersOpen(false), 500);
     }
@@ -133,7 +163,9 @@ const Shop = () => {
       <div className="bg-gray-50 border-b border-gray-200">
         <Container className="py-4">
           <div className="flex flex-col space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900">{t("shop.shop_title")}</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {t("shop.shop_title")}
+            </h1>
             <nav className="flex text-sm text-gray-500">
               <a href="/" className="hover:text-gray-700 transition-colors">
                 {t("shop.home_breadcrumb")}
@@ -156,7 +188,9 @@ const Shop = () => {
                   onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
                   className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
                 >
-                  <span className="font-medium">{t("shop.filters_button")}</span>
+                  <span className="font-medium">
+                    {t("shop.filters_button")}
+                  </span>
                   <svg
                     className={`w-5 h-5 transform transition-transform duration-200 ${
                       mobileFiltersOpen ? "rotate-180" : ""
@@ -209,12 +243,17 @@ const Shop = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 p-4 bg-gray-50 rounded-lg border">
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-600">
-                  {t("shop.showing_results")} {(currentPage - 1) * itemsPerPage + 1}-
+                  {t("shop.showing_results")}{" "}
+                  {filteredProducts.length > 0
+                    ? (currentPage - 1) * itemsPerPage + 1
+                    : 0}
+                  -
                   {Math.min(
                     currentPage * itemsPerPage,
                     filteredProducts.length
                   )}{" "}
-                  {t("shop.of_results")} {filteredProducts.length} {t("shop.results_text")}
+                  {t("shop.of_results")} {filteredProducts.length}{" "}
+                  {t("shop.results_text")}
                 </span>
               </div>
 
@@ -248,8 +287,12 @@ const Shop = () => {
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   >
                     <option value="newest">{t("shop.newest_option")}</option>
-                    <option value="price-low">{t("shop.price_low_to_high_option")}</option>
-                    <option value="price-high">{t("shop.price_high_to_low_option")}</option>
+                    <option value="price-low">
+                      {t("shop.price_low_to_high_option")}
+                    </option>
+                    <option value="price-high">
+                      {t("shop.price_high_to_low_option")}
+                    </option>
                     <option value="name">{t("shop.name_a_to_z_option")}</option>
                   </select>
                 </div>
@@ -303,9 +346,14 @@ const Shop = () => {
             </div>
 
             {/* Active Filters */}
-            {(filters.category || filters.brand || filters.search) && (
+            {(filters.category ||
+              filters.brand ||
+              filters.search ||
+              filters.priceRange) && (
               <div className="flex flex-wrap items-center gap-2 mb-6">
-                <span className="text-sm text-gray-600">{t("shop.active_filters_label")}</span>
+                <span className="text-sm text-gray-600">
+                  {t("shop.active_filters_label")}
+                </span>
                 {filters.category && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white text-sm rounded-full">
                     {t("shop.category_filter")} {filters.category}
@@ -333,6 +381,17 @@ const Shop = () => {
                     {t("shop.search_filter")} {filters.search}
                     <button
                       onClick={() => handleFilterChange({ search: "" })}
+                      className="ml-1 hover:text-gray-300"
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
+                {filters.priceRange && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white text-sm rounded-full">
+                    {t("shop.price_filter")} {filters.priceRange}
+                    <button
+                      onClick={() => handleFilterChange({ priceRange: "" })}
                       className="ml-1 hover:text-gray-300"
                     >
                       ×
