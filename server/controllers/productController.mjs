@@ -208,23 +208,44 @@ const listProducts = async (req, res) => {
     const perPage = parseInt(_perPage, 10) || 25;
     const skip = (page - 1) * perPage;
 
-    // Return response based on whether pagination is explicitly requested
+    // If pagination explicitly requested, run paginated query with total count
     if (req.query._page || req.query._perPage) {
-      res.json({
+      const [dbProducts, totalItems] = await Promise.all([
+        productModel
+          .find(filter)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(perPage),
+        productModel.countDocuments(filter),
+      ]);
+
+      const formattedProducts = dbProducts.map((p) => ({
+        ...p.toObject(),
+        image: p.images && p.images.length > 0 ? p.images[0] : "",
+      }));
+
+      return res.json({
         success: true,
-        products: paginatedProducts,
+        products: formattedProducts,
         currentPage: page,
         perPage,
-        totalItems: formattedDbProducts.length,
-        totalPages: Math.ceil(formattedDbProducts.length / perPage),
-      });
-    } else {
-      res.json({
-        success: true,
-        products: formattedDbProducts,
-        total: formattedDbProducts.length,
+        totalItems,
+        totalPages: Math.ceil(totalItems / perPage),
       });
     }
+
+    // Otherwise, return full list without pagination
+    const dbProducts = await productModel.find(filter).sort({ createdAt: -1 });
+    const formattedProducts = dbProducts.map((p) => ({
+      ...p.toObject(),
+      image: p.images && p.images.length > 0 ? p.images[0] : "",
+    }));
+
+    return res.json({
+      success: true,
+      products: formattedProducts,
+      total: formattedProducts.length,
+    });
   } catch (error) {
     console.log("List products error:", error);
     res.json({ success: false, message: error.message });

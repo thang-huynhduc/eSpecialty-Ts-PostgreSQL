@@ -1,24 +1,18 @@
-import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import Pagination from "./Pagination";
 import ProductCard from "../ProductCard";
+import { useTranslation } from "react-i18next";
 
 const PaginationProductList = ({
   products = [],
   currentPage = 1,
+  totalPages = 1,
   itemsPerPage = 12,
+  totalItems = 0,
   onPageChange,
   viewMode = "grid",
 }) => {
-  const [paginatedProducts, setPaginatedProducts] = useState([]);
-
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    setPaginatedProducts(products.slice(startIndex, endIndex));
-  }, [products, currentPage, itemsPerPage]);
-
-  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const { t } = useTranslation();
 
   if (products.length === 0) {
     return (
@@ -40,11 +34,10 @@ const PaginationProductList = ({
             </svg>
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            No products found
+            {t("shop.no_products_found")}
           </h3>
           <p className="text-gray-600 max-w-md">
-            We couldn&apos;t find any products matching your criteria. Try
-            adjusting your filters or search terms.
+            {t("shop.no_products_message")}
           </p>
         </div>
       </div>
@@ -61,7 +54,7 @@ const PaginationProductList = ({
             : "grid grid-cols-1 gap-4"
         }
       >
-        {paginatedProducts.map((product) => (
+        {products.map((product) => (
           <div
             key={product._id}
             className={
@@ -81,19 +74,22 @@ const PaginationProductList = ({
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={onPageChange}
             itemsPerPage={itemsPerPage}
-            totalItems={products.length}
+            totalItems={totalItems}
+            onPageChange={onPageChange}
           />
         </div>
       )}
     </div>
   );
 };
+
 PaginationProductList.propTypes = {
   products: PropTypes.array.isRequired,
   currentPage: PropTypes.number,
+  totalPages: PropTypes.number,
   itemsPerPage: PropTypes.number,
+  totalItems: PropTypes.number,
   onPageChange: PropTypes.func,
   viewMode: PropTypes.string,
 };
