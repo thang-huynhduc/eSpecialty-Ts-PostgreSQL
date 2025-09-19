@@ -74,6 +74,20 @@ export const formatForDisplay = (originalAmount, processedAmount = null, origina
   };
 };
 
+export const formatPriceShort = (amount) => {
+  if (!amount || isNaN(amount)) return "0";
+  const absAmount = Math.abs(amount);
+  if (absAmount >= 1000000) {
+    const millions = (absAmount / 1000000).toFixed(1);
+    return `${millions.replace(/\.0$/, "")}tr`;
+  } else if (absAmount >= 1000) {
+    const thousands = (absAmount / 1000).toFixed(1);
+    return `${thousands.replace(/\.0$/, "")}k`;
+  } else {
+    return absAmount.toLocaleString("vi-VN");
+  }
+};
+
 export default {
   formatVND,
   formatVNDSimple,
@@ -81,6 +95,7 @@ export default {
   vndToUSD,
   displayAmount,
   getDisplayCurrency,
-  formatForDisplay
+  formatForDisplay,
+  formatPriceShort
 };
 

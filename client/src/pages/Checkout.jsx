@@ -103,9 +103,7 @@ const Checkout = () => {
   };
 
   const handleItemClick = (item) => {
-      navigate(`/product/${item.productId._id}`, {
-    state: { item },
-  })
+      navigate(`/product/${item.productId._id}`); // Không truyền state nữa
   };
 
   const getStatusColor = (status) => {
@@ -250,13 +248,16 @@ const Checkout = () => {
                         <img
                           src={item.image}
                           alt={item.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover cursor-pointer" // Thêm cursor-pointer
                           onClick={() => handleItemClick(item)}
                         />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-medium text-gray-900 truncate cursor-pointer" onClick={() => handleItemClick(item)}>
+                      <h3 
+                        className="text-lg font-medium text-gray-900 truncate cursor-pointer" 
+                        onClick={() => handleItemClick(item)}
+                      >
                         {item.name}
                       </h3>
                       <p className="text-sm text-gray-600">

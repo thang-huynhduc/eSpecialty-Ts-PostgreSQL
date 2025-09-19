@@ -1,41 +1,73 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart } from "../redux/especialtySlice";
 import Container from "../components/Container";
 import { MdStar, MdFavoriteBorder, MdShare } from "react-icons/md";
 import { motion } from "framer-motion";
-import { getData } from "../helpers/index";
 import { serverUrl } from "../../config";
+import toast from "react-hot-toast";
+import PropTypes from "prop-types";
 
 const SingleProduct = () => {
-  const location = useLocation();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [productInfo, setProductInfo] = useState([]);
+  const dispatch = useDispatch();
+  const products = useSelector((state) => state.eSpecialtyReducer.products);
+  const [productInfo, setProductInfo] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab] = useState("description");
   const [quantity, setQuantity] = useState(1);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [loadingRelated, setLoadingRelated] = useState(false);
 
-  useEffect(() => {
-    setProductInfo(location.state.item);
-  }, [location, productInfo]);
+  // Tính số lượng đã đặt trong giỏ hàng
+  const cartItem = products.find((item) => item._id === id);
+  const cartQuantity = cartItem ? cartItem.quantity : 0;
+  const availableStock = productInfo?.stock
+    ? Math.max(0, productInfo.stock - cartQuantity)
+    : 0;
 
-  // Fetch related products based on category
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`${serverUrl}/api/product/single?_id=${id}`);
+        const data = await response.json();
+        if (data.success) {
+          setProductInfo(data.product);
+          // Khởi tạo quantity về 1
+          setQuantity(1);
+        } else {
+          setError("Product not found");
+        }
+      } catch (err) {
+        setError("Failed to load product");
+        console.error("Error fetching product:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       if (productInfo?.category) {
         setLoadingRelated(true);
         try {
-          // Fetch products from the same category
-          const response = await getData(
+          const response = await fetch(
             `${serverUrl}/api/products?category=${productInfo.category}&_perPage=8`
           );
-
-          if (response?.success && response?.products) {
-            // Filter out the current product and limit to 4 products
-            const filtered = response.products
-              .filter((product) => product._id !== productInfo._id)
+          const data = await response.json();
+          if (data.success && data.products) {
+            const filtered = data.products
+              .filter((product) => product._id !== id)
               .slice(0, 4);
             setRelatedProducts(filtered);
           }
@@ -47,10 +79,62 @@ const SingleProduct = () => {
       }
     };
 
-    fetchRelatedProducts();
-  }, [productInfo]);
+    if (productInfo) {
+      fetchRelatedProducts();
+    }
+  }, [productInfo, id]);
 
-  // Use product images from database if available, otherwise use mock images
+  const handleQuantityChange = (type) => {
+    if (type === "increment" && quantity < availableStock) {
+      setQuantity((prev) => prev + 1);
+    } else if (type === "decrement" && quantity > 1) {
+      setQuantity((prev) => prev - 1);
+    } else if (type === "increment" && quantity >= availableStock) {
+      toast.error("Cannot add more, stock limit reached!");
+    }
+  };
+
+  const handleAddToCart = () => {
+    if (!productInfo?.stock || productInfo.stock === 0) {
+      toast.error("This product is out of stock!");
+      return;
+    }
+    if (quantity + cartQuantity > productInfo.stock) {
+      toast.error(`Only ${availableStock} items available in stock!`);
+      return;
+    }
+    dispatch(addToCart({ ...productInfo, quantity }));
+    toast.success(`${productInfo?.name.substring(0, 10)}... added to cart!`);
+    setQuantity(1); // Reset quantity về 1 sau khi thêm vào giỏ
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !productInfo) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-2">{error || "Product not found"}</h2>
+          <button
+            onClick={() => navigate("/")}
+            className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
+          >
+            Go back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const productImages =
     productInfo?.images && productInfo.images.length > 0
       ? productInfo.images
@@ -59,20 +143,11 @@ const SingleProduct = () => {
           productInfo?.image,
           productInfo?.image,
           productInfo?.image,
-        ].filter((img) => img); // Filter out undefined images
-
-  const handleQuantityChange = (type) => {
-    if (type === "increment") {
-      setQuantity((prev) => prev + 1);
-    } else if (type === "decrement" && quantity > 1) {
-      setQuantity((prev) => prev - 1);
-    }
-  };
+        ].filter((img) => img);
 
   return (
     <div className="bg-white min-h-screen">
       <Container className="py-8">
-        {/* Breadcrumbs */}
         <div className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
           <span className="hover:text-gray-700 cursor-pointer">Home</span>
           <span>/</span>
@@ -83,16 +158,13 @@ const SingleProduct = () => {
           <span className="text-gray-900 font-medium">{productInfo?.name}</span>
         </div>
 
-        {/* Main Product Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
-          {/* Product Images */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             className="space-y-4"
           >
-            {/* Main Image */}
             <div
               className="aspect-square overflow-hidden bg-gray-50 rounded-lg cursor-zoom-in relative group"
               onClick={() => setIsImageZoomed(!isImageZoomed)}
@@ -117,8 +189,6 @@ const SingleProduct = () => {
                 </div>
               )}
             </div>
-
-            {/* Thumbnail Images */}
             <div className="grid grid-cols-4 gap-3">
               {productImages.map((image, index) => (
                 <button
@@ -143,19 +213,15 @@ const SingleProduct = () => {
             </div>
           </motion.div>
 
-          {/* Product Info */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="space-y-6"
           >
-            {/* Product Title */}
             <h1 className="text-3xl md:text-4xl font-light text-gray-900 leading-tight">
               {productInfo?.name}
             </h1>
-
-            {/* Price */}
             <div className="flex items-center gap-4">
               {productInfo?.oldPrice && (
                 <span className="text-2xl text-gray-400 line-through">
@@ -175,7 +241,8 @@ const SingleProduct = () => {
               </span>
               {productInfo?.oldPrice && (
                 <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium">
-                  Save {new Number(productInfo.oldPrice - productInfo.price).toLocaleString("vi-VN", {
+                  Save{" "}
+                  {new Number(productInfo.oldPrice - productInfo.price).toLocaleString("vi-VN", {
                     style: "currency",
                     currency: "VND",
                     minimumFractionDigits: 0,
@@ -183,8 +250,6 @@ const SingleProduct = () => {
                 </span>
               )}
             </div>
-
-            {/* Rating */}
             <div className="flex items-center gap-3">
               <div className="flex items-center">
                 {Array.from({ length: 5 }).map((_, index) => (
@@ -203,43 +268,86 @@ const SingleProduct = () => {
                 on {productInfo?.reviews?.length || 0} customer reviews
               </span>
             </div>
-
-            {/* Description */}
             <p className="text-gray-600 leading-relaxed text-lg">
               {productInfo?.description}
             </p>
-
-            {/* Quantity & Add to Cart */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium text-gray-900">
-                  Quantity:
+            <div className="space-y-6">
+              {/* Quantity Selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Quantity
                 </label>
-                <div className="flex items-center border border-gray-300 rounded-md">
-                  <button
-                    onClick={() => handleQuantityChange("decrement")}
-                    className="px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-                  >
-                    −
-                  </button>
-                  <span className="px-4 py-2 border-x border-gray-300 min-w-[60px] text-center">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => handleQuantityChange("increment")}
-                    className="px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-                  >
-                    +
-                  </button>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => handleQuantityChange("decrement")}
+                      disabled={quantity <= 1}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value, 10);
+                        if (value >= 1 && value <= availableStock) {
+                          setQuantity(value);
+                        } else if (value > availableStock) {
+                          toast.error(
+                            `Only ${availableStock} items available in stock!`
+                          );
+                          setQuantity(availableStock);
+                        } else {
+                          setQuantity(1);
+                        }
+                      }}
+                      className="w-16 text-center border-x border-gray-300 py-2 focus:outline-none"
+                      min="1"
+                      max={availableStock}
+                    />
+                    <button
+                      onClick={() => handleQuantityChange("increment")}
+                      disabled={quantity >= availableStock}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <button className="w-full bg-black text-white py-4 px-8 rounded-md hover:bg-gray-800 transition-all duration-300 font-medium uppercase tracking-wider transform hover:scale-[1.02] active:scale-[0.98]">
+              {/* Stock & Cart Info */}
+              <div className="space-y-1">
+                <p
+                  className={`text-sm font-medium ${
+                    productInfo?.stock > 0 ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  {productInfo?.stock > 0
+                    ? `In stock: ${availableStock} items available`
+                    : "Out of stock"}
+                </p>
+                {cartQuantity > 0 && (
+                  <p className="text-sm text-gray-500">
+                    In cart:{" "}
+                    <span className="font-medium text-gray-700">
+                      {cartQuantity}
+                    </span>{" "}
+                    item{cartQuantity > 1 ? "s" : ""}
+                  </p>
+                )}
+              </div>
+
+              {/* Add to Cart Button */}
+              <button
+                onClick={handleAddToCart}
+                disabled={!productInfo?.stock || productInfo.stock === 0}
+                className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-all duration-300 font-medium uppercase tracking-wide transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Add to Cart
               </button>
             </div>
-
-            {/* Action Buttons */}
             <div className="flex items-center gap-4 pt-4 border-t border-gray-200">
               <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
                 <MdFavoriteBorder className="w-5 h-5" />
@@ -250,8 +358,6 @@ const SingleProduct = () => {
                 Share
               </button>
             </div>
-
-            {/* Product Meta */}
             <div className="space-y-2 pt-4 border-t border-gray-200 text-sm">
               <p>
                 <span className="font-medium">SKU:</span>{" "}
@@ -275,14 +381,12 @@ const SingleProduct = () => {
           </motion.div>
         </div>
 
-        {/* Product Details Tabs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
           className="border-t border-gray-200 pt-12"
         >
-          {/* Tab Navigation */}
           <div className="flex space-x-8 mb-8 border-b border-gray-200">
             {["description", "reviews"].map((tab) => (
               <button
@@ -300,8 +404,6 @@ const SingleProduct = () => {
               </button>
             ))}
           </div>
-
-          {/* Tab Content */}
           <div className="min-h-[200px]">
             {activeTab === "description" && (
               <div className="prose prose-lg max-w-none">
@@ -320,7 +422,6 @@ const SingleProduct = () => {
                 </p>
               </div>
             )}
-
             {activeTab === "reviews" && (
               <div className="space-y-6">
                 <h3 className="text-2xl font-light mb-6">Customer Reviews</h3>
@@ -375,7 +476,6 @@ const SingleProduct = () => {
           </div>
         </motion.div>
 
-        {/* Related Products Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -385,7 +485,6 @@ const SingleProduct = () => {
           <h2 className="text-2xl font-light text-center mb-12">
             Related Products
           </h2>
-
           {loadingRelated ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {[1, 2, 3, 4].map((item) => (
@@ -404,11 +503,7 @@ const SingleProduct = () => {
                 <div
                   key={product._id}
                   className="group cursor-pointer"
-                  onClick={() =>
-                    navigate(`/product/${product._id}`, {
-                      state: { item: product },
-                    })
-                  }
+                  onClick={() => navigate(`/product/${product._id}`)}
                 >
                   <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
                     <img
@@ -471,11 +566,21 @@ const SingleProduct = () => {
                     )}
                   </div>
                   <button
-                    className="w-full mt-3 py-2 border border-gray-300 text-gray-700 hover:border-black hover:text-black hover:bg-black hover:text-white transition-all duration-300 text-sm font-medium uppercase tracking-wider transform hover:scale-[1.02]"
+                    className="w-full mt-3 py-2 border border-gray-300 text-gray-700 hover:border-black hover:bg-black hover:text-white transition-all duration-300 text-sm font-medium uppercase tracking-wider transform hover:scale-[1.02]"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Handle add to cart functionality here
-                      console.log("Add to cart:", product.name);
+                      if (!product?.stock || product.stock === 0) {
+                        toast.error("This product is out of stock!");
+                        return;
+                      }
+                      const cartItem = products.find((item) => item._id === product._id);
+                      const cartQty = cartItem ? cartItem.quantity : 0;
+                      if (cartQty >= product.stock) {
+                        toast.error("Cannot add more, stock limit reached!");
+                        return;
+                      }
+                      dispatch(addToCart({ ...product, quantity: 1 }));
+                      toast.success(`${product.name.substring(0, 10)}... added to cart!`);
                     }}
                   >
                     Add to Cart
@@ -494,6 +599,30 @@ const SingleProduct = () => {
       </Container>
     </div>
   );
+};
+
+SingleProduct.propTypes = {
+  productInfo: PropTypes.shape({
+    _id: PropTypes.string,
+    name: PropTypes.string,
+    category: PropTypes.string,
+    price: PropTypes.number,
+    oldPrice: PropTypes.number,
+    ratings: PropTypes.number,
+    reviews: PropTypes.arrayOf(
+      PropTypes.shape({
+        reviewerName: PropTypes.string,
+        rating: PropTypes.number,
+        comment: PropTypes.string,
+        image: PropTypes.string,
+      })
+    ),
+    description: PropTypes.string,
+    images: PropTypes.arrayOf(PropTypes.string),
+    image: PropTypes.string,
+    tags: PropTypes.string,
+    stock: PropTypes.number,
+  }),
 };
 
 export default SingleProduct;

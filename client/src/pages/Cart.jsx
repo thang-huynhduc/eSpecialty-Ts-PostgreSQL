@@ -13,6 +13,7 @@ import {
 import { emptyCart } from "../assets/images";
 import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
+import { formatPriceShort } from "../utils/currency";
 import AddressSelector from "../components/AddressSelector";
 import toast from "react-hot-toast";
 import {
@@ -197,10 +198,17 @@ const Cart = () => {
   };
 
   const handleQuantityChange = (id, action) => {
+    const item = products.find((product) => product._id === id);
     if (action === "increase") {
+      if (item.quantity >= item.stock) {
+        toast.error("Hết hàng rồii");
+        return;
+      }
       dispatch(increaseQuantity(id));
-    } else {
+      toast.success("Thêm Đơn Thành Công");
+    } else if (action === "decrease") {
       dispatch(decreaseQuantity(id));
+      toast.success(t("cart.quantity_decreased"));
     }
   };
 
@@ -361,122 +369,101 @@ const Cart = () => {
                         </div>
                       </div>
 
-                      {/* Desktop Layout */}
-                      <div className="hidden lg:grid lg:grid-cols-10 gap-4 items-center">
-                        {/* Product Info */}
-                        <div className="lg:col-span-5">
-                          <div className="flex items-start space-x-4">
-                            <Link
-                              to={`/product/${item._id}`}
-                              className="flex-shrink-0 group"
-                            >
-                              <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
-                                <img
-                                  src={item?.images?.[0] || item?.image}
-                                  alt={item?.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                />
-                              </div>
-                            </Link>
-                            <div className="flex-1 min-w-0">
-                              <Link
-                                to={`/product/${item._id}`}
-                                className="block hover:text-gray-700"
-                              >
-                                <h3 className="text-lg font-medium text-gray-900 mb-1">
-                                  {item?.name}
-                                </h3>
-                              </Link>
-                              {item?.brand && (
-                                <p className="text-sm text-gray-600 mb-1">
-                                  {t("cart.brand_label")} {item.brand}
-                                </p>
-                              )}
-                              {item?.category && (
-                                <p className="text-sm text-gray-600">
-                                  {t("cart.category_label")} {item.category}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+{/* Desktop Layout */}
+<div className="hidden lg:grid lg:grid-cols-10 gap-4 items-center">
+  {/* Product Info */}
+  <div className="lg:col-span-5">
+    <div className="flex items-start space-x-4">
+      <Link to={`/product/${item._id}`} className="flex-shrink-0 group">
+        <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
+          <img
+            src={item?.images?.[0] || item?.image}
+            alt={item?.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+          />
+        </div>
+      </Link>
+      <div className="flex-1 min-w-0">
+        <Link to={`/product/${item._id}`} className="block hover:text-gray-700">
+          <h3 className="text-lg font-medium text-gray-900 mb-1 truncate">
+            {item?.name}
+          </h3>
+        </Link>
+        {item?.brand && (
+          <p className="text-sm text-gray-600 mb-1">
+            {t("cart.brand_label")} {item.brand}
+          </p>
+        )}
+        {item?.category && (
+          <p className="text-sm text-gray-600">
+            {t("cart.category_label")} {item.category}
+          </p>
+        )}
+      </div>
+    </div>
+  </div>
 
-                        {/* Price */}
-                        <div className="lg:col-span-2">
-                          <div className="flex lg:justify-center">
-                            <div className="lg:text-center">
-                              <div className="text-lg font-semibold text-gray-900">
-                                <PriceFormat amount={item?.price || 0} />
-                              </div>
-                              {item?.offer &&
-                                item?.discountedPercentage > 0 && (
-                                  <div className="text-sm text-gray-500 line-through">
-                                    <PriceFormat
-                                      amount={
-                                        (item?.price || 0) +
-                                        ((item?.discountedPercentage || 0) *
-                                          (item?.price || 0)) /
-                                          100
-                                      }
-                                    />
-                                  </div>
-                                )}
-                            </div>
-                          </div>
-                        </div>
+  {/* Price */}
+  <div className="lg:col-span-2">
+    <div className="flex lg:justify-center">
+      <div className="lg:text-center min-w-[80px] max-w-[100px]">
+        <div className="text-base font-semibold text-gray-900 truncate">
+          {formatPriceShort(item?.price || 0)}
+        </div>
+        {item?.offer && item?.discountedPercentage > 0 && (
+          <div className="text-sm text-gray-500 line-through truncate">
+            {formatPriceShort(
+              (item?.price || 0) +
+                ((item?.discountedPercentage || 0) * (item?.price || 0)) / 100
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
 
-                        {/* Quantity Controls */}
-                        <div className="lg:col-span-2">
-                          <div className="flex lg:justify-center">
-                            <div className="flex items-center border border-gray-300 rounded-md">
-                              <button
-                                onClick={() =>
-                                  handleQuantityChange(item._id, "decrease")
-                                }
-                                disabled={(item?.quantity || 1) <= 1}
-                                className="p-3 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                              >
-                                <FaMinus className="w-3 h-3" />
-                              </button>
-                              <span className="px-4 py-3 font-medium min-w-[3rem] text-center">
-                                {item?.quantity || 1}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  handleQuantityChange(item._id, "increase")
-                                }
-                                className="p-3 hover:bg-gray-50 transition-colors"
-                              >
-                                <FaPlus className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
+  {/* Quantity Controls */}
+  <div className="lg:col-span-2">
+    <div className="flex lg:justify-center">
+      <div className="flex items-center border border-gray-300 rounded-md">
+        <button
+          onClick={() => handleQuantityChange(item._id, "decrease")}
+          disabled={(item?.quantity || 1) <= 1}
+          className="p-3 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <FaMinus className="w-3 h-3" />
+        </button>
+        <span className="px-4 py-3 font-medium min-w-[3rem] text-center">
+          {item?.quantity || 1}
+        </span>
+        <button
+          onClick={() => handleQuantityChange(item._id, "increase")}
+          className="p-3 hover:bg-gray-50 transition-colors"
+        >
+          <FaPlus className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  </div>
 
-                        {/* Subtotal */}
-                        <div className="lg:col-span-1">
-                          <div className="flex lg:justify-center items-center">
-                            <div className="lg:text-center">
-                              <div className="text-lg font-semibold text-gray-900">
-                                <PriceFormat
-                                  amount={
-                                    (item?.price || 0) * (item?.quantity || 1)
-                                  }
-                                />
-                              </div>
-                            </div>
-                            {/* Remove button for desktop */}
-                            <button
-                              onClick={() =>
-                                handleRemoveItem(item._id, item.name)
-                              }
-                              className="hidden lg:block ml-2 p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
-                            >
-                              <FaTrash className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+  {/* Subtotal */}
+  <div className="lg:col-span-1">
+    <div className="flex lg:justify-center items-center">
+      <div className="lg:text-center min-w-[80px] max-w-[100px]">
+        <div className="text-base font-semibold text-gray-900 truncate">
+          {formatPriceShort((item?.price || 0) * (item?.quantity || 1))}
+        </div>
+      </div>
+      <button
+        onClick={() => handleRemoveItem(item._id, item.name)}
+        className="hidden lg:block ml-2 p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+      >
+        <FaTrash className="w-4 h-4" />
+      </button>
+    </div>
+  </div>
+</div>
+
                     </div>
                   ))}
                 </div>

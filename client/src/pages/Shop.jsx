@@ -11,18 +11,20 @@ const Shop = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     category: "",
     brand: "",
-    priceRange: "",
     search: "",
+    minPrice: "",
+    maxPrice: "",
   });
   const [sortBy, setSortBy] = useState("newest");
-  const [viewMode, setViewMode] = useState("grid"); // grid or list
+  const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const endpoint = `${config?.baseUrl}/api/products`;
@@ -40,75 +42,49 @@ const Shop = () => {
     }
   }, [location.search]);
 
+  // Fetch products with pagination and filters
   useEffect(() => {
     const getProducts = async () => {
       setLoading(true);
       try {
-        const data = await getData(endpoint);
-        setProducts(data?.products || []);
-        setFilteredProducts(data?.products || []);
+        const queryParams = new URLSearchParams({
+          _page: currentPage,
+          _perPage: itemsPerPage,
+          ...(filters.category && { category: filters.category }),
+          ...(filters.brand && { brand: filters.brand }),
+          ...(filters.search && { _search: filters.search }),
+          ...(filters.minPrice && { minPrice: filters.minPrice }),
+          ...(filters.maxPrice && { maxPrice: filters.maxPrice }),
+          // Map sortBy to API-compatible sort parameters if supported
+          ...(sortBy !== "newest" && { _sort: sortBy }),
+        }).toString();
+
+        const data = await getData(`${endpoint}?${queryParams}`);
+        if (data.success) {
+          setProducts(data.products || []);
+          setTotalItems(data.totalItems || 0);
+          setTotalPages(data.totalPages || 1);
+          setCurrentPage(data.currentPage || 1);
+        } else {
+          setProducts([]);
+          setTotalItems(0);
+          setTotalPages(1);
+        }
       } catch (error) {
         console.error("Error fetching products:", error);
         setProducts([]);
-        setFilteredProducts([]);
+        setTotalItems(0);
+        setTotalPages(1);
       } finally {
         setLoading(false);
       }
     };
     getProducts();
-  }, [endpoint]);
-
-  // Filter and sort products
-  useEffect(() => {
-    let filtered = [...products];
-
-    // Apply filters
-    if (filters.category) {
-      filtered = filtered.filter((product) =>
-        product.category?.toLowerCase().includes(filters.category.toLowerCase())
-      );
-    }
-
-    if (filters.brand) {
-      filtered = filtered.filter((product) =>
-        product.brand?.toLowerCase().includes(filters.brand.toLowerCase())
-      );
-    }
-
-    if (filters.search) {
-      filtered = filtered.filter(
-        (product) =>
-          product.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
-          product.description
-            ?.toLowerCase()
-            .includes(filters.search.toLowerCase())
-      );
-    }
-
-    // Apply sorting
-    switch (sortBy) {
-      case "price-low":
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case "price-high":
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case "name":
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "newest":
-      default:
-        // Keep original order (newest first from API)
-        break;
-    }
-
-    setFilteredProducts(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
-  }, [products, filters, sortBy]);
+  }, [endpoint, filters, sortBy, currentPage, itemsPerPage]);
 
   const handleFilterChange = (newFilters) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
-    // Auto-close mobile filters when a filter is applied (optional UX enhancement)
+    setCurrentPage(1); // Reset to first page when filters change
     if (window.innerWidth < 1024) {
       setTimeout(() => setMobileFiltersOpen(false), 500);
     }
@@ -118,10 +94,11 @@ const Shop = () => {
     setFilters({
       category: "",
       brand: "",
-      priceRange: "",
       search: "",
+      minPrice: "",
+      maxPrice: "",
     });
-    // Auto-close mobile filters when clearing (optional UX enhancement)
+    setCurrentPage(1);
     if (window.innerWidth < 1024) {
       setTimeout(() => setMobileFiltersOpen(false), 500);
     }
@@ -210,11 +187,8 @@ const Shop = () => {
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-600">
                   {t("shop.showing_results")} {(currentPage - 1) * itemsPerPage + 1}-
-                  {Math.min(
-                    currentPage * itemsPerPage,
-                    filteredProducts.length
-                  )}{" "}
-                  {t("shop.of_results")} {filteredProducts.length} {t("shop.results_text")}
+                  {Math.min(currentPage * itemsPerPage, totalItems)}{" "}
+                  {t("shop.of_results")} {totalItems} {t("shop.results_text")}
                 </span>
               </div>
 
@@ -227,7 +201,10 @@ const Shop = () => {
                   <select
                     id="perPage"
                     value={itemsPerPage}
-                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   >
                     <option value={12}>12</option>
@@ -244,7 +221,10 @@ const Shop = () => {
                   <select
                     id="sortBy"
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
+                    onChange={(e) => {
+                      setSortBy(e.target.value);
+                      setCurrentPage(1);
+                    }}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   >
                     <option value="newest">{t("shop.newest_option")}</option>
@@ -303,7 +283,7 @@ const Shop = () => {
             </div>
 
             {/* Active Filters */}
-            {(filters.category || filters.brand || filters.search) && (
+            {(filters.category || filters.brand || filters.search || filters.minPrice || filters.maxPrice) && (
               <div className="flex flex-wrap items-center gap-2 mb-6">
                 <span className="text-sm text-gray-600">{t("shop.active_filters_label")}</span>
                 {filters.category && (
@@ -339,6 +319,17 @@ const Shop = () => {
                     </button>
                   </span>
                 )}
+                {(filters.minPrice || filters.maxPrice) && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white text-sm rounded-full">
+                    {t("shop.price_filter")} {filters.minPrice || "0"} - {filters.maxPrice || "∞"}
+                    <button
+                      onClick={() => handleFilterChange({ minPrice: "", maxPrice: "" })}
+                      className="ml-1 hover:text-gray-300"
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
                 <button
                   onClick={clearFilters}
                   className="text-sm text-gray-600 hover:text-gray-900 underline"
@@ -356,9 +347,11 @@ const Shop = () => {
                 </div>
               ) : (
                 <PaginationProductList
-                  products={filteredProducts}
+                  products={products}
                   currentPage={currentPage}
+                  totalPages={totalPages}
                   itemsPerPage={itemsPerPage}
+                  totalItems={totalItems}
                   onPageChange={setCurrentPage}
                   viewMode={viewMode}
                 />

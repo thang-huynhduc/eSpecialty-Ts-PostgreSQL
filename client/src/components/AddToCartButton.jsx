@@ -14,17 +14,32 @@ const AddToCartButton = ({ item, className }) => {
   const dispatch = useDispatch();
   const { products } = useSelector((state) => state.eSpecialtyReducer);
   const [existingProduct, setExistingProduct] = useState(null);
+
   useEffect(() => {
     const availableItem = products.find(
       (product) => product?._id === item?._id
     );
-
     setExistingProduct(availableItem || null);
   }, [products, item]);
 
   const handleAddToCart = () => {
+    // Kiểm tra nếu stock là 0 hoặc không đủ để thêm
+    if (!item?.stock || item.stock <= 0) {
+      toast.error("This product is out of stock!");
+      return;
+    }
     dispatch(addToCart(item));
     toast.success(`${item?.name.substring(0, 10)}... is added successfully!`);
+  };
+
+  const handleIncreaseQuantity = () => {
+    // Kiểm tra nếu số lượng hiện tại đã đạt hoặc vượt stock
+    if (existingProduct?.quantity >= item?.stock) {
+      toast.error("Cannot add more, stock limit reached!");
+      return;
+    }
+    dispatch(increaseQuantity(item?._id));
+    toast.success("Quantity increased successfully!");
   };
 
   return (
@@ -50,11 +65,9 @@ const AddToCartButton = ({ item, className }) => {
             {existingProduct?.quantity || 0}
           </p>
           <button
-            onClick={() => {
-              dispatch(increaseQuantity(item?._id));
-              toast.success("Quantity increased successfully!");
-            }}
-            className="border border-gray-300 text-gray-700 p-2 hover:border-black hover:text-black rounded-md text-sm transition-all duration-200 cursor-pointer"
+            onClick={handleIncreaseQuantity}
+            disabled={existingProduct?.quantity >= item?.stock}
+            className="border border-gray-300 text-gray-700 p-2 hover:border-black hover:text-black rounded-md text-sm transition-all duration-200 cursor-pointer disabled:text-gray-300 disabled:border-gray-200 disabled:hover:border-gray-200 disabled:hover:text-gray-300"
           >
             <FaPlus />
           </button>
@@ -62,7 +75,8 @@ const AddToCartButton = ({ item, className }) => {
       ) : (
         <button
           onClick={handleAddToCart}
-          className="w-full border border-black text-black text-xs font-medium py-3 px-6 uppercase tracking-wide hover:bg-black hover:text-white transition-all duration-200"
+          disabled={!item?.stock || item.stock <= 0}
+          className="w-full border border-black text-black text-xs font-medium py-3 px-6 uppercase tracking-wide hover:bg-black hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Add to cart
         </button>
@@ -75,6 +89,7 @@ AddToCartButton.propTypes = {
   item: PropTypes.shape({
     _id: PropTypes.string,
     name: PropTypes.string,
+    stock: PropTypes.number, // Thêm stock vào PropTypes
   }).isRequired,
   className: PropTypes.string,
 };
