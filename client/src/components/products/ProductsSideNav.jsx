@@ -8,7 +8,11 @@ import { debounce } from "lodash";
 const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
   const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
+  const [filteredCategories, setFilteredCategories] = useState([]); // Danh sách categories sau khi lọc
+  const [categorySearchTerm, setCategorySearchTerm] = useState(""); // Từ khóa tìm kiếm category
   const [brands, setBrands] = useState([]);
+  const [filteredBrands, setFilteredBrands] = useState([]); // Danh sách brands sau khi lọc
+  const [brandSearchTerm, setBrandSearchTerm] = useState(""); // Từ khóa tìm kiếm brand
   const [searchTerm, setSearchTerm] = useState(filters.search || "");
   const [priceRange, setPriceRange] = useState({
     min: filters.minPrice || "",
@@ -16,23 +20,20 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
   });
 
   useEffect(() => {
-    // Fetch categories and brands from products
+    // Fetch categories từ /api/category và brands từ /api/brand
     const fetchFilterOptions = async () => {
       try {
-        const data = await getData(`${config?.baseUrl}/api/products`);
-        const products = data?.products || [];
+        // Fetch categories từ /api/category
+        const categoryData = await getData(`${config?.baseUrl}/api/category`);
+        const categories = categoryData?.categories || [];
+        setCategories(categories.map((category) => category.name)); // Giả sử API trả về { _id, name, image }
+        setFilteredCategories(categories.map((category) => category.name)); // Khởi tạo filteredCategories
 
-        // Extract unique categories
-        const uniqueCategories = [
-          ...new Set(products.map((p) => p.category).filter(Boolean)),
-        ];
-        setCategories(uniqueCategories);
-
-        // Extract unique brands
-        const uniqueBrands = [
-          ...new Set(products.map((p) => p.brand).filter(Boolean)),
-        ];
-        setBrands(uniqueBrands);
+        // Fetch brands từ /api/brand
+        const brandData = await getData(`${config?.baseUrl}/api/brand`);
+        const brands = brandData?.brands || [];
+        setBrands(brands.map((brand) => brand.name)); // Giả sử API trả về { _id, name, image }
+        setFilteredBrands(brands.map((brand) => brand.name)); // Khởi tạo filteredBrands
       } catch (error) {
         console.error("Error fetching filter options:", error);
       }
@@ -42,7 +43,7 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
   }, []);
 
   useEffect(() => {
-    // Sync local state with filters prop
+    // Sync local state với filters prop
     setSearchTerm(filters.search || "");
     setPriceRange({
       min: filters.minPrice || "",
@@ -50,11 +51,11 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
     });
   }, [filters]);
 
-  // Debounce search filter
+  // Debounce search filter cho product search
   const handleSearchChange = useCallback(
     debounce((value) => {
       onFilterChange({ search: value });
-    }, 1000),
+    }, 800),
     [onFilterChange]
   );
 
@@ -65,14 +66,50 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
         minPrice: min,
         maxPrice: max,
       });
-    }, 1000),
+    }, 500),
     [onFilterChange]
+  );
+
+  // Debounce tìm kiếm category
+  const handleCategorySearchChange = useCallback(
+    debounce((value) => {
+      setFilteredCategories(
+        categories.filter((category) =>
+          category.toLowerCase().includes(value.toLowerCase())
+        )
+      );
+    }, 300),
+    [categories]
+  );
+
+  // Debounce tìm kiếm brand
+  const handleBrandSearchChange = useCallback(
+    debounce((value) => {
+      setFilteredBrands(
+        brands.filter((brand) =>
+          brand.toLowerCase().includes(value.toLowerCase())
+        )
+      );
+    }, 300),
+    [brands]
   );
 
   const handleSearchInput = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
     handleSearchChange(value);
+  };
+
+  const handleCategorySearchInput = (e) => {
+    const value = e.target.value;
+    setCategorySearchTerm(value);
+    handleCategorySearchChange(value);
+  };
+
+  const handleBrandSearchInput = (e) => {
+    const value = e.target.value;
+    setBrandSearchTerm(value);
+    handleBrandSearchChange(value);
   };
 
   const handlePriceChange = (min, max) => {
@@ -97,8 +134,10 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
     return () => {
       handleSearchChange.cancel();
       handlePriceChangeDebounced.cancel();
+      handleCategorySearchChange.cancel();
+      handleBrandSearchChange.cancel();
     };
-  }, [handleSearchChange, handlePriceChangeDebounced]);
+  }, [handleSearchChange, handlePriceChangeDebounced, handleCategorySearchChange, handleBrandSearchChange]);
 
   return (
     <div className="w-full space-y-6">
@@ -136,23 +175,52 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           {t("shop.categories")}
         </h3>
-        <div className="space-y-3">
-          {categories.map((category) => (
-            <label
-              key={category}
-              className="flex items-center cursor-pointer group"
-            >
-              <input
-                type="checkbox"
-                checked={filters.category === category}
-                onChange={() => handleCategoryChange(category)}
-                className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900 focus:ring-2"
-              />
-              <span className="ml-3 text-gray-700 group-hover:text-gray-900 transition-colors capitalize">
-                {category}
-              </span>
-            </label>
-          ))}
+        {/* Search input cho categories */}
+        <div className="relative mb-4">
+          <input
+            type="text"
+            value={categorySearchTerm}
+            onChange={handleCategorySearchInput}
+            placeholder={"Search categories..."}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+          />
+          <svg
+            className="absolute right-3 top-3.5 w-5 h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+        <div className="space-y-3 max-h-60 overflow-y-auto">
+          {filteredCategories.length > 0 ? (
+            filteredCategories.map((category) => (
+              <label
+                key={category}
+                className="flex items-center cursor-pointer group"
+              >
+                <input
+                  type="checkbox"
+                  checked={filters.category === category}
+                  onChange={() => handleCategoryChange(category)}
+                  className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900 focus:ring-2"
+                />
+                <span className="ml-3 text-gray-700 group-hover:text-gray-900 transition-colors capitalize">
+                  {category}
+                </span>
+              </label>
+            ))
+          ) : (
+            <p className="text-gray-500 text-sm">
+              {t("shop.no_categories_found") || "No categories found"}
+            </p>
+          )}
         </div>
       </div>
 
@@ -161,23 +229,51 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           {t("shop.brands")}
         </h3>
+        <div className="relative mb-4">
+          <input
+            type="text"
+            value={brandSearchTerm}
+            onChange={handleBrandSearchInput}
+            placeholder={"Search brands..."}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+          />
+          <svg
+            className="absolute right-3 top-3.5 w-5 h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
         <div className="space-y-3 max-h-60 overflow-y-auto">
-          {brands.map((brand) => (
-            <label
-              key={brand}
-              className="flex items-center cursor-pointer group"
-            >
-              <input
-                type="checkbox"
-                checked={filters.brand === brand}
-                onChange={() => handleBrandChange(brand)}
-                className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900 focus:ring-2"
-              />
-              <span className="ml-3 text-gray-700 group-hover:text-gray-900 transition-colors capitalize">
-                {brand}
-              </span>
-            </label>
-          ))}
+          {filteredBrands.length > 0 ? (
+            filteredBrands.map((brand) => (
+              <label
+                key={brand}
+                className="flex items-center cursor-pointer group"
+              >
+                <input
+                  type="checkbox"
+                  checked={filters.brand === brand}
+                  onChange={() => handleBrandChange(brand)}
+                  className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900 focus:ring-2"
+                />
+                <span className="ml-3 text-gray-700 group-hover:text-gray-900 transition-colors capitalize">
+                  {brand}
+                </span>
+              </label>
+            ))
+          ) : (
+            <p className="text-gray-500 text-sm">
+              {t("shop.no_brands_found") || "No brands found"}
+            </p>
+          )}
         </div>
       </div>
 
@@ -242,7 +338,13 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
       {/* Clear Filters */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <button
-          onClick={onClearFilters}
+          onClick={() => {
+            setCategorySearchTerm(""); // Reset category search
+            setFilteredCategories(categories); // Khôi phục danh sách categories
+            setBrandSearchTerm(""); // Reset brand search
+            setFilteredBrands(brands); // Khôi phục danh sách brands
+            onClearFilters();
+          }}
           className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium"
         >
           {t("shop.clear_all_filters")}
