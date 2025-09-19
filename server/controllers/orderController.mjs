@@ -405,13 +405,7 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    const validStatuses = [
-      "pending",
-      "confirmed",
-      "shipped",
-      "delivered",
-      "cancelled",
-    ];
+    const validStatuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
     if (!validStatuses.includes(status)) {
       return res.json({
         success: false,
@@ -419,15 +413,7 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    const validPaymentStatuses = ["pending", "paid", "failed"];
-    if (paymentStatus && !validPaymentStatuses.includes(paymentStatus)) {
-      return res.json({
-        success: false,
-        message: "Invalid payment status",
-      });
-    }
-
-    const order = await orderModel.findById(orderId);
+    const order = await orderModel.findById(orderId).populate("items.productId");
     if (!order) {
       return res.json({
         success: false,
@@ -435,10 +421,54 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    order.status = status;
-    if (paymentStatus) {
-      order.paymentStatus = paymentStatus;
+    const oldStatus = order.status; // Lưu status cũ để check transition
+
+    // Xử lý stock/soldQuantity dựa trên transition
+    const items = order.items;
+    for (const item of items) {
+      const productId = item.productId._id; // Từ populate
+      const quantity = item.quantity;
+
+      const product = await productModel.findById(productId);
+      if (!product) continue;
+
+      // Khi chuyển sang "confirmed" từ "pending": Giảm stock
+      if (status === "confirmed" && oldStatus === "pending") {
+        if (product.stock < quantity) {
+          return res.json({
+            success: false,
+            message: `Insufficient stock for ${product.name}. Available: ${product.stock}`,
+          });
+        }
+        await productModel.findByIdAndUpdate(productId, {
+          $inc: { stock: -quantity },
+        });
+        if (product.stock - quantity <= 0) {
+          product.isAvailable = false;
+          await product.save();
+        }
+      }
+
+      // Khi chuyển sang "shipped" từ "confirmed": Tăng soldQuantity
+      if (status === "shipped" && oldStatus === "confirmed") {
+        await productModel.findByIdAndUpdate(productId, {
+          $inc: { soldQuantity: quantity },
+        });
+      }
+
+      // Khi chuyển sang "cancelled" từ "confirmed" hoặc "pending": Khôi phục stock nếu đã giảm
+      if (status === "cancelled" && oldStatus === "confirmed") {
+        await productModel.findByIdAndUpdate(productId, {
+          $inc: { stock: quantity },
+        });
+        product.isAvailable = true; // Khôi phục availability nếu cần
+        await product.save();
+      }
     }
+
+    // Cập nhật status order
+    order.status = status;
+    if (paymentStatus) order.paymentStatus = paymentStatus;
     order.updatedAt = Date.now();
     await order.save();
 
