@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
+import { debounce } from "lodash";
 
 const Pagination = ({
   currentPage,
@@ -8,9 +10,29 @@ const Pagination = ({
   itemsPerPage,
   totalItems,
 }) => {
-  const handlePageChange = (page) => {
+  const { t } = useTranslation();
+  const [inputPage, setInputPage] = useState(currentPage);
+
+  useEffect(() => {
+    setInputPage(currentPage);
+  }, [currentPage]);
+
+  const debouncedHandlePageChange = debounce((page) => {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
       onPageChange(page);
+    }
+  }, 300);
+
+  const handlePageChange = (page) => {
+    debouncedHandlePageChange(page);
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setInputPage(value);
+    const page = parseInt(value, 10);
+    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+      handlePageChange(page);
     }
   };
 
@@ -37,7 +59,7 @@ const Pagination = ({
 
     if (currentPage + delta < totalPages - 1) {
       rangeWithDots.push("...", totalPages);
-    } else {
+    } else if (totalPages > 1) {
       rangeWithDots.push(totalPages);
     }
 
@@ -53,7 +75,8 @@ const Pagination = ({
     <div className="flex flex-col sm:flex-row justify-between items-center gap-4 py-8">
       {/* Items info */}
       <div className="text-sm text-gray-600">
-        Showing {startItem} to {endItem} of {totalItems} results
+        {t("shop.showing_results")} {startItem} {t("shop.to")} {endItem}{" "}
+        {t("shop.of_results")} {totalItems} {t("shop.results_text")}
       </div>
 
       {/* Pagination controls */}
@@ -142,25 +165,23 @@ const Pagination = ({
 
       {/* Jump to page */}
       <div className="flex items-center space-x-2 text-sm">
-        <span className="text-gray-600">Go to page:</span>
+        <span className="text-gray-600">{t("shop.go_to_page")}</span>
         <input
           type="number"
           min="1"
           max={totalPages}
-          value={currentPage}
-          onChange={(e) => {
-            const page = parseInt(e.target.value);
-            if (page >= 1 && page <= totalPages) {
-              handlePageChange(page);
-            }
-          }}
+          value={inputPage}
+          onChange={handleInputChange}
           className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
         />
-        <span className="text-gray-600">of {totalPages}</span>
+        <span className="text-gray-600">
+          {t("shop.of")} {totalPages}
+        </span>
       </div>
     </div>
   );
 };
+
 Pagination.propTypes = {
   currentPage: PropTypes.number.isRequired,
   totalPages: PropTypes.number.isRequired,
