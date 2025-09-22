@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "recharts": "^3.2.1"
   }
 }

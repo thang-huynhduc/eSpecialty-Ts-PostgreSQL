@@ -1,4 +1,56 @@
 import mongoose from "mongoose";
+import { encrypt, decrypt } from "../utils/crypto.js";
+
+// Transparentencrypt/decrypt string fields
+const encryptStringSetter = (value) => {
+  if (value === undefined || value === null) return value;
+  try {
+    // If value already a encrypted JSON string, keep it
+    if (typeof value === "string" && value.includes("\"iv\"") && value.includes("\"content\"") && value.includes("\"tag\"")) {
+      JSON.parse(value); 
+      return value;
+    }
+  } catch (_) {}
+  try {
+    const payload = encrypt(value);
+    return JSON.stringify(payload);
+  } catch (_) {
+    return value;
+  }
+};
+
+const decryptStringGetter = (value) => {
+  if (!value) return value;
+  try {
+    if (typeof value === "string") {
+      const obj = JSON.parse(value);
+      if (obj && obj.iv && obj.content && obj.tag) {
+        return decrypt(obj);
+      }
+    }
+  } catch (_) {}
+  return value;
+};
+
+const AddressSchema = new mongoose.Schema(
+  {
+    label: { type: String },
+    street: { type: String, set: encryptStringSetter, get: decryptStringGetter },
+    ward: { type: String, set: encryptStringSetter, get: decryptStringGetter },
+    district: { type: String, set: encryptStringSetter, get: decryptStringGetter },
+    city: { type: String, set: encryptStringSetter, get: decryptStringGetter },
+    zipCode: { type: String, set: encryptStringSetter, get: decryptStringGetter },
+    country: { type: String, default: "Vietnam" },
+    phone: { type: String, default: "", set: encryptStringSetter, get: decryptStringGetter },
+    isDefault: { type: Boolean, default: false },
+    _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  },
+  {
+    _id: false,
+    toJSON: { getters: true },
+    toObject: { getters: true },
+  }
+);
 
 const userSchema = new mongoose.Schema(
   {
@@ -20,20 +72,7 @@ const userSchema = new mongoose.Schema(
         ref: "order",
       },
     ],
-    addresses: [
-      {
-        label: { type: String}, // e.g., 'Home', 'Work', 'Billing'
-        street: { type: String},
-        ward: { type: String}, // Phường/Xã
-        district: { type: String}, // Quận/Huyện
-        city: { type: String}, // Tỉnh/Thành phố
-        zipCode: { type: String},
-        country: { type: String, default: "Vietnam" },
-        phone: { type: String, default: "" },
-        isDefault: { type: Boolean, default: false },
-        _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
-      },
-    ],
+    addresses: [AddressSchema],
     isActive: { type: Boolean, default: true },
     lastLogin: { type: Date },
     avatar: { type: String, default: "" },
@@ -41,6 +80,8 @@ const userSchema = new mongoose.Schema(
   {
     minimize: false,
     timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true },
   }
 );
 
