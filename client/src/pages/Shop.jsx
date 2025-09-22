@@ -10,12 +10,7 @@ import { getData } from "../helpers";
 const Shop = () => {
   const { t } = useTranslation();
   const location = useLocation();
-<<<<<<< HEAD
-  const [allProducts, setAllProducts] = useState([]); // Toàn bộ sản phẩm để filter
-  const [filteredProducts, setFilteredProducts] = useState([]); // Sản phẩm sau khi filter
-=======
   const [products, setProducts] = useState([]);
->>>>>>> 285ba61 (feat: pagination list product, Add to card, max,minstock)
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     category: "",
@@ -32,6 +27,8 @@ const Shop = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  const endpoint = `${config?.baseUrl}/api/products`;
+
   // Handle URL parameters for category filtering
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -45,42 +42,11 @@ const Shop = () => {
     }
   }, [location.search]);
 
-<<<<<<< HEAD
-  // Fetch toàn bộ sản phẩm 
-=======
   // Fetch products with pagination and filters
->>>>>>> 285ba61 (feat: pagination list product, Add to card, max,minstock)
   useEffect(() => {
-    const fetchAllProducts = async () => {
+    const getProducts = async () => {
       setLoading(true);
       try {
-<<<<<<< HEAD
-        let allProducts = [];
-        let currentPage = 1;
-        let hasMore = true;
-
-        while (hasMore) {
-          const endpoint = `${config?.baseUrl}/api/products?_page=${currentPage}&_perPage=50`;
-          const data = await getData(endpoint);
-          const products = data?.products || [];
-
-          if (products.length === 0) {
-            hasMore = false;
-          } else {
-            allProducts = [...allProducts, ...products];
-            currentPage++;
-            // Sản phẩm trả về ít hơn _perPage  
-            if (products.length < 50) {
-              hasMore = false;
-            }
-          }
-        }
-
-        setAllProducts(allProducts);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        setAllProducts([]);
-=======
         const queryParams = new URLSearchParams({
           _page: currentPage,
           _perPage: itemsPerPage,
@@ -109,87 +75,16 @@ const Shop = () => {
         setProducts([]);
         setTotalItems(0);
         setTotalPages(1);
->>>>>>> 285ba61 (feat: pagination list product, Add to card, max,minstock)
       } finally {
         setLoading(false);
       }
     };
-<<<<<<< HEAD
-
-    fetchAllProducts();
-  }, []); // Chỉ chạy một lần khi component mount
-
-  // Filter và sort sản phẩm khi có thay đổi
-  useEffect(() => {
-    let filtered = [...allProducts];
-
-    // Apply filters
-    if (filters.category) {
-      filtered = filtered.filter((product) =>
-        product.category?.toLowerCase().includes(filters.category.toLowerCase())
-      );
-    }
-
-    if (filters.brand) {
-      filtered = filtered.filter((product) =>
-        product.brand?.toLowerCase().includes(filters.brand.toLowerCase())
-      );
-    }
-
-    if (filters.search) {
-      filtered = filtered.filter(
-        (product) =>
-          product.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
-          product.description
-            ?.toLowerCase()
-            .includes(filters.search.toLowerCase())
-      );
-    }
-
-    // Apply price range filter if needed
-    if (filters.priceRange) {
-      // Implement price range logic here
-      // Example: if priceRange is "0-100"
-      const [minPrice, maxPrice] = filters.priceRange.split("-").map(Number);
-      if (!isNaN(minPrice) && !isNaN(maxPrice)) {
-        filtered = filtered.filter(
-          (product) => product.price >= minPrice && product.price <= maxPrice
-        );
-      }
-    }
-
-    // Apply sorting
-    switch (sortBy) {
-      case "price-low":
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case "price-high":
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case "name":
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "newest":
-      default:
-        // Keep original order (newest first from API)
-        break;
-    }
-
-    setFilteredProducts(filtered);
-    setCurrentPage(1); // Reset về trang đầu khi filter thay đổi
-  }, [allProducts, filters, sortBy]);
-
-  const handleFilterChange = (newFilters) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
-    // Auto-close mobile filters when a filter is applied
-=======
     getProducts();
   }, [endpoint, filters, sortBy, currentPage, itemsPerPage]);
 
   const handleFilterChange = (newFilters) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
     setCurrentPage(1); // Reset to first page when filters change
->>>>>>> 285ba61 (feat: pagination list product, Add to card, max,minstock)
     if (window.innerWidth < 1024) {
       setTimeout(() => setMobileFiltersOpen(false), 500);
     }
@@ -203,11 +98,7 @@ const Shop = () => {
       minPrice: "",
       maxPrice: "",
     });
-<<<<<<< HEAD
-    // Auto-close mobile filters when clearing
-=======
     setCurrentPage(1);
->>>>>>> 285ba61 (feat: pagination list product, Add to card, max,minstock)
     if (window.innerWidth < 1024) {
       setTimeout(() => setMobileFiltersOpen(false), 500);
     }
@@ -219,9 +110,7 @@ const Shop = () => {
       <div className="bg-gray-50 border-b border-gray-200">
         <Container className="py-4">
           <div className="flex flex-col space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {t("shop.shop_title")}
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t("shop.shop_title")}</h1>
             <nav className="flex text-sm text-gray-500">
               <a href="/" className="hover:text-gray-700 transition-colors">
                 {t("shop.home_breadcrumb")}
@@ -244,9 +133,7 @@ const Shop = () => {
                   onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
                   className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
                 >
-                  <span className="font-medium">
-                    {t("shop.filters_button")}
-                  </span>
+                  <span className="font-medium">{t("shop.filters_button")}</span>
                   <svg
                     className={`w-5 h-5 transform transition-transform duration-200 ${
                       mobileFiltersOpen ? "rotate-180" : ""
@@ -299,23 +186,9 @@ const Shop = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 p-4 bg-gray-50 rounded-lg border">
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-600">
-<<<<<<< HEAD
-                  {t("shop.showing_results")}{" "}
-                  {filteredProducts.length > 0
-                    ? (currentPage - 1) * itemsPerPage + 1
-                    : 0}
-                  -
-                  {Math.min(
-                    currentPage * itemsPerPage,
-                    filteredProducts.length
-                  )}{" "}
-                  {t("shop.of_results")} {filteredProducts.length}{" "}
-                  {t("shop.results_text")}
-=======
                   {t("shop.showing_results")} {(currentPage - 1) * itemsPerPage + 1}-
                   {Math.min(currentPage * itemsPerPage, totalItems)}{" "}
                   {t("shop.of_results")} {totalItems} {t("shop.results_text")}
->>>>>>> 285ba61 (feat: pagination list product, Add to card, max,minstock)
                 </span>
               </div>
 
@@ -355,12 +228,8 @@ const Shop = () => {
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   >
                     <option value="newest">{t("shop.newest_option")}</option>
-                    <option value="price-low">
-                      {t("shop.price_low_to_high_option")}
-                    </option>
-                    <option value="price-high">
-                      {t("shop.price_high_to_low_option")}
-                    </option>
+                    <option value="price-low">{t("shop.price_low_to_high_option")}</option>
+                    <option value="price-high">{t("shop.price_high_to_low_option")}</option>
                     <option value="name">{t("shop.name_a_to_z_option")}</option>
                   </select>
                 </div>
@@ -414,18 +283,9 @@ const Shop = () => {
             </div>
 
             {/* Active Filters */}
-<<<<<<< HEAD
-            {(filters.category ||
-              filters.brand ||
-              filters.search ||
-              filters.priceRange) && (
-=======
             {(filters.category || filters.brand || filters.search || filters.minPrice || filters.maxPrice) && (
->>>>>>> 285ba61 (feat: pagination list product, Add to card, max,minstock)
               <div className="flex flex-wrap items-center gap-2 mb-6">
-                <span className="text-sm text-gray-600">
-                  {t("shop.active_filters_label")}
-                </span>
+                <span className="text-sm text-gray-600">{t("shop.active_filters_label")}</span>
                 {filters.category && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white text-sm rounded-full">
                     {t("shop.category_filter")} {filters.category}
@@ -459,19 +319,11 @@ const Shop = () => {
                     </button>
                   </span>
                 )}
-<<<<<<< HEAD
-                {filters.priceRange && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white text-sm rounded-full">
-                    {t("shop.price_filter")} {filters.priceRange}
-                    <button
-                      onClick={() => handleFilterChange({ priceRange: "" })}
-=======
                 {(filters.minPrice || filters.maxPrice) && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white text-sm rounded-full">
                     {t("shop.price_filter")} {filters.minPrice || "0"} - {filters.maxPrice || "∞"}
                     <button
                       onClick={() => handleFilterChange({ minPrice: "", maxPrice: "" })}
->>>>>>> 285ba61 (feat: pagination list product, Add to card, max,minstock)
                       className="ml-1 hover:text-gray-300"
                     >
                       ×

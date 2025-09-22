@@ -208,43 +208,31 @@ const listProducts = async (req, res) => {
     const perPage = parseInt(_perPage, 10) || 25;
     const skip = (page - 1) * perPage;
 
-    // If pagination explicitly requested, run paginated query with total count
-    if (req.query._page || req.query._perPage) {
-      const [dbProducts, totalItems] = await Promise.all([
-        productModel
-          .find(filter)
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(perPage),
-        productModel.countDocuments(filter),
-      ]);
+    // Get total count after filtering (hiệu quả, không tải data)
+    const totalItems = await productModel.countDocuments(filter);
 
-      const formattedProducts = dbProducts.map((p) => ({
-        ...p.toObject(),
-        image: p.images && p.images.length > 0 ? p.images[0] : "",
-      }));
+    // Get paginated products from DB directly
+    let dbProducts = await productModel
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(perPage)
+      .lean(); 
 
-      return res.json({
-        success: true,
-        products: formattedProducts,
-        currentPage: page,
-        perPage,
-        totalItems,
-        totalPages: Math.ceil(totalItems / perPage),
-      });
-    }
-
-    // Otherwise, return full list without pagination
-    const dbProducts = await productModel.find(filter).sort({ createdAt: -1 });
-    const formattedProducts = dbProducts.map((p) => ({
-      ...p.toObject(),
-      image: p.images && p.images.length > 0 ? p.images[0] : "",
+    // Format for frontend
+    let formattedDbProducts = dbProducts.map((product) => ({
+      ...product,
+      image: product.images && product.images.length > 0 ? product.images[0] : "",
     }));
 
-    return res.json({
+    // Response
+    res.json({
       success: true,
-      products: formattedProducts,
-      total: formattedProducts.length,
+      products: formattedDbProducts,
+      currentPage: page,
+      perPage,
+      totalItems,
+      totalPages: Math.ceil(totalItems / perPage),
     });
   } catch (error) {
     console.log("List products error:", error);
