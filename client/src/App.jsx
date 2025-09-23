@@ -5,6 +5,7 @@ import BestSellers from "./components/homeProducts/BestSellers";
 import NewArrivals from "./components/homeProducts/NewArrivals";
 import ProductOfTheYear from "./components/homeProducts/ProductOfTheYear";
 import SpecialOffers from "./components/homeProducts/SpecialOffers";
+import AboutUs from "./components/AboutUs";
 import { jwtDecode } from "jwt-decode";
 import { useDispatch } from "react-redux";
 import {
@@ -61,7 +62,8 @@ function App() {
   return (
     <main className="w-full overflow-hidden">
       <Banner />
-      <Container className="py-5 md:py-10">
+      <AboutUs />
+      <Container className="py-5 md:py-2">
         <NewArrivals />
         <BestSellers />
         <ProductOfTheYear />

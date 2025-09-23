@@ -36,11 +36,14 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
         setFilteredBrands(brands.map((brand) => brand.name)); // Khởi tạo filteredBrands
       } catch (error) {
         console.error("Error fetching filter options:", error);
+        toast.error("Error loading filters");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchFilterOptions();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     // Sync local state với filters prop
@@ -117,7 +120,7 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
     handlePriceChangeDebounced(min, max);
   };
 
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (categoryName) => {
     onFilterChange({
       category: filters.category === category ? "" : category,
     });
@@ -223,6 +226,7 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
           )}
         </div>
       </div>
+
 
       {/* Brands */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">

@@ -150,9 +150,8 @@ const ProductCard = ({ item, viewMode = "grid", className = "" }) => {
 
         {/* Hover Overlay */}
         <div
-          className={`absolute inset-0 bg-black bg-opacity-20 transition-opacity duration-300 ${
-            isHovered ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute inset-0 bg-black bg-opacity-20 transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"
+            }`}
         >
           <div className="absolute inset-0 flex items-center justify-center">
             <button
@@ -168,11 +167,12 @@ const ProductCard = ({ item, viewMode = "grid", className = "" }) => {
       {/* Product Info */}
       <div className="pt-4 pb-4 px-4 text-center">
         <h3
-          className="text-sm font-medium text-gray-900 uppercase tracking-wide mb-2 cursor-pointer hover:text-gray-600 transition-colors duration-200"
+          className="text-sm font-medium text-gray-900 uppercase tracking-wide mb-2 cursor-pointer hover:text-gray-600 transition-colors duration-200 line-clamp-2"
           onClick={handleProductDetails}
         >
           {item?.name}
         </h3>
+
 
         {/* Price */}
         <div className="mb-3">

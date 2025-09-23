@@ -1,16 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Container from "./Container";
 import { Button } from "./ui/button";
 import { paymentCard } from "../assets/images";
 import SocialLinks from "./SocialLinks";
 import { useTranslation } from "react-i18next";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const Footer = () => {
   const { t } = useTranslation();
   const [emailInfo, setEmailInfo] = useState("");
   const [subscription, setSubscription] = useState(false);
   const [errMsg, setErrMsg] = useState("");
+  const [categories, setCategories] = useState([]);
+  const { token } = useSelector((state) => state.eSpecialtyReducer);
+
+  // ✅ Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/category`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await response.json();
+        if (data.success) {
+          setCategories(data.categories);
+        } else {
+          toast.error(data.message || "Failed to fetch categories");
+        }
+      } catch (err) {
+        console.error("Fetch categories error:", err);
+        toast.error("Failed to fetch categories");
+      }
+    };
+
+    fetchCategories();
+  }, [token]);
 
   const emailValidation = () => {
     return String(emailInfo)
@@ -33,7 +65,6 @@ const Footer = () => {
   return (
     <footer className="bg-white border-t border-gray-100">
       <Container className="py-16">
-        {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Brand Section */}
           <div className="lg:col-span-1">
@@ -54,94 +85,57 @@ const Footer = () => {
             </h4>
             <ul className="space-y-3">
               <li>
-                <a
-                  href="/about"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
-                >
+                <a href="/about" className="text-gray-600 hover:text-gray-900 text-sm">
                   {t("footer.about_us")}
                 </a>
               </li>
               <li>
-                <a
-                  href="/shop"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
-                >
+                <a href="/shop" className="text-gray-600 hover:text-gray-900 text-sm">
                   {t("footer.shop")}
                 </a>
               </li>
               <li>
-                <a
-                  href="/contact"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
-                >
+                <a href="/contact" className="text-gray-600 hover:text-gray-900 text-sm">
                   {t("footer.contact")}
                 </a>
               </li>
               <li>
-                <a
-                  href="/blog"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
-                >
+                <a href="/blog" className="text-gray-600 hover:text-gray-900 text-sm">
                   {t("footer.blog")}
                 </a>
               </li>
               <li>
-                <a
-                  href="/faq"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
-                >
+                <a href="/faq" className="text-gray-600 hover:text-gray-900 text-sm">
                   {t("footer.faq")}
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Categories */}
+          {/* ✅ Dynamic Categories */}
           <div>
             <h4 className="text-lg font-semibold text-gray-900 mb-6">
               {t("footer.categories")}
             </h4>
             <ul className="space-y-3">
               <li>
-                <a
-                  href="/shop?category=Electronics"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
+                <Link
+                  to="/shop"
+                  className="text-gray-600 hover:text-gray-900 text-sm transition-colors"
                 >
-                  {t("footer.electronics")}
-                </a>
+                  All Products
+                </Link>
               </li>
-              <li>
-                <a
-                  href="/shop?category=Fashion"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
-                >
-                  {t("footer.fashion")}
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/shop?category=Home & Garden"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
-                >
-                  {t("footer.home_garden")}
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/shop?category=Sports"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
-                >
-                  {t("footer.sports")}
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/shop?category=Beauty"
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200 text-sm"
-                >
-                  {t("footer.beauty")}
-                </a>
-              </li>
+              {categories.map((cat) => (
+                <li key={cat._id}>
+                  <Link
+                    to={`/shop?category=${encodeURIComponent(cat.name)}`}
+                    className="text-gray-600 hover:text-gray-900 text-sm transition-colors"
+                  >
+                    {cat.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -153,7 +147,6 @@ const Footer = () => {
             <p className="text-gray-600 mb-4 text-sm leading-relaxed">
               {t("footer.newsletter_description")}
             </p>
-
             {subscription ? (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -194,22 +187,11 @@ const Footer = () => {
         {/* Divider */}
         <div className="border-t border-gray-100 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            {/* Copyright */}
-            <p className="text-gray-500 text-sm">
-              {t("footer.copyright")}
-            </p>
-
-            {/* Payment Methods */}
+            <p className="text-gray-500 text-sm">{t("footer.copyright")}</p>
             <div className="flex items-center gap-4">
               <span className="text-gray-500 text-sm">{t("footer.we_accept")}:</span>
-              <img
-                src={paymentCard}
-                alt="Payment methods"
-                className="h-8 object-contain opacity-60"
-              />
+              <img src={paymentCard} alt="Payment methods" className="h-8 object-contain opacity-60" />
             </div>
-
-            {/* Legal Links */}
             <div className="flex gap-6">
               {[t("footer.privacy_policy"), t("footer.terms_of_service")].map((link) => (
                 <a

@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { serverUrl } from "../../config";
 import toast from "react-hot-toast";
 import PropTypes from "prop-types";
+import ProductTitle from "../components/products/ProductTitle";
 
 const SingleProduct = () => {
   const { id } = useParams();
@@ -155,7 +156,7 @@ const SingleProduct = () => {
             {productInfo?.category}
           </span>
           <span>/</span>
-          <span className="text-gray-900 font-medium">{productInfo?.name}</span>
+          <span className="text-gray-900 font-medium line-clamp-1">{productInfo?.name}</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
@@ -172,11 +173,10 @@ const SingleProduct = () => {
               <img
                 src={productImages[selectedImage] || "/placeholder-image.jpg"}
                 alt={productInfo?.name}
-                className={`w-full h-full object-cover transition-all duration-500 ${
-                  isImageZoomed
+                className={`w-full h-full object-cover transition-all duration-500 ${isImageZoomed
                     ? "scale-150 cursor-zoom-out"
                     : "hover:scale-105 group-hover:scale-105"
-                }`}
+                  }`}
                 onError={(e) => {
                   e.target.src = "/placeholder-image.jpg";
                 }}
@@ -194,11 +194,10 @@ const SingleProduct = () => {
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`aspect-square overflow-hidden bg-gray-50 rounded-lg border-2 transition-all duration-200 ${
-                    selectedImage === index
+                  className={`aspect-square overflow-hidden bg-gray-50 rounded-lg border-2 transition-all duration-200 ${selectedImage === index
                       ? "border-black"
                       : "border-transparent hover:border-gray-300"
-                  }`}
+                    }`}
                 >
                   <img
                     src={image || "/placeholder-image.jpg"}
@@ -219,9 +218,11 @@ const SingleProduct = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="space-y-6"
           >
-            <h1 className="text-3xl md:text-4xl font-light text-gray-900 leading-tight">
-              {productInfo?.name}
-            </h1>
+            {/* Product Title */}
+            <ProductTitle name={productInfo?.name} />
+
+
+            {/* Price */}
             <div className="flex items-center gap-4">
               {productInfo?.oldPrice && (
                 <span className="text-2xl text-gray-400 line-through">
@@ -255,11 +256,10 @@ const SingleProduct = () => {
                 {Array.from({ length: 5 }).map((_, index) => (
                   <MdStar
                     key={index}
-                    className={`w-5 h-5 ${
-                      index < Math.floor(productInfo?.ratings || 0)
+                    className={`w-5 h-5 ${index < Math.floor(productInfo?.ratings || 0)
                         ? "text-yellow-400"
                         : "text-gray-300"
-                    }`}
+                      }`}
                   />
                 ))}
               </div>
@@ -392,11 +392,10 @@ const SingleProduct = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-4 text-sm font-medium uppercase tracking-wider transition-colors relative ${
-                  activeTab === tab
+                className={`pb-4 text-sm font-medium uppercase tracking-wider transition-colors relative ${activeTab === tab
                     ? "text-black border-b-2 border-black"
                     : "text-gray-500 hover:text-gray-700"
-                }`}
+                  }`}
               >
                 {tab === "reviews"
                   ? `Reviews (${productInfo?.reviews?.length || 0})`
@@ -448,11 +447,10 @@ const SingleProduct = () => {
                                   (_, starIndex) => (
                                     <MdStar
                                       key={starIndex}
-                                      className={`w-4 h-4 ${
-                                        starIndex < review.rating
+                                      className={`w-4 h-4 ${starIndex < review.rating
                                           ? "text-yellow-400"
                                           : "text-gray-300"
-                                      }`}
+                                        }`}
                                     />
                                   )
                                 )}
@@ -527,11 +525,10 @@ const SingleProduct = () => {
                       {Array.from({ length: 5 }).map((_, starIndex) => (
                         <MdStar
                           key={starIndex}
-                          className={`w-4 h-4 ${
-                            starIndex < Math.floor(product.ratings || 4)
+                          className={`w-4 h-4 ${starIndex < Math.floor(product.ratings || 4)
                               ? "text-yellow-400"
                               : "text-gray-300"
-                          }`}
+                            }`}
                         />
                       ))}
                     </div>
