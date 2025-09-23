@@ -2,37 +2,59 @@ import { useState, useEffect } from "react";
 import { getData } from "../../helpers";
 import { config } from "../../../config";
 
-const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
+
+const ProductsSideNav = ({ onFilterChange, filters, onClearFilters, token }) => {
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Fetch categories and brands from products
     const fetchFilterOptions = async () => {
       try {
-        const data = await getData(`${config?.baseUrl}/api/products`);
-        const products = data?.products || [];
+        setLoading(true);
 
-        // Extract unique categories
-        const uniqueCategories = [
-          ...new Set(products.map((p) => p.category).filter(Boolean)),
-        ];
-        setCategories(uniqueCategories);
+        // 🔹 Fetch categories từ API
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/category`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const data = await response.json();
 
-        // Extract unique brands
+        if (data.success) {
+          setCategories(data.categories || []);
+        } else {
+          toast.error(data.message || "Failed to fetch categories");
+        }
+
+        // 🔹 Nếu vẫn muốn lấy brands từ products
+        const productsRes = await fetch(
+          `${config?.baseUrl}/api/products`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const productsData = await productsRes.json();
+        const products = productsData?.products || [];
+
         const uniqueBrands = [
           ...new Set(products.map((p) => p.brand).filter(Boolean)),
         ];
         setBrands(uniqueBrands);
+
       } catch (error) {
         console.error("Error fetching filter options:", error);
+        toast.error("Error loading filters");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchFilterOptions();
-  }, []);
+  }, [token]);
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -40,9 +62,9 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
     onFilterChange({ search: value });
   };
 
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = (categoryName) => {
     onFilterChange({
-      category: filters?.category === category ? "" : category,
+      category: filters?.category === categoryName ? "" : categoryName,
     });
   };
 
@@ -58,56 +80,52 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
   return (
     <div className="w-full space-y-6">
       {/* Search */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Search Products
-        </h3>
-        <div className="relative">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            placeholder="Search products..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-          />
-          <svg
-            className="absolute right-3 top-3.5 w-5 h-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </div>
-      </div>
+      {/* ... giữ nguyên phần search ... */}
 
       {/* Categories */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
         <div className="space-y-3">
-          {categories.map((category) => (
-            <label
-              key={category}
-              className="flex items-center cursor-pointer group"
-            >
-              <input
-                type="checkbox"
-                checked={filters?.category === category}
-                onChange={() => handleCategoryChange(category)}
-                className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900 focus:ring-2"
-              />
-              <span className="ml-3 text-gray-700 group-hover:text-gray-900 transition-colors capitalize">
-                {category}
-              </span>
-            </label>
-          ))}
+          {loading ? (
+            <p className="text-gray-500 text-sm">Loading...</p>
+          ) : (
+            <>
+              {/* Hard-code category ALL */}
+              <label
+                key="all"
+                className="flex items-center cursor-pointer group"
+              >
+                <input
+                  type="checkbox"
+                  checked={!filters?.category} // nếu không có filter thì chọn All
+                  onChange={() => onFilterChange({ category: "" })}
+                  className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900 focus:ring-2"
+                />
+                <span className="ml-3 text-gray-700 group-hover:text-gray-900 transition-colors capitalize">
+                  All Products
+                </span>
+              </label>
+
+              {/* Các category từ API */}
+              {categories.map((cat) => (
+                <label key={cat._id} className="flex items-center cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={filters.category.includes(cat.name)}
+                    onChange={() => handleCategoryChange(cat.name)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="ml-3 text-gray-700 group-hover:text-black">
+                    {cat.name}
+                  </span>
+                </label>
+              ))}
+
+            </>
+          )}
         </div>
       </div>
+
 
       {/* Brands */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
@@ -218,9 +236,8 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
                   {[...Array(5)].map((_, i) => (
                     <svg
                       key={i}
-                      className={`w-4 h-4 ${
-                        i < rating ? "text-yellow-400" : "text-gray-300"
-                      }`}
+                      className={`w-4 h-4 ${i < rating ? "text-yellow-400" : "text-gray-300"
+                        }`}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
