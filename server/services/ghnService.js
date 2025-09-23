@@ -1,4 +1,9 @@
 import { ghn } from '../config/ghn.js';
+import axios from 'axios'
+const GHN_API_URL = "https://dev-online-gateway.ghn.vn/shiip/public-api/v2";
+const TOKEN = process.env.GHN_TOKEN;   // từ .env
+const SHOP_ID = process.env.GHN_SHOP_ID; // từ .env
+const FROM_DISTRICT_ID = 1450; // Quận 1
 
 class GHNService {
   async getProvinces() {
@@ -53,67 +58,72 @@ class GHNService {
     }
   }
 
-  async calculateShippingFee(data) {
+  async calculateShippingFee({ toDistrictId, toWardCode, weight, serviceId, serviceTypeId }) {
     try {
-      const {
-        toDistrictId,
-        toWardCode,
-        weight = 500,
-        length = 20,
-        width = 20,
-        height = 10,
-        serviceId = null,
-        serviceTypeId = 2
-      } = data;
+      const response = await axios.post(
+        `${GHN_API_URL}/shipping-order/fee`,
+        {
+          from_district_id: FROM_DISTRICT_ID,
+          service_id: serviceId,
+          service_type_id: serviceTypeId,
+          to_district_id: toDistrictId,
+          to_ward_code: toWardCode,
+          weight,
+          height: 15,
+          length: 15,
+          width: 15,
+        },
+        {
+          headers: {
+            Token: TOKEN,
+            ShopId: SHOP_ID,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      const shippingData = {
-        to_district_id: toDistrictId,
-        to_ward_code: toWardCode,
-        weight: weight,
-        length: length,
-        width: width,
-        height: height,
-        service_type_id: serviceTypeId
-      };
-
-      if (serviceId) {
-        shippingData.service_id = serviceId;
-      }
-
-      const response = await ghn.calculateFee(shippingData);
-      return {
-        success: true,
-        data: response || {}
-      };
+      return { success: true, data: response.data.data };
     } catch (error) {
-      console.error('GHN calculateShippingFee error:', error);
+      console.error("GHN calculateShippingFee error:", error.response?.data || error.message);
       return {
         success: false,
-        message: error.message,
-        data: {}
+        message: error.response?.data?.message || error.message || "GHN API error",
       };
     }
   }
-
+  
   async getServices(fromDistrictId, toDistrictId) {
     try {
-      const response = await ghn.getServices({
-        from_district: fromDistrictId,
-        to_district: toDistrictId
-      });
+      const response = await axios.post(
+        `${GHN_API_URL}/shipping-order/available-services`,
+        {
+          shop_id: parseInt(SHOP_ID),
+          from_district: fromDistrictId,
+          to_district: toDistrictId,
+        },
+        {
+          headers: {
+            Token: TOKEN,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
       return {
         success: true,
-        data: response || []
+        message: "Get services success",
+        data: response.data.data,
       };
     } catch (error) {
-      console.error('GHN getServices error:', error);
+      console.error("GHN getServices error:", error.response?.data || error.message);
       return {
         success: false,
-        message: error.message,
-        data: []
+        message: error.response?.data?.message || error.message,
+        data: [],
       };
     }
   }
+
 
   async createOrder(orderData) {
     try {

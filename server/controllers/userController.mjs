@@ -340,7 +340,7 @@ const addAddress = async (req, res) => {
     const paramUserId = req.params?.userId; 
     const targetUserId = userId || paramUserId;
     console.log("req.body", req.body);
-    let { label, street, ward, district, city, zipCode, country, phone, isDefault } =
+    let { label, street, ward, district, city,provinceId, districtId, wardCode ,zipCode, country, phone, isDefault } =
       req.body;
 
     // Validate required fields
@@ -369,6 +369,9 @@ const addAddress = async (req, res) => {
       ward,
       district,
       city,
+      provinceId,
+      districtId,
+      wardCode,
       zipCode,
       country,
       phone: phone || "",

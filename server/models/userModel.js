@@ -72,7 +72,23 @@ const userSchema = new mongoose.Schema(
         ref: "order",
       },
     ],
-    addresses: [AddressSchema],
+    addresses: [
+      {
+        label: { type: String}, // e.g., 'Home', 'Work', 'Billing'
+        street: { type: String},
+        ward: { type: String}, // Phường/Xã
+        district: { type: String}, // Quận/Huyện
+        city: { type: String}, // Tỉnh/Thành phố
+        provinceId: { type: Number, },
+        districtId: { type: Number, },
+        wardCode: {type: String,},
+        zipCode: { type: String},
+        country: { type: String, default: "Vietnam" },
+        phone: { type: String, default: "" },
+        isDefault: { type: Boolean, default: false },
+        _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+      },
+    ],
     isActive: { type: Boolean, default: true },
     lastLogin: { type: Date },
     avatar: { type: String, default: "" },
