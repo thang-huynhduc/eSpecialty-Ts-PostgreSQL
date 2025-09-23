@@ -1,0 +1,15 @@
+diff --git a/node_modules/vnpay/dist/chunk-EPCCPJI6.js b/node_modules/vnpay/dist/chunk-EPCCPJI6.js
+index 5dec67e..b6b0676 100644
+--- a/node_modules/vnpay/dist/chunk-EPCCPJI6.js
++++ b/node_modules/vnpay/dist/chunk-EPCCPJI6.js
+@@ -2,8 +2,8 @@ import { RESPONSE_MAP } from './chunk-3RXL4RP4.js';
+ import { __name } from './chunk-DHKAIZT6.js';
+ import crypto2 from 'crypto';
+ import dayjs from 'dayjs';
+-import timezone from 'dayjs/plugin/timezone';
+-import utc from 'dayjs/plugin/utc';
++import timezone from 'dayjs/plugin/timezone.js';
++import utc from 'dayjs/plugin/utc.js';
+ import * as fs from 'fs';
+ 
+ dayjs.extend(utc);
