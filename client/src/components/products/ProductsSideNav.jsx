@@ -19,31 +19,39 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
     max: filters.maxPrice || "",
   });
 
-  useEffect(() => {
-    // Fetch categories từ /api/category và brands từ /api/brand
-    const fetchFilterOptions = async () => {
-      try {
-        // Fetch categories từ /api/category
-        const categoryData = await getData(`${config?.baseUrl}/api/category`);
-        const categories = categoryData?.categories || [];
-        setCategories(categories.map((category) => category.name)); // Giả sử API trả về { _id, name, image }
-        setFilteredCategories(categories.map((category) => category.name)); // Khởi tạo filteredCategories
+useEffect(() => {
+  let isMounted = true;
 
-        // Fetch brands từ /api/brand
-        const brandData = await getData(`${config?.baseUrl}/api/brand`);
-        const brands = brandData?.brands || [];
-        setBrands(brands.map((brand) => brand.name)); // Giả sử API trả về { _id, name, image }
-        setFilteredBrands(brands.map((brand) => brand.name)); // Khởi tạo filteredBrands
-      } catch (error) {
-        console.error("Error fetching filter options:", error);
-        toast.error("Error loading filters");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchFilterOptions = async () => {
+    try {
+      const [categoryData, brandData] = await Promise.all([
+        getData(`${config?.baseUrl}/api/category`),
+        getData(`${config?.baseUrl}/api/brand`),
+      ]);
 
-    fetchFilterOptions();
-  }, [token]);
+      if (!isMounted) return;
+
+      const categories = categoryData?.categories || [];
+      const brands = brandData?.brands || [];
+
+      const categoryNames = categories.map((category) => category.name);
+      const brandNames = brands.map((brand) => brand.name);
+
+      setCategories(categoryNames);
+      setFilteredCategories(categoryNames);
+      setBrands(brandNames);
+      setFilteredBrands(brandNames);
+    } catch (error) {
+      console.error("Error fetching filter options:", error);
+    }
+  };
+
+  fetchFilterOptions();
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
 
   useEffect(() => {
     // Sync local state với filters prop
@@ -120,11 +128,11 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
     handlePriceChangeDebounced(min, max);
   };
 
-  const handleCategoryChange = (categoryName) => {
-    onFilterChange({
-      category: filters.category === category ? "" : category,
-    });
-  };
+const handleCategoryChange = (categoryName) => {
+  onFilterChange({
+    category: filters.category === categoryName ? "" : categoryName,
+  });
+};
 
   const handleBrandChange = (brand) => {
     onFilterChange({
