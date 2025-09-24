@@ -225,11 +225,11 @@ const Checkout = () => {
                     {t("checkout_order.order_status")}:
                   </span>
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-                      order.status
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPaymentStatusColor(
+                      order.paymentStatus
                     )}`}
                   >
-                    {t(`order.${order.status}`)} {/* i18n */}
+                    {t(`checkout_order.${order.paymentStatus}`)} {/* i18n */}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
