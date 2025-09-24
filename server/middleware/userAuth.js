@@ -29,11 +29,27 @@ const userAuth = async (req, res, next) => {
       return res.json({ success: false, message: "Account is deactivated" });
     }
 
+    // Check if password was changed after token was issued
+    if (decoded.lastPasswordChange && user.lastPasswordChange) {
+      const tokenPasswordChange = new Date(decoded.lastPasswordChange);
+      if (user.lastPasswordChange > tokenPasswordChange) {
+        return res.json({
+          success: false,
+          message: "Session expired due to password change, please log in again",
+        });
+      }
+    }
+
     // Add user info to request object
-    req.user = user;
+    req.user = {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
     next();
   } catch (error) {
-    console.log(error);
+    console.log("Authentication error:", error);
     res.json({ success: false, message: "Invalid token" });
   }
 };

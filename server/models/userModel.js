@@ -90,7 +90,11 @@ const userSchema = new mongoose.Schema(
       },
     ],
     isActive: { type: Boolean, default: true },
+    verified: { type: Boolean, default: false }, // Email verification status
+    failedLoginAttempts: { type: Number, default: 0 }, // Track failed logins
+    lockUntil: { type: Date }, // Account lock timestamp
     lastLogin: { type: Date },
+    lastPasswordChange: { type: Date, default: Date.now }, // Added for session invalidation
     avatar: { type: String, default: "" },
   },
   {
