@@ -7,6 +7,9 @@ import {
   createPayPalOrder,
   capturePayPalPayment,
   handlePayPalWebhook,
+  createVNPayPayment,
+  vnpayReturnHandler,
+  vnpayIpnHandler,
 } from "../controllers/paymentController.js";
 import userAuth from "../middleware/userAuth.js";
 
@@ -50,5 +53,10 @@ router.post(
   express.raw({ type: "application/json" }),
   handlePayPalWebhook
 );
+
+// VNPay routes
+router.post(`${routeValue}vnpay/create-payment`, userAuth, createVNPayPayment);
+router.get(`${routeValue}vnpay/return`, vnpayReturnHandler);
+router.get(`${routeValue}vnpay/ipn`, vnpayIpnHandler);
 
 export default router;

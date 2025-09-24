@@ -18,6 +18,7 @@ import {
   FaPhone,
   FaArrowLeft,
   FaPaypal,
+  FaCreditCard,
 } from "react-icons/fa";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -68,6 +69,29 @@ const Checkout = () => {
       setPaymentStep("paypal");
     } else if (paymentMethod === "cod") {
       toast.success(t("checkout_order.order_confirmed_cod")); // i18n
+    }
+  };
+
+  const handleVNPay = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/api/payment/vnpay/create-payment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await res.json();
+      if (data.success && data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else {
+        toast.error(data.message || "Failed to initialize VNPay payment");
+      }
+    } catch (err) {
+      console.error("VNPay init error:", err);
+      toast.error("Failed to initialize VNPay payment");
     }
   };
 
@@ -376,6 +400,14 @@ const Checkout = () => {
                             <FaPaypal className="w-5 h-5" />
                             {t("checkout_order.pay_with_paypal")} {/* i18n */}
                           </button>
+
+                          <button
+                            onClick={handleVNPay}
+                            className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                          >
+                            <FaCreditCard className="w-5 h-5" />
+                            Pay with VNPay
+                          </button>
                         </div>
                       ) : (
                         <>
@@ -390,6 +422,14 @@ const Checkout = () => {
                           <div className="text-center">
                             <span className="text-gray-500 text-sm">or</span>
                           </div>
+
+                          <button
+                            onClick={handleVNPay}
+                            className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                          >
+                            <FaCreditCard className="w-5 h-5" />
+                            Pay with VNPay
+                          </button>
 
                           <button
                             onClick={() => handlePayment("cod")}

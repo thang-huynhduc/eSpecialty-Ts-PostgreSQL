@@ -17,7 +17,7 @@ const Footer = () => {
   const [categories, setCategories] = useState([]);
   const { token } = useSelector((state) => state.eSpecialtyReducer);
 
-  // ✅ Fetch categories
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -112,7 +112,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* ✅ Dynamic Categories */}
+          {/* Dynamic Categories */}
           <div>
             <h4 className="text-lg font-semibold text-gray-900 mb-6">
               {t("footer.categories")}

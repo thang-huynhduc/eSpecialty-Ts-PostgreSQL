@@ -22,55 +22,96 @@ const PaymentSuccess = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const orderId = searchParams.get("order_id");
+  const orderId = searchParams.get("orderId");
   const paymentIntentId = searchParams.get("payment_intent");
+  const paymentMethod = searchParams.get("payment_method");
+  const status = searchParams.get("status");
 
   useEffect(() => {
-    const confirmPaymentAndFetchOrder = async () => {
-      if (!orderId || !paymentIntentId) {
-        toast.error("Invalid payment confirmation");
-        navigate("/orders");
-        return;
-      }
-
+    const run = async () => {
       try {
         const token = localStorage.getItem("token");
 
-        // Confirm payment with backend
-        const confirmResponse = await fetch(
-          `${API_URL}/api/payment/stripe/confirm-payment`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              paymentIntentId,
-              orderId,
-            }),
+        // Stripe path
+        if (paymentIntentId) {
+          if (!orderId) {
+            toast.error("Invalid payment confirmation");
+            navigate("/orders");
+            return;
           }
-        );
-
-        const confirmData = await confirmResponse.json();
-        if (confirmData.success) {
+          const confirmResponse = await fetch(
+            `${API_URL}/api/payment/stripe/confirm-payment`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ paymentIntentId, orderId }),
+            }
+          );
+          const confirmData = await confirmResponse.json();
+          if (!confirmData.success) {
+            toast.error(confirmData.message || "Payment confirmation failed");
+            navigate("/orders");
+            return;
+          }
           setOrder(confirmData.order);
           toast.success("Payment confirmed successfully!");
-        } else {
-          toast.error(confirmData.message || "Payment confirmation failed");
-          navigate("/orders");
+          return;
         }
+
+        // VNPay path server update order via return 
+        if (orderId && status) {
+          const orderRes = await fetch(`${API_URL}/api/order/user/${orderId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const orderData = await orderRes.json();
+          console.log("orderData", orderData);
+          if (orderData.success) {
+            setOrder(orderData.order);
+            if (status === "success") {
+              toast.success("Thanh toán thành công! ");
+            } else {
+              toast.error("Thanh toán thất bại");
+              navigate("/orders");
+              return;
+            }
+          } else {
+            toast.error("Order not found");
+            navigate("/orders");
+            return;
+          }
+          return;
+        }
+
+        // PayPal path from checkout navigation
+        if (paymentMethod === "paypal" && orderId) {
+          const orderRes = await fetch(`${API_URL}/api/order/user/${orderId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const orderData = await orderRes.json();
+          if (orderData.success) {
+            setOrder(orderData.order);
+          } else {
+            toast.error("Order not found");
+            navigate("/orders");
+            return;
+          }
+          return;
+        }
+        navigate("/orders");
       } catch (error) {
-        console.error("Payment confirmation error:", error);
-        toast.error("Failed to confirm payment");
+        console.error("Payment success handling error:", error);
+        toast.error("Failed to load payment result");
         navigate("/orders");
       } finally {
         setLoading(false);
       }
     };
 
-    confirmPaymentAndFetchOrder();
-  }, [orderId, paymentIntentId, navigate]);
+    run();
+  }, [orderId, paymentIntentId, status, paymentMethod, navigate]);
 
   const handlePrint = () => {
     window.print();
@@ -145,9 +186,9 @@ const PaymentSuccess = () => {
             >
               <FaCheckCircle className="w-12 h-12 text-green-600" />
             </motion.div>
-            <h1 className="text-4xl font-bold mb-4">Payment Successful!</h1>
+            <h1 className="text-4xl font-bold mb-4">Thanh toán thành công!</h1>
             <p className="text-xl opacity-90 mb-2">
-              Thank you for your purchase
+              Cảm ơn bạn đã mua hàng
             </p>
             <p className="text-lg opacity-80">
               Order #{order._id.slice(-8).toUpperCase()}

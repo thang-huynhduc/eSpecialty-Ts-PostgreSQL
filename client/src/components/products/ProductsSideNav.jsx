@@ -19,39 +19,39 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
     max: filters.maxPrice || "",
   });
 
-  useEffect(() => {
-    let isMounted = true;
+useEffect(() => {
+  let isMounted = true;
 
-    const fetchFilterOptions = async () => {
-      try {
-        const [categoryData, brandData] = await Promise.all([
-          getData(`${config?.baseUrl}/api/category`),
-          getData(`${config?.baseUrl}/api/brand`),
-        ]);
+  const fetchFilterOptions = async () => {
+    try {
+      const [categoryData, brandData] = await Promise.all([
+        getData(`${config?.baseUrl}/api/category`),
+        getData(`${config?.baseUrl}/api/brand`),
+      ]);
 
-        if (!isMounted) return;
+      if (!isMounted) return;
 
-        const categories = categoryData?.categories || [];
-        const brands = brandData?.brands || [];
+      const categories = categoryData?.categories || [];
+      const brands = brandData?.brands || [];
 
-        const categoryNames = categories.map((category) => category.name);
-        const brandNames = brands.map((brand) => brand.name);
+      const categoryNames = categories.map((category) => category.name);
+      const brandNames = brands.map((brand) => brand.name);
 
-        setCategories(categoryNames);
-        setFilteredCategories(categoryNames);
-        setBrands(brandNames);
-        setFilteredBrands(brandNames);
-      } catch (error) {
-        console.error("Error fetching filter options:", error);
-      }
-    };
+      setCategories(categoryNames);
+      setFilteredCategories(categoryNames);
+      setBrands(brandNames);
+      setFilteredBrands(brandNames);
+    } catch (error) {
+      console.error("Error fetching filter options:", error);
+    }
+  };
 
-    fetchFilterOptions();
+  fetchFilterOptions();
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  return () => {
+    isMounted = false;
+  };
+}, []);
 
   useEffect(() => {
     // Sync local state với filters prop
@@ -128,11 +128,11 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
     handlePriceChangeDebounced(min, max);
   };
 
-  const handleCategoryChange = (categoryName) => {
-    onFilterChange({
-      category: filters.category === categoryName ? "" : categoryName,
-    });
-  };
+const handleCategoryChange = (categoryName) => {
+  onFilterChange({
+    category: filters.category === categoryName ? "" : categoryName,
+  });
+};
 
   const handleBrandChange = (brand) => {
     onFilterChange({

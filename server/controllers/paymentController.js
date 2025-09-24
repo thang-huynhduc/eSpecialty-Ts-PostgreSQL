@@ -4,7 +4,7 @@ import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import paypalClient, { PAYPAL_WEBHOOK_CONFIG, SUPPORTED_PAYPAL_EVENTS } from "../config/paypal.js";
 import { convertVNDToUSD, isPayPalSupportedCurrency } from "../services/currencyService.js";
-import { createPayPalOrder as createPayPalOrderService, capturePayPalPayment as capturePayPalPaymentService } from "../services/paymentService.js";
+import { createPayPalOrder as createPayPalOrderService, capturePayPalPayment as capturePayPalPaymentService, createVNPayPaymentUrl, verifyVNPayReturnOrIPN } from "../services/paymentService.js";
 import paymentDetailsModel from "../models/paymentDetailsModel.js";
 
 
@@ -605,3 +605,145 @@ export const createOrder = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+/* VNPAY FUNCTIONS*/
+
+export const createVNPayPayment = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    const userId = req.user.id;
+
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
+    }
+
+    if (order.userId.toString() !== userId) {
+      return res.json({ success: false, message: "Unauthorized access to order" });
+    }
+
+    if (order.paymentStatus === "paid") {
+      return res.json({ success: false, message: "Order is already paid" });
+    }
+
+    // Upsert payment details 
+    let paymentDetails = await paymentDetailsModel.findOne({ orderId: orderId, paymentMethod: "vnpay" });
+
+    if (!paymentDetails) {
+      paymentDetails = new paymentDetailsModel({
+        orderId: orderId,
+        paymentMethod: "vnpay",
+        originalCurrency: "VND",
+        originalAmount: order.amount,
+        gatewayStatus: "pending",
+      });
+      await paymentDetails.save();
+    }
+
+    const clientIp = req.headers["x-forwarded-for"]?.split(",")[0] || req.connection.remoteAddress || "127.0.0.1";
+    const buildUrl = await createVNPayPaymentUrl({ order, clientIp });
+    if (!buildUrl.success) {
+      return res.json({ success: false, message: "Failed to build VNPay URL" });
+    }
+    res.json({ success: true, paymentUrl: buildUrl.paymentUrl });
+  } catch (error) {
+    console.error("Create VNPay Payment Error:", error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export const vnpayReturnHandler = async (req, res) => {
+  try {
+    const params = req.query;
+    const { isValid } = verifyVNPayReturnOrIPN(params);
+    const orderId = params["vnp_TxnRef"]; // Mongo order id
+    const responseCode = params["vnp_ResponseCode"]; // '00' is success
+
+    if (!orderId) {
+      return res.json({ success: false, message: "Missing order reference" });
+    }
+
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
+    }
+
+    if (!isValid) {
+      return res.json({ success: false, message: "Invalid signature" });
+    }
+
+    // Update payment details
+    const paymentDetails = await paymentDetailsModel.findOne({ orderId: orderId, paymentMethod: "vnpay" });
+    if (paymentDetails) {
+      paymentDetails.transactionId = params["vnp_TransactionNo"] || paymentDetails.transactionId;
+      paymentDetails.gatewayStatus = responseCode === "00" ? "completed" : "failed";
+      paymentDetails.gatewayResponse = params;
+      await paymentDetails.save();
+    }
+
+    if (responseCode === "00") {
+      order.paymentStatus = "paid";
+      order.paymentMethod = "vnpay";
+      order.status = "confirmed";
+      await order.save();
+    } else {
+      order.paymentStatus = "failed";
+      await order.save();
+    }
+
+    // Redirect to client success/fail page
+    const redirectUrl = `${process.env.CLIENT_URL}/payment-success?orderId=${orderId}&status=${responseCode === "00" ? "success" : "failed"}`; 
+    res.redirect(redirectUrl);
+  } catch (error) {
+    console.error("VNPay Return Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const vnpayIpnHandler = async (req, res) => {
+  try {
+    const params = req.query;
+    const { isValid } = verifyVNPayReturnOrIPN(params);
+    const orderId = params["vnp_TxnRef"]; // Mongo order id
+    const responseCode = params["vnp_ResponseCode"]; // '00' is success
+
+    if (!orderId) {
+      return res.json({ RspCode: "01", Message: "Missing order reference" });
+    }
+
+    if (!isValid) {
+      return res.json({ RspCode: "97", Message: "Invalid signature" });
+    }
+
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.json({ RspCode: "02", Message: "Order not found" });
+    }
+
+    // Idempotent update
+    if (order.paymentStatus !== "paid") {
+      const paymentDetails = await paymentDetailsModel.findOne({ orderId: orderId, paymentMethod: "vnpay" });
+      if (paymentDetails) {
+        paymentDetails.transactionId = params["vnp_TransactionNo"] || paymentDetails.transactionId;
+        paymentDetails.gatewayStatus = responseCode === "00" ? "completed" : "failed";
+        paymentDetails.gatewayResponse = params;
+        await paymentDetails.save();
+      }
+
+      if (responseCode === "00") {
+        order.paymentStatus = "paid";
+        order.paymentMethod = "vnpay";
+        order.status = "confirmed";
+      } else {
+        order.paymentStatus = "failed";
+      }
+      await order.save();
+    }
+
+    res.json({ RspCode: "00", Message: "Confirm Success" });
+  } catch (error) {
+    console.error("VNPay IPN Error:", error);
+    res.json({ RspCode: "99", Message: "Unknown error" });
+  }
+};
+
