@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { serverUrl } from "../../../admin/config";
+import { serverUrl } from "../../config";
 import axios from "axios";
 import {
   FaUser,
@@ -12,12 +12,13 @@ import {
   FaEyeSlash,
   FaUserPlus,
   FaArrowRight,
-  FaCheckCircle,
   FaKey,
 } from "react-icons/fa";
 import Container from "../components/Container";
+import { useTranslation } from "react-i18next";
 
 const SignUp = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
@@ -25,55 +26,137 @@ const SignUp = () => {
     if (token) {
       navigate("/");
     }
-  }, [token, navigate]);
+
+    // Check for lockout status
+    const lockoutData = JSON.parse(localStorage.getItem("signupLockout") || "{}");
+    const now = Date.now();
+    if (lockoutData?.lockedUntil && now < lockoutData.lockedUntil) {
+      setIsLocked(true);
+      setSignupAttempts(lockoutData.attempts || 0);
+      toast.error(
+        t("signup.lockout_message", {
+          minutes: Math.ceil((lockoutData.lockedUntil - now) / 1000 / 60),
+        }) || `Tài khoản bị tạm khóa. Vui lòng thử lại sau ${Math.ceil(
+          (lockoutData.lockedUntil - now) / 1000 / 60
+        )} phút.`
+      );
+    } else if (lockoutData?.lockedUntil) {
+      // Clear lockout if time has passed
+      localStorage.removeItem("signupLockout");
+      setIsLocked(false);
+      setSignupAttempts(0);
+    }
+  }, [navigate, t]);
 
   const [clientName, setClientName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [checked, setChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState("");
   const [showOtpForm, setShowOtpForm] = useState(false);
   const [userId, setUserId] = useState("");
+  const [signupAttempts, setSignupAttempts] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
   const role = "user";
 
   const [errClientName, setErrClientName] = useState("");
   const [errEmail, setErrEmail] = useState("");
   const [errPassword, setErrPassword] = useState("");
+  const [errConfirmPassword, setErrConfirmPassword] = useState("");
   const [errOtp, setErrOtp] = useState("");
 
+  // Rate limiting constants
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+  const sanitizeInput = (input) => {
+    // Remove potentially dangerous characters
+    return input.replace(/[<>{};'"`]/g, "").trim();
+  };
+
+  const validateEmail = (email) => {
+    // Stricter email regex
+    return String(email)
+      .toLowerCase()
+      .match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i);
+  };
+
+  const validateInputForMaliciousContent = (input) => {
+    const maliciousPatterns = [
+      /or\s+1\s*=\s*1/i,
+      /--/,
+      /;/,
+      /union\s+.*select/i,
+      /drop\s+.*table/i,
+      /insert\s+into/i,
+      /exec\s*\(/i,
+      /alter\s+table/i,
+      /delete\s+from/i,
+      /update\s+.*set/i,
+      /script\s*>/i,
+      /eval\s*\(/i,
+      /select\s*.*\s*from/i,   
+    ];
+    return !maliciousPatterns.some((pattern) => pattern.test(input));
+  };
+
   const handleName = (e) => {
-    setClientName(e.target.value);
+    const sanitizedName = sanitizeInput(e.target.value);
+    setClientName(sanitizedName);
     setErrClientName("");
   };
 
   const handleEmail = (e) => {
-    setEmail(e.target.value);
+    const sanitizedEmail = sanitizeInput(e.target.value);
+    setEmail(sanitizedEmail);
     setErrEmail("");
   };
 
   const handlePassword = (e) => {
-    setPassword(e.target.value);
+    const sanitizedPassword = sanitizeInput(e.target.value);
+    setPassword(sanitizedPassword);
     setErrPassword("");
   };
 
+  const handleConfirmPassword = (e) => {
+    const sanitizedConfirmPassword = sanitizeInput(e.target.value);
+    setConfirmPassword(sanitizedConfirmPassword);
+    setErrConfirmPassword("");
+  };
+
   const handleOtp = (e) => {
-    setOtp(e.target.value);
+    const sanitizedOtp = sanitizeInput(e.target.value);
+    setOtp(sanitizedOtp);
     setErrOtp("");
   };
 
-  const EmailValidation = (email) => {
-    return String(email)
-      .toLowerCase()
-      .match(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i);
+  const checkSignupAttempts = () => {
+    if (signupAttempts >= MAX_ATTEMPTS) {
+      setIsLocked(true);
+      const lockedUntil = Date.now() + LOCKOUT_DURATION;
+      localStorage.setItem(
+        "signupLockout",
+        JSON.stringify({ attempts: signupAttempts, lockedUntil })
+      );
+      toast.error(
+        t("signup.too_many_attempts", {
+          minutes: LOCKOUT_DURATION / 1000 / 60,
+        }) || `Quá nhiều lần thử đăng ký. Vui lòng thử lại sau ${LOCKOUT_DURATION / 1000 / 60} phút.`
+      );
+      return false;
+    }
+    return true;
   };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
 
     if (!checked) {
-      toast.error("Please accept the terms and conditions");
+      toast.error(t("signup.accept_terms") || "Vui lòng chấp nhận các điều khoản và điều kiện");
       return;
     }
 
@@ -81,31 +164,93 @@ const SignUp = () => {
     setErrClientName("");
     setErrEmail("");
     setErrPassword("");
+    setErrConfirmPassword("");
 
     let hasError = false;
 
     if (!clientName) {
-      setErrClientName("Enter your full name");
+      setErrClientName(t("signup.enter_full_name") || "Vui lòng nhập họ và tên");
       hasError = true;
     }
 
     if (!email) {
-      setErrEmail("Enter your email");
+      setErrEmail(t("auth.enter_email"));
       hasError = true;
-    } else if (!EmailValidation(email)) {
-      setErrEmail("Enter a valid email address");
+    } else if (!validateEmail(email)) {
+      setErrEmail(t("signup.valid_email") || "Vui lòng nhập địa chỉ email hợp lệ");
       hasError = true;
     }
 
     if (!password) {
-      setErrPassword("Create a password");
+      setErrPassword(t("auth.enter_password"));
       hasError = true;
     } else if (password.length < 8) {
-      setErrPassword("Password must be at least 8 characters");
+      setErrPassword(t("signup.password_min_length") || "Mật khẩu phải có ít nhất 8 ký tự");
       hasError = true;
     }
 
-    if (hasError) {
+    if (!confirmPassword) {
+      setErrConfirmPassword(t("signup.confirm_password") || "Vui lòng xác nhận mật khẩu");
+      hasError = true;
+    } else if (password !== confirmPassword) {
+      setErrConfirmPassword(t("signup.password_mismatch") || "Mật khẩu xác nhận không khớp");
+      hasError = true;
+    }
+
+    // Check for SQL injection patterns and block request
+    if (!validateInputForMaliciousContent(clientName)) {
+      setErrClientName(t("signup.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
+      setSignupAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "signupLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
+      hasError = true;
+    }
+
+    if (!validateInputForMaliciousContent(email)) {
+      setErrEmail(t("signup.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
+      setSignupAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "signupLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
+      hasError = true;
+    }
+
+    if (!validateInputForMaliciousContent(password)) {
+      setErrPassword(t("signup.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
+      setSignupAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "signupLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
+      hasError = true;
+    }
+
+    if (!validateInputForMaliciousContent(confirmPassword)) {
+      setErrConfirmPassword(t("signup.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
+      setSignupAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "signupLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
+      hasError = true;
+    }
+
+    if (hasError || !checkSignupAttempts()) {
       setIsLoading(false);
       return;
     }
@@ -122,12 +267,30 @@ const SignUp = () => {
         toast.success(data?.message);
         setUserId(data.userId);
         setShowOtpForm(true);
+        localStorage.removeItem("signupLockout");
+        setSignupAttempts(0);
       } else {
+        setSignupAttempts((prev) => {
+          const newAttempts = prev + 1;
+          localStorage.setItem(
+            "signupLockout",
+            JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+          );
+          return newAttempts;
+        });
         toast.error(data?.message);
       }
     } catch (error) {
-      console.log("User registration error", error);
-      toast.error(error?.response?.data?.message || "Registration failed");
+      setSignupAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "signupLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
+      console.log("Lỗi đăng ký người dùng", error);
+      toast.error(error?.response?.data?.message || t("signup.registration_failed") || "Đăng ký thất bại");
     } finally {
       setIsLoading(false);
     }
@@ -138,8 +301,26 @@ const SignUp = () => {
     setIsLoading(true);
     setErrOtp("");
 
+    let hasError = false;
     if (!otp || otp.length !== 6) {
-      setErrOtp("Enter a valid 6-digit OTP");
+      setErrOtp(t("signup.valid_otp") || "Vui lòng nhập mã OTP 6 chữ số hợp lệ");
+      hasError = true;
+    }
+
+    if (!validateInputForMaliciousContent(otp)) {
+      setErrOtp(t("signup.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
+      setSignupAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "signupLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
+      hasError = true;
+    }
+
+    if (hasError) {
       setIsLoading(false);
       return;
     }
@@ -159,8 +340,8 @@ const SignUp = () => {
         toast.error(data?.message);
       }
     } catch (error) {
-      console.log("OTP verification error", error);
-      toast.error(error?.response?.data?.message || "OTP verification failed");
+      console.log("Lỗi xác minh OTP", error);
+      toast.error(error?.response?.data?.message || t("signup.otp_verification_failed") || "Xác minh OTP thất bại");
     } finally {
       setIsLoading(false);
     }
@@ -186,12 +367,16 @@ const SignUp = () => {
                 <FaUserPlus className="text-2xl text-white" />
               </motion.div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {showOtpForm ? "Verify OTP" : "Create Account"}
+                {showOtpForm 
+                  ? t("signup.verify_otp_title") || "Xác minh OTP" 
+                  : t("signup.create_account_title") || "Tạo tài khoản"
+                }
               </h1>
               <p className="text-gray-600">
                 {showOtpForm
-                  ? "Enter the OTP sent to your email"
-                  : "Join eSpecialty Shopping and start your journey"}
+                  ? t("signup.verify_otp_subtitle") || "Nhập mã OTP đã được gửi đến email của bạn"
+                  : t("signup.create_account_subtitle") || "Tham gia eSpecialty Shopping và bắt đầu hành trình của bạn"
+                }
               </p>
             </div>
 
@@ -202,7 +387,7 @@ const SignUp = () => {
                     htmlFor="clientName"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    Full Name
+                    {t("signup.full_name") || "Họ và tên"}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -217,7 +402,8 @@ const SignUp = () => {
                       className={`block w-full pl-10 pr-3 py-3 border ${
                         errClientName ? "border-red-300" : "border-gray-300"
                       } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
-                      placeholder="Enter your full name"
+                      placeholder={t("signup.full_name_placeholder") || "Nhập họ và tên của bạn"}
+                      disabled={isLocked}
                     />
                   </div>
                   {errClientName && (
@@ -237,7 +423,7 @@ const SignUp = () => {
                     htmlFor="email"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    Email Address
+                    {t("auth.email_address")}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -252,7 +438,8 @@ const SignUp = () => {
                       className={`block w-full pl-10 pr-3 py-3 border ${
                         errEmail ? "border-red-300" : "border-gray-300"
                       } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
-                      placeholder="Enter your email"
+                      placeholder={t("auth.email_placeholder")}
+                      disabled={isLocked}
                     />
                   </div>
                   {errEmail && (
@@ -272,7 +459,7 @@ const SignUp = () => {
                     htmlFor="password"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    Password
+                    {t("auth.password")}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -287,12 +474,14 @@ const SignUp = () => {
                       className={`block w-full pl-10 pr-12 py-3 border ${
                         errPassword ? "border-red-300" : "border-gray-300"
                       } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
-                      placeholder="Create a strong password"
+                      placeholder={t("signup.password_placeholder") || "Tạo một mật khẩu mạnh"}
+                      disabled={isLocked}
                     />
                     <button
                       type="button"
                       className="absolute inset-y-0 right-0 pr-3 flex items-center"
                       onClick={() => setShowPassword(!showPassword)}
+                      disabled={isLocked}
                     >
                       {showPassword ? (
                         <FaEyeSlash className="h-5 w-5 text-gray-400 hover:text-gray-600" />
@@ -315,27 +504,50 @@ const SignUp = () => {
 
                 <div>
                   <label
-                    htmlFor="role"
+                    htmlFor="confirmPassword"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    Account Type
+                    {t("signup.confirm_password_label") || "Xác nhận mật khẩu"}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaCheckCircle className="h-5 w-5 text-green-500" />
+                      <FaLock className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
-                      id="role"
-                      name="role"
-                      type="text"
-                      value="User Account"
-                      readOnly
-                      className="block w-full pl-10 pr-3 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed"
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={handleConfirmPassword}
+                      className={`block w-full pl-10 pr-12 py-3 border ${
+                        errConfirmPassword ? "border-red-300" : "border-gray-300"
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
+                      placeholder={t("signup.confirm_password_placeholder") || "Xác nhận mật khẩu của bạn"}
+                      disabled={isLocked}
                     />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      disabled={isLocked}
+                    >
+                      {showConfirmPassword ? (
+                        <FaEyeSlash className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      ) : (
+                        <FaEye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">
-                    All new registrations are created as user accounts
-                  </p>
+                  {errConfirmPassword && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-2 text-sm text-red-600 flex items-center gap-1"
+                    >
+                      <span className="font-bold">!</span>
+                      {errConfirmPassword}
+                    </motion.p>
+                  )}
                 </div>
 
                 <div className="flex items-start space-x-3">
@@ -347,35 +559,36 @@ const SignUp = () => {
                       checked={checked}
                       onChange={() => setChecked(!checked)}
                       className="w-4 h-4 text-gray-600 bg-gray-100 border-gray-300 rounded focus:ring-gray-500 focus:ring-2"
+                      disabled={isLocked}
                     />
                   </div>
                   <div className="text-sm">
                     <label htmlFor="terms" className="text-gray-700">
-                      I agree to the{" "}
+                      {t("signup.terms_agreement") || "Tôi đồng ý với"}{" "}
                       <Link
                         to="#"
                         className="text-gray-900 font-medium hover:underline"
                       >
-                        Terms of Service
+                        {t("signup.terms_of_service") || "Điều khoản dịch vụ"}
                       </Link>{" "}
-                      and{" "}
+                      {t("signup.and") || "và"}{" "}
                       <Link
                         to="#"
                         className="text-gray-900 font-medium hover:underline"
                       >
-                        Privacy Policy
+                        {t("signup.privacy_policy") || "Chính sách bảo mật"}
                       </Link>
                     </label>
                   </div>
                 </div>
 
                 <motion.button
-                  whileHover={{ scale: checked ? 1.02 : 1 }}
-                  whileTap={{ scale: checked ? 0.98 : 1 }}
+                  whileHover={{ scale: checked && !isLocked ? 1.02 : 1 }}
+                  whileTap={{ scale: checked && !isLocked ? 0.98 : 1 }}
                   type="submit"
-                  disabled={!checked || isLoading}
+                  disabled={!checked || isLoading || isLocked}
                   className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white transition-all duration-200 ${
-                    checked
+                    checked && !isLocked
                       ? "bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                       : "bg-gray-400 cursor-not-allowed"
                   } disabled:opacity-50`}
@@ -383,11 +596,11 @@ const SignUp = () => {
                   {isLoading ? (
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Creating Account...
+                      {t("signup.creating_account") || "Đang tạo tài khoản..."}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      Create Account
+                      {t("signup.create_account") || "Tạo tài khoản"}
                       <FaArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   )}
@@ -400,7 +613,7 @@ const SignUp = () => {
                     htmlFor="otp"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    OTP Code
+                    {t("signup.otp_label") || "Mã OTP"}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -415,7 +628,7 @@ const SignUp = () => {
                       className={`block w-full pl-10 pr-3 py-3 border ${
                         errOtp ? "border-red-300" : "border-gray-300"
                       } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
-                      placeholder="Enter the 6-digit OTP"
+                      placeholder={t("signup.otp_placeholder") || "Nhập mã OTP 6 chữ số"}
                     />
                   </div>
                   {errOtp && (
@@ -440,11 +653,11 @@ const SignUp = () => {
                   {isLoading ? (
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Verifying OTP...
+                      {t("signup.verifying_otp") || "Đang xác minh OTP..."}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      Verify OTP
+                      {t("signup.verify_otp") || "Xác minh OTP"}
                       <FaArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   )}
@@ -459,7 +672,7 @@ const SignUp = () => {
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-white text-gray-500">
-                    Already have an account?
+                    {t("signup.has_account") || "Đã có tài khoản?"}
                   </span>
                 </div>
               </div>
@@ -470,7 +683,7 @@ const SignUp = () => {
                 to="/signin"
                 className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
               >
-                Sign in to your account
+                {t("auth.signin") || "Đăng nhập vào tài khoản của bạn"}
                 <FaArrowRight className="w-4 h-4" />
               </Link>
             </div>

@@ -90,7 +90,7 @@ const userLogin = async (req, res) => {
     } else {
       user.failedLoginAttempts += 1;
       if (user.failedLoginAttempts >= 5) {
-        user.lockUntil = new Date(Date.now() + 15 * 60 * 1000);
+        user.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
       }
       await user.save();
       res.json({ success: false, message: "Invalid email or password" });

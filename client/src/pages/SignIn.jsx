@@ -1,9 +1,3 @@
-// Updated Login.jsx
-// Added Forgot Password functionality with OTP request and reset form.
-// This implements password reset flow on frontend.
-// For security: Client-side rate limiting can be added via debounce, but server handles it.
-// Added modal-like state for reset flow.
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -27,6 +21,8 @@ import { useTranslation } from "react-i18next";
 const SignIn = () => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -42,23 +38,117 @@ const SignIn = () => {
   const [errNewPassword, setErrNewPassword] = useState("");
   const [userId, setUserId] = useState("");
   const [showOtpStep, setShowOtpStep] = useState(false);
-  const navigate = useNavigate();
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
+
+  // Rate limiting constants
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       navigate("/");
     }
-  }, [navigate]);
+
+    // Check for lockout status
+    const lockoutData = JSON.parse(localStorage.getItem("loginLockout") || "{}");
+    const now = Date.now();
+    if (lockoutData?.lockedUntil && now < lockoutData.lockedUntil) {
+      setIsLocked(true);
+      setLoginAttempts(lockoutData.attempts || 0);
+      toast.error(
+        t("auth.lockout_message", {
+          minutes: Math.ceil((lockoutData.lockedUntil - now) / 1000 / 60),
+        }) || `Tài khoản bị tạm khóa. Vui lòng thử lại sau ${Math.ceil(
+          (lockoutData.lockedUntil - now) / 1000 / 60
+        )} phút.`
+      );
+    } else if (lockoutData?.lockedUntil) {
+      // Clear lockout if time has passed
+      localStorage.removeItem("loginLockout");
+      setIsLocked(false);
+      setLoginAttempts(0);
+    }
+  }, [navigate, t]);
+
+  const sanitizeInput = (input) => {
+    // Remove potentially dangerous characters
+    return input.replace(/[<>{};'"`]/g, "").trim();
+  };
+
+  const validateEmail = (email) => {
+    // Stricter email regex
+    return String(email)
+      .toLowerCase()
+      .match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i);
+  };
+
+  const validateInputForMaliciousContent = (input) => {
+    const maliciousPatterns = [
+      /or\s+1\s*=\s*1/i,
+      /--/,
+      /;/,
+      /union\s+.*select/i,
+      /drop\s+.*table/i,
+      /insert\s+into/i,
+      /exec\s*\(/i,
+      /alter\s+table/i,
+      /delete\s+from/i,
+      /update\s+.*set/i,
+      /script\s*>/i,
+      /eval\s*\(/i,
+      /select\s*.*\s*from/i,   
+    ];
+    return !maliciousPatterns.some((pattern) => pattern.test(input));
+  };
 
   const handleEmail = (e) => {
-    setEmail(e.target.value);
+    const sanitizedEmail = sanitizeInput(e.target.value);
+    setEmail(sanitizedEmail);
     setErrEmail("");
   };
 
   const handlePassword = (e) => {
-    setPassword(e.target.value);
+    const sanitizedPassword = sanitizeInput(e.target.value);
+    setPassword(sanitizedPassword);
     setErrPassword("");
+  };
+
+  const handleResetEmail = (e) => {
+    const sanitizedEmail = sanitizeInput(e.target.value);
+    setResetEmail(sanitizedEmail);
+    setErrResetEmail("");
+  };
+
+  const handleOtp = (e) => {
+    const sanitizedOtp = sanitizeInput(e.target.value);
+    setOtp(sanitizedOtp);
+    setErrOtp("");
+  };
+
+  const handleNewPassword = (e) => {
+    const sanitizedPassword = sanitizeInput(e.target.value);
+    setNewPassword(sanitizedPassword);
+    setErrNewPassword("");
+  };
+
+  const checkLoginAttempts = () => {
+    if (loginAttempts >= MAX_ATTEMPTS) {
+      setIsLocked(true);
+      const lockedUntil = Date.now() + LOCKOUT_DURATION;
+      localStorage.setItem(
+        "loginLockout",
+        JSON.stringify({ attempts: loginAttempts, lockedUntil })
+      );
+      toast.error(
+        t("auth.too_many_attempts", {
+          minutes: LOCKOUT_DURATION / 1000 / 60,
+        }) || `Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau ${LOCKOUT_DURATION / 1000 / 60} phút.`
+      );
+      return false;
+    }
+    return true;
   };
 
   const fetchUserOrderCount = async (token) => {
@@ -74,31 +164,67 @@ const SignIn = () => {
         dispatch(setOrderCount(data.orders.length));
       }
     } catch (error) {
-      console.error("Error fetching order count:", error);
+      console.error("Lỗi khi lấy số lượng đơn hàng:", error);
     }
   };
 
   const handleSignIn = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
     setErrEmail("");
     setErrPassword("");
 
+    let hasError = false;
+
     if (!email) {
       setErrEmail(t("auth.enter_email"));
-      setIsLoading(false);
-      return;
+      hasError = true;
+    } else if (!validateEmail(email)) {
+      setErrEmail(t("auth.valid_email") || "Vui lòng nhập địa chỉ email hợp lệ");
+      hasError = true;
     }
 
     if (!password) {
       setErrPassword(t("auth.enter_password"));
+      hasError = true;
+    }
+
+    console.log("Check email:", email, "=>", validateInputForMaliciousContent(email));
+    // Check for SQL injection patterns and block request
+    if (!validateInputForMaliciousContent(email)) {
+      setErrEmail(t("auth.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
+      setLoginAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "loginLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
+      hasError = true;
+    }
+  console.log("Check password:", password, "=>", validateInputForMaliciousContent(password));
+
+    if (!validateInputForMaliciousContent(password)) {
+      setErrPassword(t("auth.suspected_injection") || "Tính hack hay gì  🫵");
+      setLoginAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "loginLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
+      hasError = true;
+    }
+
+    if (hasError || !checkLoginAttempts()) {
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await axios.post(serverUrl + "/api/user/login", {
+      const response = await axios.post(`${serverUrl}/api/user/login`, {
         email,
         password,
       });
@@ -107,13 +233,31 @@ const SignIn = () => {
         localStorage.setItem("token", data?.token);
         await fetchUserOrderCount(data?.token);
         toast.success(data?.message);
+        localStorage.removeItem("loginLockout");
+        setLoginAttempts(0);
         navigate("/");
       } else {
+        setLoginAttempts((prev) => {
+          const newAttempts = prev + 1;
+          localStorage.setItem(
+            "loginLockout",
+            JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+          );
+          return newAttempts;
+        });
         toast.error(data?.message);
       }
     } catch (error) {
-      console.log("User login error", error);
-      toast.error(error?.response?.data?.message || "Login failed");
+      setLoginAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "loginLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
+      console.log("Lỗi đăng nhập người dùng", error);
+      toast.error(error?.response?.data?.message || t("auth.signin_failed") || "Đăng nhập thất bại");
     } finally {
       setIsLoading(false);
     }
@@ -124,14 +268,37 @@ const SignIn = () => {
     setIsLoading(true);
     setErrResetEmail("");
 
+    let hasError = false;
     if (!resetEmail) {
-      setErrResetEmail("Enter your email");
+      setErrResetEmail(t("auth.enter_email"));
+      hasError = true;
+    } else if (!validateEmail(resetEmail)) {
+      setErrResetEmail(t("auth.valid_email") || "Vui lòng nhập địa chỉ email hợp lệ");
+      hasError = true;
+    }
+
+    if (!validateInputForMaliciousContent(resetEmail)) {
+      setErrResetEmail(t("auth.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
+      setLoginAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "loginLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
+      hasError = true;
+    }
+
+    if (hasError || !checkLoginAttempts()) {
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await axios.post(`${serverUrl}/api/user/request-reset`, { email: resetEmail });
+      const response = await axios.post(`${serverUrl}/api/user/request-reset`, {
+        email: resetEmail,
+      });
       const data = response?.data;
       if (data?.success) {
         toast.success(data?.message);
@@ -141,7 +308,7 @@ const SignIn = () => {
         toast.error(data?.message);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Request failed");
+      toast.error(error?.response?.data?.message || t("auth.request_reset_failed") || "Yêu cầu thất bại");
     } finally {
       setIsLoading(false);
     }
@@ -155,11 +322,38 @@ const SignIn = () => {
 
     let hasError = false;
     if (!otp || otp.length !== 6) {
-      setErrOtp("Enter valid 6-digit OTP");
+      setErrOtp(t("auth.valid_otp") || "Vui lòng nhập mã OTP 6 chữ số hợp lệ");
       hasError = true;
     }
+
     if (!newPassword || newPassword.length < 8) {
-      setErrNewPassword("Password must be at least 8 characters");
+      setErrNewPassword(t("auth.password_min_length") || "Mật khẩu phải có ít nhất 8 ký tự");
+      hasError = true;
+    }
+
+    if (!validateInputForMaliciousContent(otp)) {
+      setErrOtp(t("auth.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
+      setLoginAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "loginLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
+      hasError = true;
+    }
+
+    if (!validateInputForMaliciousContent(newPassword)) {
+      setErrNewPassword(t("auth.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
+      setLoginAttempts((prev) => {
+        const newAttempts = prev + 1;
+        localStorage.setItem(
+          "loginLockout",
+          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
+        );
+        return newAttempts;
+      });
       hasError = true;
     }
 
@@ -183,7 +377,7 @@ const SignIn = () => {
         toast.error(data?.message);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Reset failed");
+      toast.error(error?.response?.data?.message || t("auth.reset_password_failed") || "Đặt lại mật khẩu thất bại");
     } finally {
       setIsLoading(false);
     }
@@ -218,7 +412,10 @@ const SignIn = () => {
 
                 <form onSubmit={handleSignIn} className="space-y-6">
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
                       {t("auth.email_address")}
                     </label>
                     <div className="relative">
@@ -235,6 +432,7 @@ const SignIn = () => {
                           errEmail ? "border-red-300" : "border-gray-300"
                         } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
                         placeholder={t("auth.email_placeholder")}
+                        disabled={isLocked}
                       />
                     </div>
                     {errEmail && (
@@ -250,7 +448,10 @@ const SignIn = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
                       {t("auth.password")}
                     </label>
                     <div className="relative">
@@ -267,11 +468,13 @@ const SignIn = () => {
                           errPassword ? "border-red-300" : "border-gray-300"
                         } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
                         placeholder={t("auth.password_placeholder")}
+                        disabled={isLocked}
                       />
                       <button
                         type="button"
                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
                         onClick={() => setShowPassword(!showPassword)}
+                        disabled={isLocked}
                       >
                         {showPassword ? (
                           <FaEyeSlash className="h-5 w-5 text-gray-400 hover:text-gray-600" />
@@ -297,6 +500,7 @@ const SignIn = () => {
                       type="button"
                       onClick={() => setShowResetForm(true)}
                       className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                      disabled={isLocked}
                     >
                       {t("auth.forgot_password")}
                     </button>
@@ -306,7 +510,7 @@ const SignIn = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || isLocked}
                     className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     {isLoading ? (
@@ -326,15 +530,22 @@ const SignIn = () => {
             ) : (
               <>
                 <div className="text-center mb-8">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">Reset Password</h1>
-                  <p className="text-gray-600">Enter your email to receive OTP</p>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    {t("auth.reset_password_title") || "Đặt lại mật khẩu"}
+                  </h1>
+                  <p className="text-gray-600">
+                    {t("auth.reset_password_subtitle") || "Nhập email của bạn để nhận mã OTP"}
+                  </p>
                 </div>
 
                 {!showOtpStep ? (
                   <form onSubmit={handleRequestReset} className="space-y-6">
                     <div>
-                      <label htmlFor="resetEmail" className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address
+                      <label
+                        htmlFor="resetEmail"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        {t("auth.email_address")}
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -344,14 +555,11 @@ const SignIn = () => {
                           id="resetEmail"
                           type="email"
                           value={resetEmail}
-                          onChange={(e) => {
-                            setResetEmail(e.target.value);
-                            setErrResetEmail("");
-                          }}
+                          onChange={handleResetEmail}
                           className={`block w-full pl-10 pr-3 py-3 border ${
                             errResetEmail ? "border-red-300" : "border-gray-300"
                           } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
-                          placeholder="Enter your email"
+                          placeholder={t("auth.email_placeholder")}
                         />
                       </div>
                       {errResetEmail && (
@@ -376,11 +584,11 @@ const SignIn = () => {
                       {isLoading ? (
                         <div className="flex items-center gap-2">
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Sending OTP...
+                          {t("auth.sending_otp") || "Đang gửi OTP..."}
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          Send OTP
+                          {t("auth.send_otp") || "Gửi OTP"}
                           <FaArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </div>
                       )}
@@ -392,15 +600,18 @@ const SignIn = () => {
                         onClick={() => setShowResetForm(false)}
                         className="text-sm text-gray-600 hover:text-gray-900"
                       >
-                        Back to Sign In
+                        {t("auth.back_to_signin") || "Quay lại đăng nhập"}
                       </button>
                     </div>
                   </form>
                 ) : (
                   <form onSubmit={handleResetPassword} className="space-y-6">
                     <div>
-                      <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
-                        OTP Code
+                      <label
+                        htmlFor="otp"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        {t("auth.otp_label") || "Mã OTP"}
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -410,14 +621,11 @@ const SignIn = () => {
                           id="otp"
                           type="text"
                           value={otp}
-                          onChange={(e) => {
-                            setOtp(e.target.value);
-                            setErrOtp("");
-                          }}
+                          onChange={handleOtp}
                           className={`block w-full pl-10 pr-3 py-3 border ${
                             errOtp ? "border-red-300" : "border-gray-300"
                           } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
-                          placeholder="Enter 6-digit OTP"
+                          placeholder={t("auth.otp_placeholder") || "Nhập mã OTP 6 chữ số"}
                         />
                       </div>
                       {errOtp && (
@@ -433,8 +641,11 @@ const SignIn = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                        New Password
+                      <label
+                        htmlFor="newPassword"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        {t("auth.new_password") || "Mật khẩu mới"}
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -444,14 +655,11 @@ const SignIn = () => {
                           id="newPassword"
                           type={showPassword ? "text" : "password"}
                           value={newPassword}
-                          onChange={(e) => {
-                            setNewPassword(e.target.value);
-                            setErrNewPassword("");
-                          }}
+                          onChange={handleNewPassword}
                           className={`block w-full pl-10 pr-12 py-3 border ${
                             errNewPassword ? "border-red-300" : "border-gray-300"
                           } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
-                          placeholder="Enter new password"
+                          placeholder={t("auth.new_password_placeholder") || "Nhập mật khẩu mới"}
                         />
                         <button
                           type="button"
@@ -487,11 +695,11 @@ const SignIn = () => {
                       {isLoading ? (
                         <div className="flex items-center gap-2">
                           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Resetting...
+                          {t("auth.resetting_password") || "Đang đặt lại..."}
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          Reset Password
+                          {t("auth.reset_password") || "Đặt lại mật khẩu"}
                           <FaArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </div>
                       )}
@@ -506,7 +714,7 @@ const SignIn = () => {
                         }}
                         className="text-sm text-gray-600 hover:text-gray-900"
                       >
-                        Back to Sign In
+                        {t("auth.back_to_signin") || "Quay lại đăng nhập"}
                       </button>
                     </div>
                   </form>
