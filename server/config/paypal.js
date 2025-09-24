@@ -1,19 +1,18 @@
 import { Client, Environment } from "@paypal/paypal-server-sdk";
 
 // PayPal environment configuration
-const environment = process.env.NODE_ENV === "production" 
-  ? Environment.Production
-  : Environment.Sandbox;
+const environment =  Environment.Sandbox;
+
 
 // PayPal client configuration
 const paypalClient = new Client({
-  clientCredentialsAuthCredentials: {
+  clientCredentialsAuthCredentials: { 
     oAuthClientId: process.env.PAYPAL_CLIENT_ID,
     oAuthClientSecret: process.env.PAYPAL_CLIENT_SECRET,
   },
   environment: environment,
   loggingConfiguration: {
-    logLevel: process.env.NODE_ENV === "production" ? "INFO" : "DEBUG",
+    logLevel: "DEBUG",
     enableMasking: true,
   },
 });

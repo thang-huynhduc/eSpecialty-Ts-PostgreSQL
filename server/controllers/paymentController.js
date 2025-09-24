@@ -22,7 +22,7 @@ export const createPaymentIntent = async (req, res) => {
     }
 
     // Verify order belongs to user
-    if (order.userId.toString() !== userId) {
+    if (order.userId.toString() !== userId.toString()) {
       return res.json({
         success: false,
         message: "Unauthorized access to order",
@@ -72,7 +72,7 @@ export const confirmPayment = async (req, res) => {
       }
 
       // Verify order belongs to user
-      if (order.userId.toString() !== userId) {
+      if (order.userId.toString() !== userId.toString()) {
         return res.json({
           success: false,
           message: "Unauthorized access to order",
@@ -156,6 +156,7 @@ export const createPayPalOrder = async (req, res) => {
     const { orderId, currency = "VND" } = req.body;
     const userId = req.user.id;
 
+
     // Find the existing order
     const order = await orderModel.findById(orderId);
     if (!order) {
@@ -163,7 +164,7 @@ export const createPayPalOrder = async (req, res) => {
     }
 
     // Verify order belongs to user
-    if (order.userId.toString() !== userId) {
+    if (order.userId.toString() !== userId.toString()) {
       return res.json({
         success: false,
         message: "Unauthorized access to order",
@@ -256,7 +257,7 @@ export const capturePayPalPayment = async (req, res) => {
     }
 
     // Verify order belongs to user
-    if (order.userId.toString() !== userId) {
+    if (order.userId.toString() !== userId.toString()) {
       return res.json({
         success: false,
         message: "Unauthorized access to order",
@@ -618,13 +619,13 @@ export const createVNPayPayment = async (req, res) => {
       return res.json({ success: false, message: "Order not found" });
     }
 
-    if (order.userId.toString() !== userId) {
+    if (order.userId.toString() !== userId.toString()) {
       return res.json({ success: false, message: "Unauthorized access to order" });
     }
 
     if (order.paymentStatus === "paid") {
       return res.json({ success: false, message: "Order is already paid" });
-    }
+    }   
 
     // Upsert payment details 
     let paymentDetails = await paymentDetailsModel.findOne({ orderId: orderId, paymentMethod: "vnpay" });

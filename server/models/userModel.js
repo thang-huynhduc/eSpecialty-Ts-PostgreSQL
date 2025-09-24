@@ -39,6 +39,9 @@ const AddressSchema = new mongoose.Schema(
     ward: { type: String, set: encryptStringSetter, get: decryptStringGetter },
     district: { type: String, set: encryptStringSetter, get: decryptStringGetter },
     city: { type: String, set: encryptStringSetter, get: decryptStringGetter },
+    provinceId: { type: Number, },
+    districtId: { type: Number, },
+    wardCode: {type: String,},
     zipCode: { type: String, set: encryptStringSetter, get: decryptStringGetter },
     country: { type: String, default: "Vietnam" },
     phone: { type: String, default: "", set: encryptStringSetter, get: decryptStringGetter },
@@ -46,7 +49,6 @@ const AddressSchema = new mongoose.Schema(
     _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
   },
   {
-    _id: false,
     toJSON: { getters: true },
     toObject: { getters: true },
   }
