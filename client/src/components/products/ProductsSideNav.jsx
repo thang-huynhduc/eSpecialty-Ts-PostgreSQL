@@ -20,30 +20,38 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
   });
 
   useEffect(() => {
-    // Fetch categories từ /api/category và brands từ /api/brand
+    let isMounted = true;
+
     const fetchFilterOptions = async () => {
       try {
-        // Fetch categories từ /api/category
-        const categoryData = await getData(`${config?.baseUrl}/api/category`);
-        const categories = categoryData?.categories || [];
-        setCategories(categories.map((category) => category.name)); // Giả sử API trả về { _id, name, image }
-        setFilteredCategories(categories.map((category) => category.name)); // Khởi tạo filteredCategories
+        const [categoryData, brandData] = await Promise.all([
+          getData(`${config?.baseUrl}/api/category`),
+          getData(`${config?.baseUrl}/api/brand`),
+        ]);
 
-        // Fetch brands từ /api/brand
-        const brandData = await getData(`${config?.baseUrl}/api/brand`);
+        if (!isMounted) return;
+
+        const categories = categoryData?.categories || [];
         const brands = brandData?.brands || [];
-        setBrands(brands.map((brand) => brand.name)); // Giả sử API trả về { _id, name, image }
-        setFilteredBrands(brands.map((brand) => brand.name)); // Khởi tạo filteredBrands
+
+        const categoryNames = categories.map((category) => category.name);
+        const brandNames = brands.map((brand) => brand.name);
+
+        setCategories(categoryNames);
+        setFilteredCategories(categoryNames);
+        setBrands(brandNames);
+        setFilteredBrands(brandNames);
       } catch (error) {
         console.error("Error fetching filter options:", error);
-        toast.error("Error loading filters");
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchFilterOptions();
-  }, [token]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     // Sync local state với filters prop
@@ -122,7 +130,7 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
 
   const handleCategoryChange = (categoryName) => {
     onFilterChange({
-      category: filters.category === category ? "" : category,
+      category: filters.category === categoryName ? "" : categoryName,
     });
   };
 
@@ -215,15 +223,16 @@ const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
                   className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900 focus:ring-2"
                 />
                 <span className="ml-3 text-gray-700 group-hover:text-gray-900 transition-colors capitalize">
-                  {category}
+                  {t(`categories.${category}`, category)}
                 </span>
               </label>
             ))
           ) : (
             <p className="text-gray-500 text-sm">
-              {t("shop.no_categories_found") || "No categories found"}
+              {t("shop.no_categories_found")}
             </p>
           )}
+
         </div>
       </div>
 

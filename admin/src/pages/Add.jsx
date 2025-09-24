@@ -9,8 +9,10 @@ import { serverUrl } from "../../config";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import SmallLoader from "../components/SmallLoader";
+import { useTranslation } from "react-i18next";
 
 const Add = ({ token }) => {
+  const { t } = useTranslation();
   const [isLoading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -36,6 +38,9 @@ const Add = ({ token }) => {
     image3: null,
     image4: null,
   });
+  const translateCategory = (categoryName) => {
+    return t(`categories.${categoryName}`, { defaultValue: categoryName });
+  };
 
   // Fetch categories and brands
   const fetchCategoriesAndBrands = async () => {
@@ -57,7 +62,7 @@ const Add = ({ token }) => {
       }
     } catch (error) {
       console.error("Error fetching categories and brands:", error);
-      toast.error("Failed to load categories and brands");
+      toast.error(t('add_product.addProduct.validation.errorLoadingData'));
     } finally {
       setLoadingData(false);
     }
@@ -82,6 +87,15 @@ const Add = ({ token }) => {
       setFormData({
         ...formData,
         [name]: value === "true",
+      });
+    } else if (name === "category") {
+      const originalCategoryName = categories.find(
+        cat => translateCategory(cat.name) === value
+      )?.name || value;
+
+      setFormData({
+        ...formData,
+        [name]: originalCategoryName,
       });
     } else if (
       name === "price" ||
@@ -130,14 +144,14 @@ const Add = ({ token }) => {
       !formData.stock ||
       !formData.category
     ) {
-      toast.error("Please fill in all required fields");
+      toast.error(t('add_product.addProduct.validation.requiredFields'));
       return;
     }
 
     // Check if at least one image is uploaded
     const hasImage = Object.values(imageFiles).some((file) => file !== null);
     if (!hasImage) {
-      toast.error("Please upload at least one image");
+      toast.error(t('add_product.addProduct.validation.atLeastOneImage'));
       return;
     }
 
@@ -181,11 +195,20 @@ const Add = ({ token }) => {
       }
     } catch (error) {
       console.log("Product data uploading error", error);
-      toast.error(error?.response?.data?.message || "Error uploading product");
+      toast.error(error?.response?.data?.message || t('add_product.addProduct.validation.uploadError'));
     } finally {
       setLoading(false);
     }
   };
+
+  const tagOptions = [
+    t('add_product.addProduct.tags.fashion'),
+    t('add_product.addProduct.tags.electronics'),
+    t('add_product.addProduct.tags.sports'),
+    t('add_product.addProduct.tags.accessories'),
+    t('add_product.addProduct.tags.others')
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6">
       <div className="xl:max-w-5xl bg-white rounded-xl shadow-sm border border-gray-200">
@@ -196,10 +219,10 @@ const Add = ({ token }) => {
             </div>
             <div>
               <Title className="text-xl sm:text-2xl font-bold text-gray-800">
-                Add New Product
+                {t('add_product.addProduct.title')}
               </Title>
               <p className="text-sm text-gray-500 mt-1">
-                Create a new product for your store
+                {t('add_product.addProduct.subtitle')}
               </p>
             </div>
           </div>
@@ -211,7 +234,7 @@ const Add = ({ token }) => {
             {/* Image Upload Section */}
             <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Product Images
+                {t('add_product.addProduct.images.title')}
               </h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {["image1", "image2", "image3", "image4"].map(
@@ -237,14 +260,14 @@ const Add = ({ token }) => {
                                 <FaTimes className="text-xs" />
                               </button>
                               <span className="text-xs text-gray-600">
-                                Change
+                                {t('add_product.addProduct.images.change')}
                               </span>
                             </>
                           ) : (
                             <>
                               <IoMdCloudUpload className="text-3xl text-gray-400 mb-2" />
                               <span className="text-xs text-gray-600">
-                                Upload Image {index + 1}
+                                {t('add_product.addProduct.images.upload', { number: index + 1 })}
                               </span>
                             </>
                           )}
@@ -262,22 +285,21 @@ const Add = ({ token }) => {
                 )}
               </div>
               <p className="text-sm text-gray-500 mt-3">
-                Upload up to 4 images. First image will be the main product
-                image.
+                {t('add_product.addProduct.images.hint')}
               </p>
             </div>
 
             {/* Basic Information */}
             <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Basic Information
+                {t('add_product.addProduct.basicInfo.title')}
               </h3>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div className="lg:col-span-2">
-                  <Label htmlFor="name">Product Name *</Label>
+                  <Label htmlFor="name">{t('add_product.addProduct.basicInfo.name')}</Label>
                   <Input
                     type="text"
-                    placeholder="Enter product name"
+                    placeholder={t('add_product.addProduct.basicInfo.namePlaceholder')}
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
@@ -287,9 +309,9 @@ const Add = ({ token }) => {
                 </div>
 
                 <div className="lg:col-span-2">
-                  <Label htmlFor="description">Description *</Label>
+                  <Label htmlFor="description">{t('add_product.addProduct.basicInfo.description')}</Label>
                   <textarea
-                    placeholder="Enter product description"
+                    placeholder={t('add_product.addProduct.basicInfo.descriptionPlaceholder')}
                     className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                     rows={4}
                     name="description"
@@ -300,7 +322,7 @@ const Add = ({ token }) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="brand">Brand</Label>
+                  <Label htmlFor="brand">{t('add_product.addProduct.basicInfo.brand')}</Label>
                   <select
                     name="brand"
                     value={formData.brand}
@@ -309,7 +331,7 @@ const Add = ({ token }) => {
                     disabled={loadingData}
                   >
                     <option value="">
-                      {loadingData ? "Loading brands..." : "Select brand"}
+                      {loadingData ? t('add_product.addProduct.basicInfo.loadingBrands') : t('add_product.addProduct.basicInfo.brandPlaceholder')}
                     </option>
                     {brands.map((brand) => (
                       <option key={brand._id} value={brand.name}>
@@ -320,18 +342,18 @@ const Add = ({ token }) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="_type">Product Type</Label>
+                  <Label htmlFor="_type">{t('add_product.addProduct.basicInfo.type')}</Label>
                   <select
                     name="_type"
                     value={formData._type}
                     onChange={handleChange}
                     className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">Select type</option>
-                    <option value="new_arrivals">New Arrivals</option>
-                    <option value="best_sellers">Best Sellers</option>
-                    <option value="special_offers">Special Offers</option>
-                    <option value="promotions">Promotions</option>
+                    <option value="">{t('add_product.addProduct.basicInfo.typePlaceholder')}</option>
+                    <option value="new_arrivals">{t('add_product.addProduct.basicInfo.typeOptions.new_arrivals')}</option>
+                    <option value="best_sellers">{t('add_product.addProduct.basicInfo.typeOptions.best_sellers')}</option>
+                    <option value="special_offers">{t('add_product.addProduct.basicInfo.typeOptions.special_offers')}</option>
+                    <option value="promotions">{t('add_product.addProduct.basicInfo.typeOptions.promotions')}</option>
                   </select>
                 </div>
               </div>
@@ -340,16 +362,16 @@ const Add = ({ token }) => {
             {/* Pricing */}
             <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Pricing & Stock
+                {t('add_product.addProduct.pricing.title')}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                 <div className="flex flex-col">
-                  <Label htmlFor="price">Price *</Label>
+                  <Label htmlFor="price">{t('add_product.addProduct.pricing.price')}</Label>
                   <Input
                     type="number"
                     step="0.01"
                     min="0"
-                    placeholder="0.00"
+                    placeholder={t('add_product.addProduct.pricing.pricePlaceholder')}
                     name="price"
                     value={formData.price}
                     onChange={handleChange}
@@ -359,14 +381,12 @@ const Add = ({ token }) => {
                 </div>
 
                 <div className="flex flex-col">
-                  <Label htmlFor="discountedPercentage">
-                    Discount Percentage
-                  </Label>
+                  <Label htmlFor="discountedPercentage">{t('add_product.addProduct.pricing.discount')}</Label>
                   <Input
                     type="number"
                     min="0"
                     max="100"
-                    placeholder="10"
+                    placeholder={t('add_product.addProduct.pricing.discountPlaceholder')}
                     name="discountedPercentage"
                     value={formData.discountedPercentage}
                     onChange={handleChange}
@@ -375,11 +395,11 @@ const Add = ({ token }) => {
                 </div>
 
                 <div className="flex flex-col">
-                  <Label htmlFor="stock">Stock Quantity *</Label>
+                  <Label htmlFor="stock">{t('add_product.addProduct.pricing.stock')}</Label>
                   <Input
                     type="number"
                     min="0"
-                    placeholder="0"
+                    placeholder={t('add_product.addProduct.pricing.stockPlaceholder')}
                     name="stock"
                     value={formData.stock}
                     onChange={handleChange}
@@ -393,68 +413,66 @@ const Add = ({ token }) => {
             {/* Category and Settings */}
             <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Category & Settings
+                {t('add_product.addProduct.category.title')}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <div>
-                  <Label htmlFor="category">Category *</Label>
+                  <Label htmlFor="category">{t('add_product.addProduct.category.category')}</Label>
                   <select
                     name="category"
-                    value={formData.category}
+                    value={translateCategory(formData.category)}
                     onChange={handleChange}
                     className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                     disabled={loadingData}
                   >
                     <option value="">
-                      {loadingData
-                        ? "Loading categories..."
-                        : "Select category"}
+                      {loadingData ? t('add_product.addProduct.category.loadingCategories') : t('add_product.addProduct.category.categoryPlaceholder')}
                     </option>
                     {categories.map((category) => (
-                      <option key={category._id} value={category.name}>
-                        {category.name}
+                      <option key={category._id} value={translateCategory(category.name)}>
+                        {translateCategory(category.name)}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <Label htmlFor="isAvailable">Availability</Label>
+                  <Label htmlFor="isAvailable">{t('add_product.addProduct.category.availability')}</Label>
                   <select
                     name="isAvailable"
                     value={formData.isAvailable.toString()}
                     onChange={handleChange}
                     className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="true">Available</option>
-                    <option value="false">Out of Stock</option>
+                    <option value="true">{t('add_product.addProduct.category.availabilityOptions.true')}</option>
+                    <option value="false">{t('add_product.addProduct.category.availabilityOptions.false')}</option>
                   </select>
                 </div>
 
                 <div>
-                  <Label htmlFor="offer">Special Offer</Label>
+                  <Label htmlFor="offer">{t('add_product.addProduct.category.offer')}</Label>
                   <select
                     name="offer"
                     value={formData.offer.toString()}
                     onChange={handleChange}
                     className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="false">No</option>
-                    <option value="true">Yes</option>
+                    <option value="false">{t('add_product.addProduct.category.offerOptions.false')}</option>
+                    <option value="true">{t('add_product.addProduct.category.offerOptions.true')}</option>
                   </select>
                 </div>
 
                 <div>
-                  <Label htmlFor="badge">Show Badge</Label>
+                  <Label htmlFor="badge">{t('add_product.addProduct.category.badge')}</Label>
                   <select
                     name="badge"
                     value={formData.badge.toString()}
                     onChange={handleChange}
                     className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="false">No</option>
-                    <option value="true">Yes</option>
+                    <option value="false">{t('add_product.addProduct.category.badgeOptions.false')}</option>
+                    <option value="true">{t('add_product.addProduct.category.badgeOptions.true')}</option>
                   </select>
                 </div>
               </div>
@@ -462,15 +480,11 @@ const Add = ({ token }) => {
 
             {/* Tags */}
             <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Tags</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                {t('add_product.addProduct.tags.title')}
+              </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-                {[
-                  "Fashion",
-                  "Electronics",
-                  "Sports",
-                  "Accessories",
-                  "Others",
-                ].map((tag) => (
+                {tagOptions.map((tag) => (
                   <div className="flex items-center space-x-2" key={tag}>
                     <input
                       id={tag.toLowerCase()}
@@ -514,12 +528,12 @@ const Add = ({ token }) => {
                 {isLoading ? (
                   <>
                     <SmallLoader />
-                    <span>Adding Product...</span>
+                    <span>{t('add_product.addProduct.submit.adding')}</span>
                   </>
                 ) : (
                   <>
                     <IoMdAdd className="text-lg" />
-                    <span>Add Product</span>
+                    <span>{t('add_product.addProduct.submit.add')}</span>
                   </>
                 )}
               </button>

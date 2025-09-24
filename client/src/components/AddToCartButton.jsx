@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
+
 import {
   addToCart,
   decreaseQuantity,
@@ -14,6 +16,7 @@ const AddToCartButton = ({ item, className }) => {
   const dispatch = useDispatch();
   const { products } = useSelector((state) => state.eSpecialtyReducer);
   const [existingProduct, setExistingProduct] = useState(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const availableItem = products.find(
@@ -78,7 +81,7 @@ const AddToCartButton = ({ item, className }) => {
           disabled={!item?.stock || item.stock <= 0}
           className="w-full border border-black text-black text-xs font-medium py-3 px-6 uppercase tracking-wide hover:bg-black hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Add to cart
+          {t("product.add_to_cart")}
         </button>
       )}
     </>

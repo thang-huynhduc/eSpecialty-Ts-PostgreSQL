@@ -77,6 +77,82 @@
     "manage_categories": "Quản lý danh mục",
     "manage_brands": "Quản lý thương hiệu"
   },
+  "add_product": {
+    "addProduct": {
+      "title": "Thêm Sản Phẩm Mới",
+      "subtitle": "Tạo sản phẩm mới cho cửa hàng của bạn",
+      "images": {
+        "title": "Hình ảnh Sản phẩm",
+        "change": "Thay đổi",
+        "upload": "Tải lên Ảnh {{number}}",
+        "hint": "Tải lên tối đa 4 hình ảnh. Hình ảnh đầu tiên sẽ là hình ảnh sản phẩm chính."
+      },
+      "basicInfo": {
+        "title": "Thông tin Cơ bản",
+        "name": "Tên Sản phẩm *",
+        "namePlaceholder": "Nhập tên sản phẩm",
+        "description": "Mô tả *",
+        "descriptionPlaceholder": "Nhập mô tả sản phẩm",
+        "brand": "Thương hiệu",
+        "brandPlaceholder": "Chọn thương hiệu",
+        "loadingBrands": "Đang tải thương hiệu...",
+        "type": "Loại Sản phẩm",
+        "typePlaceholder": "Chọn loại",
+        "typeOptions": {
+          "new_arrivals": "Hàng mới về",
+          "best_sellers": "Bán chạy nhất",
+          "special_offers": "Ưu đãi đặc biệt",
+          "promotions": "Khuyến mãi"
+        }
+      },
+      "pricing": {
+        "title": "Giá & Kho hàng",
+        "price": "Giá *",
+        "pricePlaceholder": "0.00",
+        "discount": "Phần trăm Giảm giá",
+        "discountPlaceholder": "10",
+        "stock": "Số lượng Kho *",
+        "stockPlaceholder": "0"
+      },
+      "category": {
+        "title": "Danh mục & Cài đặt",
+        "category": "Danh mục *",
+        "categoryPlaceholder": "Chọn danh mục",
+        "loadingCategories": "Đang tải danh mục...",
+        "availability": "Tình trạng",
+        "availabilityOptions": {
+          "true": "Có sẵn",
+          "false": "Hết hàng"
+        },
+        "offer": "Ưu đãi Đặc biệt",
+        "offerOptions": {
+          "true": "Có",
+          "false": "Không"
+        },
+        "badge": "Hiển thị Huy hiệu",
+        "badgeOptions": {
+          "true": "Có",
+          "false": "Không"
+        }
+      },
+      "tags": {
+        "title": "Thẻ",
+        "fashion": "Thời trang",
+        "electronics": "Điện tử",
+        "sports": "Thể thao",
+        "accessories": "Phụ kiện",
+        "others": "Khác"
+      },
+      "submit": {
+        "adding": "Đang thêm Sản phẩm...",
+        "add": "Thêm Sản phẩm"
+      },
+      "validation": {
+        "requiredFields": "Vui lòng điền đầy đủ các trường bắt buộc",
+        "atLeastOneImage": "Vui lòng tải lên ít nhất một hình ảnh"
+      }
+    }
+  },
   "orders": {
     "order": "Đơn hàng",
     "order_id": "Mã đơn hàng",
@@ -92,7 +168,98 @@
     "delivered": "Đã giao hàng",
     "cancelled": "Đã hủy",
     "processing": "Đang xử lý",
-    "manage_customer_orders": "Quản lý đơn hàng khách hàng"
+    "manage_customer_orders": "Quản lý đơn hàng khách hàng",
+    "title": "Quản lý Đơn hàng",
+    "refresh": "Làm mới",
+    "stats": {
+      "totalOrders": "Tổng đơn hàng",
+      "pending": "Đang chờ",
+      "delivered": "Đã giao",
+      "revenue": "Doanh thu"
+    },
+    "filters": {
+      "searchPlaceholder": "Tìm kiếm đơn hàng...",
+      "allStatus": "Tất cả trạng thái",
+      "allPayments": "Tất cả thanh toán",
+      "sortByDate": "Sắp xếp theo ngày",
+      "sortByAmount": "Sắp xếp theo số tiền",
+      "sortByStatus": "Sắp xếp theo trạng thái",
+      "show": "Hiển thị",
+      "ordersPerPage": "đơn hàng mỗi trang",
+      "showing": "Hiển thị {{from}} đến {{to}} trong tổng số {{total}} đơn hàng"
+    },
+    "table": {
+      "orderId": "Mã đơn hàng",
+      "customer": "Khách hàng",
+      "date": "Ngày",
+      "items": "Sản phẩm",
+      "amount": "Số tiền",
+      "status": "Trạng thái",
+      "payment": "Thanh toán",
+      "actions": "Thao tác"
+    },
+    "status": {
+      "pending": "Đang chờ",
+      "confirmed": "Đã xác nhận",
+      "shipped": "Đang giao",
+      "delivered": "Đã giao",
+      "cancelled": "Đã hủy"
+    },
+    "paymentStatus": {
+      "pending": "Đang chờ",
+      "paid": "Đã thanh toán",
+      "failed": "Thất bại"
+    },
+    "buttons": {
+      "view": "Xem chi tiết",
+      "edit": "Sửa đơn hàng",
+      "delete": "Xóa đơn hàng",
+      "previous": "Trước",
+      "next": "Sau",
+      "save": "Lưu thay đổi",
+      "cancel": "Hủy",
+      "close": "Đóng"
+    },
+    "modals": {
+      "editTitle": "Sửa đơn hàng",
+      "orderDetails": "Chi tiết đơn hàng",
+      "orderStatus": "Trạng thái đơn hàng",
+      "customerInfo": "Khách hàng",
+      "paymentInfo": "Thông tin thanh toán",
+      "shippingAddress": "Địa chỉ giao hàng",
+      "orderItems": "Sản phẩm đặt hàng",
+      "orderTotal": "Tổng đơn hàng"
+    },
+    "details": {
+      "status": "Trạng thái",
+      "payment": "Thanh toán",
+      "method": "Phương thức",
+      "date": "Ngày",
+      "amount": "Số tiền",
+      "originalAmount": "Số tiền gốc (VND)",
+      "paypalId": "ID PayPal",
+      "captureId": "ID Capture",
+      "fullName": "Họ tên",
+      "phone": "Điện thoại",
+      "address": "Địa chỉ",
+      "zipcode": "Mã bưu điện",
+      "price": "Giá",
+      "quantity": "Số lượng",
+      "total": "Tổng",
+      "productId": "Mã sản phẩm",
+      "lastUpdated": "Cập nhật lần cuối"
+    },
+    "messages": {
+      "noOrders": "Không tìm thấy đơn hàng",
+      "tryAdjusting": "Hãy thử điều chỉnh bộ lọc",
+      "noOrdersYet": "Chưa có đơn hàng nào",
+      "confirmDelete": "Bạn có chắc muốn xóa đơn hàng này?",
+      "updateSuccess": "Cập nhật đơn hàng thành công",
+      "deleteSuccess": "Xóa đơn hàng thành công",
+      "updateError": "Cập nhật đơn hàng thất bại",
+      "deleteError": "Xóa đơn hàng thất bại",
+      "fetchError": "Tải đơn hàng thất bại"
+    }
   },
   "users": {
     "user": "Người dùng",
@@ -185,17 +352,229 @@
   },
   "analytics": {
     "view_analytics": "Xem phân tích & thông tin chi tiết",
-    "insights": "Thông tin chi tiết"
+    "insights": "Thông tin chi tiết",
+    "dashboard": "Bảng điều khiển phân tích",
+    "subtitle": "Theo dõi hiệu suất kinh doanh realtime",
+    "stats": {
+      "total_revenue": "Tổng Doanh Thu",
+      "total_orders": "Tổng Đơn Hàng",
+      "total_users": "Tổng Người Dùng",
+      "total_products": "Tổng Sản Phẩm"
+    },
+    "quick_stats": {
+      "todays_sales": "Doanh Thu Hôm Nay",
+      "todays_orders": "Đơn Hàng Hôm Nay"
+    },
+    "charts": {
+      "revenue_orders": "Biểu Đồ Doanh Thu Hàng Tháng",
+      "order_status": "Trạng Thái Đơn Hàng",
+      "user_registrations": "Biểu Đồ Đăng Ký Người Dùng"
+    },
+    "sections": {
+      "recent_orders": "Đơn Hàng Gần Đây",
+      "top_products": "Sản Phẩm Hàng Đầu",
+      "recent_users": "Người Dùng Gần Đây"
+    },
+    "labels": {
+      "revenue": "Doanh thu",
+      "orders": "Đơn hàng",
+      "users": "Số người dùng đăng ký",
+      "date": "Ngày",
+      "percent": "Tỷ lệ",
+      "order_count": "Số đơn"
+    }
   },
   "inventory": {
-    "stock_management": "Quản lý tồn kho"
+    "stock_management": "Quản lý tồn kho",
+    "title": "Quản lý kho hàng",
+    "subtitle": "Theo dõi và quản lý kho hàng của bạn với thông tin theo thời gian thực",
+    "tabs": {
+      "overview": "Tổng quan",
+      "low-stock": "Hàng tồn thấp",
+      "out-of-stock": "Hết hàng",
+      "movements": "Lịch sử kho",
+      "valuation": "Định giá kho"
+    },
+    "stats": {
+      "totalProducts": "Tổng sản phẩm",
+      "lowStockProducts": "Sản phẩm tồn thấp",
+      "outOfStockProducts": "Hết hàng",
+      "inStockProducts": "Còn hàng",
+      "inventoryValue": "Giá trị kho",
+      "totalInventoryValue": "Tổng giá trị kho hàng",
+      "totalSold": "Tổng đã bán",
+      "totalUnitsSold": "Số lượng đơn vị đã bán"
+    },
+    "quickActions": {
+      "title": "Hành động nhanh",
+      "checkAlerts": "Kiểm tra cảnh báo",
+      "exportReport": "Xuất báo cáo",
+      "viewHistory": "Xem lịch sử",
+      "valuationReport": "Báo cáo định giá"
+    },
+    "lowStock": {
+      "title": "Cảnh báo tồn thấp",
+      "threshold": "Ngưỡng cảnh báo:",
+      "search": "Tìm kiếm sản phẩm...",
+      "noItems": "Không tìm thấy sản phẩm tồn thấp!",
+      "saveChanges": "Lưu thay đổi",
+      "itemsCount": "Cảnh báo tồn thấp"
+    },
+    "outOfStock": {
+      "title": "Sản phẩm hết hàng",
+      "search": "Tìm kiếm sản phẩm...",
+      "noItems": "Không có sản phẩm hết hàng!",
+      "itemsCount": "Sản phẩm hết hàng"
+    },
+    "movements": {
+      "title": "Lịch sử kho gần đây",
+      "lastUpdated": "Cập nhật lần cuối:",
+      "stock": "Tồn kho",
+      "sold": "Đã bán:"
+    },
+    "valuation": {
+      "totalValuation": "Tổng định giá",
+      "inventoryValue": "Giá trị kho:",
+      "salesValue": "Giá trị bán hàng:",
+      "totalProducts": "Tổng sản phẩm:",
+      "topCategories": "Danh mục hàng đầu",
+      "products": "sản phẩm",
+      "units": "đơn vị",
+      "categoryAnalysis": "Phân tích danh mục",
+      "category": "Danh mục",
+      "productsCount": "Sản phẩm",
+      "totalStock": "Tổng tồn",
+      "inventoryValueCol": "Giá trị kho",
+      "salesValueCol": "Giá trị bán"
+    },
+    "product": {
+      "name": "Tên",
+      "category": "Danh mục",
+      "price": "Giá",
+      "sold": "Đã bán",
+      "stock": "Tồn kho",
+      "restock": "Restock",
+      "save": "Lưu",
+      "cancel": "Hủy"
+    },
+    "buttons": {
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "restock": "Restock"
+    },
+    "messages": {
+      "updatingStock": "Đang cập nhật kho...",
+      "stockUpdated": "Cập nhật kho thành công!",
+      "errorUpdating": "Lỗi khi cập nhật kho"
+    }
   },
   "invoice": {
     "generate_manage_invoices": "Tạo & quản lý hóa đơn"
   },
   "api": {
     "api_documentation": "Tài liệu API"
+  },
+  "categories": {
+    "Bộ Quà Tặng Thực Phẩm": "Bộ Quà Tặng Thực Phẩm",
+    "Gia Vị và Nguyên Liệu Nấu Ăn": "Gia Vị và Nguyên Liệu Nấu Ăn",
+    "Mật Ong": "Mật Ong",
+    "Đồ Ăn Vặt": "Đồ Ăn Vặt",
+    "Thực Phẩm Bổ Dưỡng": "Thực Phẩm Bổ Dưỡng",
+    "Gạo, Mì, Nui": "Gạo, Mì, Nui",
+    "Socola": "Socola",
+    "Mứt, hạt": "Mứt, hạt",
+    "title": "Danh mục",
+    "subtitle": "Quản lý danh mục sản phẩm",
+    "actions": {
+      "refresh": "Làm mới",
+      "addCategory": "Thêm Danh mục",
+      "edit": "Sửa",
+      "delete": "Xóa",
+      "create": "Tạo",
+      "update": "Cập nhật",
+      "cancel": "Hủy",
+      "save": "Lưu",
+      "saving": "Đang lưu...",
+      "refreshTitle": "Làm mới Danh mục"
+    },
+    "search": {
+      "placeholder": "Tìm kiếm danh mục..."
+    },
+    "table": {
+      "image": "Hình ảnh",
+      "name": "Tên",
+      "description": "Mô tả",
+      "actions": "Thao tác"
+    },
+    "modal": {
+      "addTitle": "Thêm Danh mục",
+      "editTitle": "Sửa Danh mục",
+      "nameLabel": "Tên Danh mục *",
+      "namePlaceholder": "Nhập tên danh mục",
+      "descriptionLabel": "Mô tả",
+      "descriptionPlaceholder": "Nhập mô tả danh mục",
+      "imageLabel": "Hình ảnh Danh mục *"
+    },
+    "messages": {
+      "noCategories": "Chưa có danh mục nào",
+      "noCategoriesFound": "Không tìm thấy danh mục",
+      "tryAdjustingSearch": "Thử điều chỉnh từ khóa tìm kiếm",
+      "startCreating": "Bắt đầu bằng cách tạo danh mục đầu tiên",
+      "createFirstCategory": "Tạo Danh mục",
+      "nameRequired": "Tên danh mục là bắt buộc",
+      "imageRequired": "Hình ảnh danh mục là bắt buộc",
+      "createSuccess": "Tạo danh mục thành công",
+      "updateSuccess": "Cập nhật danh mục thành công",
+      "deleteSuccess": "Xóa danh mục thành công",
+      "deleteConfirm": "Bạn có chắc chắn muốn xóa danh mục này?",
+      "fetchError": "Lỗi khi tải danh mục",
+      "saveError": "Lỗi khi lưu danh mục",
+      "deleteError": "Lỗi khi xóa danh mục"
+    },
+    "validation": {
+      "nameRequired": "Tên danh mục là bắt buộc",
+      "imageRequired": "Hình ảnh danh mục là bắt buộc"
+    }
+  },
+  "brands": {
+    "title": "Thương hiệu",
+    "subtitle": "Quản lý thương hiệu sản phẩm",
+    "refresh": "Làm mới",
+    "addBrand": "Thêm thương hiệu",
+    "searchPlaceholder": "Tìm kiếm thương hiệu...",
+    "logo": "Logo",
+    "brandName": "Tên thương hiệu",
+    "description": "Mô tả",
+    "website": "Website",
+    "actions": "Thao tác",
+    "noDescription": "Không có mô tả",
+    "noWebsite": "Không có website",
+    "visit": "Truy cập",
+    "visitWebsite": "Truy cập Website",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "noBrandsYet": "Chưa có thương hiệu nào",
+    "noBrandsFound": "Không tìm thấy thương hiệu",
+    "adjustSearchTerms": "Thử điều chỉnh từ khóa tìm kiếm",
+    "createFirstBrand": "Bắt đầu bằng cách tạo thương hiệu đầu tiên",
+    "createBrand": "Tạo thương hiệu",
+    "editBrand": "Chỉnh sửa thương hiệu",
+    "nameRequired": "Tên thương hiệu là bắt buộc",
+    "imageRequired": "Logo thương hiệu là bắt buộc",
+    "namePlaceholder": "Nhập tên thương hiệu",
+    "descriptionPlaceholder": "Nhập mô tả thương hiệu",
+    "websiteUrl": "URL Website",
+    "brandLogo": "Logo thương hiệu",
+    "cancel": "Hủy",
+    "saving": "Đang lưu...",
+    "update": "Cập nhật",
+    "create": "Tạo",
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa thương hiệu này?",
+    "fetchError": "Lỗi khi tải danh sách thương hiệu",
+    "saveError": "Lỗi khi lưu thương hiệu",
+    "deleteError": "Lỗi khi xóa thương hiệu",
+    "createSuccess": "Tạo thương hiệu thành công",
+    "updateSuccess": "Cập nhật thương hiệu thành công",
+    "deleteSuccess": "Xóa thương hiệu thành công"
   }
 }
-
-

@@ -33,7 +33,7 @@
     "subscribe": "Đăng ký",
     "subscribe_success": "✓ Đăng ký thành công!",
     "copyright": "© 2025 especialty. Tất cả quyền được bảo lưu.",
-    "we_accept": "Chúng tôi chấp nhận:",
+    "we_accept": "Chúng tôi chấp nhận",
     "privacy_policy": "Chính sách bảo mật",
     "terms_of_service": "Điều khoản dịch vụ",
     "email_required": "Vui lòng cung cấp Email!",
@@ -77,6 +77,8 @@
     "success": "Thành công",
     "save": "Lưu",
     "cancel": "Hủy",
+    "close": "Đóng",
+    "shop_now": "Mua ngay",
     "confirm": "Xác nhận",
     "delete": "Xóa",
     "edit": "Chỉnh sửa",
@@ -112,17 +114,7 @@
     "shipping": "Phí vận chuyển",
     "total": "Tổng cộng"
   },
-  "checkout": {
-    "checkout": "Thanh toán",
-    "billing_address": "Địa chỉ thanh toán",
-    "shipping_address": "Địa chỉ giao hàng",
-    "payment_method": "Phương thức thanh toán",
-    "order_summary": "Tóm tắt đơn hàng",
-    "place_order": "Đặt hàng",
-    "processing": "Đang xử lý...",
-    "payment_success": "Thanh toán thành công",
-    "payment_failed": "Thanh toán thất bại"
-  },
+
   "order": {
     "order_history": "Lịch sử đơn hàng",
     "order_details": "Chi tiết đơn hàng",
@@ -284,7 +276,7 @@
     "update_address": "Cập nhật địa chỉ",
     "full_name_label": "Họ và tên",
     "email_address_label": "Địa chỉ Email",
-    "phone_number_label": "Số điện thoại", 
+    "phone_number_label": "Số điện thoại",
     "address_label_field": "Địa chỉ",
     "account_type_label": "Loại tài khoản",
     "member_since_label": "Thành viên từ",
@@ -294,7 +286,7 @@
     "recent_orders_title": "Đơn hàng gần đây",
     "order_id_label": "Mã đơn hàng",
     "date_label": "Ngày",
-    "items_label": "Sản phẩm", 
+    "items_label": "Sản phẩm",
     "total_label": "Tổng",
     "status_label": "Trạng thái",
     "item_single": "sản phẩm",
@@ -308,7 +300,7 @@
     "items_in_cart_label": "Sản phẩm trong giỏ",
     "total_orders_label": "Tổng đơn hàng",
     "pending_orders_label": "Đơn hàng chờ xử lý",
-    "completed_orders_label": "Đơn hàng hoàn thành", 
+    "completed_orders_label": "Đơn hàng hoàn thành",
     "saved_addresses_label": "Địa chỉ đã lưu",
     "quick_actions_title": "Hành động nhanh",
     "shopping_cart_title": "Giỏ hàng",
@@ -358,7 +350,7 @@
     "order_found": "đơn hàng được tìm thấy",
     "refresh": "Làm mới",
     "order_id": "Mã đơn hàng",
-    "date": "Ngày",
+    "date": "Ngày đặt",
     "items": "Sản phẩm",
     "total": "Tổng tiền",
     "status": "Trạng thái",
@@ -382,7 +374,7 @@
     "already_in_cart": "Đã có trong giỏ (sl:",
     "will_be_updated": ") - sẽ được cập nhật",
     "total_value": "Tổng giá trị:",
-    "cancel": "Hủy",
+    "cancel": "Hủy đơn",
     "add_to_cart_confirm": "Thêm vào giỏ",
     "orders_found_multiple": "đơn hàng được tìm thấy",
     "orders_found_single": "đơn hàng được tìm thấy",
@@ -454,30 +446,55 @@
     "never_forget": "Không bao giờ quên",
     "never_forget_desc": "Giữ cho các sản phẩm yêu thích luôn được tổ chức và dễ truy cập"
   },
-  "about": {
-    "about_specialty_shopping": "Về eSpecialty Shopping",
-    "about_description": "Chúng tôi đam mê mang đến cho bạn trải nghiệm mua sắm tốt nhất với các sản phẩm chất lượng, dịch vụ đặc biệt và giá cả không thể cạnh tranh. Khám phá lý do tại sao hàng triệu người tin tưởng chúng tôi cho nhu cầu mua sắm của họ.",
-    "happy_customers": "Khách hàng hài lòng",
-    "countries_served": "Quốc gia phục vụ",
-    "industry_experience": "Kinh nghiệm trong ngành",
-    "customer_satisfaction": "Sự hài lòng của khách hàng",
-    "our_story": "Câu chuyện của chúng tôi",
-    "story_content": "Được thành lập vào năm 2025, eSpecialty Shopping bắt đầu với một sứ mệnh đơn giản: làm cho các sản phẩm chất lượng có thể tiếp cận được với mọi người, ở mọi nơi.",
-    "trust_security": "Tin cậy & Bảo mật",
-    "trust_security_desc": "Bảo mật của bạn là ưu tiên của chúng tôi. Chúng tôi sử dụng mã hóa và các biện pháp bảo mật hàng đầu trong ngành để bảo vệ dữ liệu và giao dịch của bạn.",
-    "fast_reliable": "Nhanh & Đáng tin cậy",
-    "fast_reliable_desc": "Giao hàng nhanh và dịch vụ đáng tin cậy. Chúng tôi hợp tác với các nhà cung cấp vận chuyển đáng tin cậy để đảm bảo đơn hàng của bạn đến đúng hạn.",
-    "customer_first": "Khách hàng là ưu tiên",
-    "customer_first_desc": "Hỗ trợ khách hàng 24/7 và chính sách đổi trả dễ dàng. Đội ngũ tận tâm của chúng tôi luôn sẵn sàng giúp bạn với bất kỳ câu hỏi hoặc mối quan tâm nào.",
-    "get_started_today": "Bắt đầu ngay hôm nay",
-    "join_millions": "Tham gia với hàng triệu khách hàng hài lòng và trải nghiệm sự khác biệt. Bắt đầu hành trình mua sắm của bạn với chúng tôi ngay hôm nay.",
-    "explore_products": "Khám phá sản phẩm",
-    "contact_us": "Liên hệ với chúng tôi"
+  "about_us": {
+    "hero": {
+      "title": "Về eSpecialty",
+      "subtitle": "Chúng tôi đam mê mang đến cho bạn trải nghiệm mua sắm tốt nhất với sản phẩm chất lượng, dịch vụ tuyệt vời và giá cả cạnh tranh. Hãy khám phá lý do tại sao hàng triệu khách hàng tin tưởng chúng tôi."
+    },
+    "stats": {
+      "customers": "Khách hàng hài lòng",
+      "countries": "Quốc gia phục vụ",
+      "experience": "Kinh nghiệm ngành",
+      "satisfaction": "Mức độ hài lòng"
+    },
+    "story": {
+      "title": "Câu chuyện của chúng tôi",
+      "p1": "Được thành lập vào năm 2025, eSpecialty bắt đầu với một sứ mệnh đơn giản: mang sản phẩm chất lượng đến với mọi người, ở mọi nơi. Từ một cửa hàng nhỏ trực tuyến, chúng tôi đã phát triển thành một thị trường uy tín phục vụ khách hàng trên toàn thế giới.",
+      "p2": "Chúng tôi tin rằng mua sắm không chỉ là một giao dịch – mà còn là một trải nghiệm đầy cảm hứng. Vì vậy, chúng tôi lựa chọn kỹ lưỡng sản phẩm, hợp tác với nhà cung cấp uy tín và đầu tư vào công nghệ tiên tiến để mang lại sự tiện lợi tối đa.",
+      "p3": "Ngày nay, chúng tôi tự hào phục vụ hơn 50,000 khách hàng hài lòng trên toàn cầu, cung cấp từ xu hướng thời trang mới nhất đến các sản phẩm công nghệ hiện đại, tất cả đều dựa trên cam kết về chất lượng, giá cả hợp lý và dịch vụ xuất sắc.",
+      "highlight": {
+        "title": "Chất lượng hàng đầu",
+        "subtitle": "Mỗi sản phẩm đều được chọn lọc kỹ lưỡng"
+      }
+    },
+    "values": {
+      "title": "Giá trị cốt lõi",
+      "subtitle": "Những nguyên tắc này định hình mọi hoạt động của chúng tôi và tạo nên trải nghiệm khác biệt cho khách hàng.",
+      "trust": {
+        "title": "Tin cậy & Bảo mật",
+        "description": "Bảo mật của bạn là ưu tiên hàng đầu. Chúng tôi áp dụng công nghệ mã hóa và các biện pháp bảo mật tiên tiến để bảo vệ dữ liệu và giao dịch."
+      },
+      "fast": {
+        "title": "Nhanh chóng & Đáng tin cậy",
+        "description": "Giao hàng nhanh và dịch vụ đảm bảo. Chúng tôi hợp tác với các đơn vị vận chuyển uy tín để đảm bảo đơn hàng đến đúng hẹn."
+      },
+      "customer": {
+        "title": "Khách hàng là số 1",
+        "description": "Hỗ trợ khách hàng 24/7 và đổi trả dễ dàng. Đội ngũ tận tâm của chúng tôi luôn sẵn sàng giúp bạn giải đáp mọi thắc mắc."
+      }
+    },
+    "cta": {
+      "title": "Sẵn sàng mua sắm?",
+      "subtitle": "Tham gia cùng hàng ngàn khách hàng hài lòng và khám phá tại sao eSpecialty là lựa chọn hàng đầu cho mua sắm trực tuyến.",
+      "shop": "Mua ngay",
+      "contact": "Liên hệ"
+    }
   },
-  "checkout": {
+  "checkout_order": {
     "back_to_orders": "Quay lại đơn hàng",
     "checkout": "Thanh toán",
     "order_details": "Chi tiết đơn hàng",
+    "order_confirmation": "Xác nhận đơn hàng",
     "order_id": "Mã đơn hàng",
     "order_date": "Ngày đặt",
     "order_status": "Trạng thái đơn hàng",
@@ -564,5 +581,111 @@
     "order_placed_success": "Đặt hàng thành công!",
     "failed_place_order": "Không thể đặt hàng",
     "item_removed_success": "đã xóa khỏi giỏ hàng!"
+  },
+  "about": {
+    "videoTitle": "Đặc Sản Việt Nam",
+    "heading": "Vì sao bạn nên chọn eSpecialty?",
+    "paragraph1": "eSpecialty là nơi hội tụ những <strong>đặc sản nổi tiếng từ khắp mọi vùng miền Việt Nam</strong>, từ nước mắm Phú Quốc, mật ong Tây Nguyên cho đến bánh trung thu truyền thống.",
+    "paragraph2": "Chúng tôi cam kết mang đến cho bạn những sản phẩm chất lượng cao, được chọn lọc kỹ lưỡng từ các nhà sản xuất uy tín, cùng mức giá hợp lý."
+  },
+  "categories": {
+    "Bộ Quà Tặng Thực Phẩm": "Bộ Quà Tặng Thực Phẩm",
+    "Gia Vị và Nguyên Liệu Nấu Ăn": "Gia Vị và Nguyên Liệu Nấu Ăn",
+    "Mật Ong": "Mật Ong",
+    "Đồ Ăn Vặt": "Đồ Ăn Vặt",
+    "Thực Phẩm Bổ Dưỡng": "Thực Phẩm Bổ Dưỡng",
+    "Gạo, Mì, Nui": "Gạo, Mì, Nui",
+    "Socola": "Socola",
+    "Mứt, hạt": "Mứt, hạt"
+  },
+  "product of the year": {
+    "Product of the Year": "Sản phẩm của Năm",
+    "description": "Khám phá tuyệt tác được ưa chuộng và sáng tạo bậc nhất, chinh phục trái tim khách hàng trên toàn thế giới. Trải nghiệm đỉnh cao tinh hoa trong từng chi tiết.",
+    "shop_now": "Mua Ngay"
+  },
+  "banner_1": {
+    "sale": "Sản phẩm bán chạy",
+    "title": "Nước Mắm",
+    "subtitle": "Trải nghiệm vị ngon nguyên chất, tinh túy từ biển cả, phù hợp cho mọi bữa ăn gia đình",
+    "description": "Nước mắm đặc sản, hương vị đậm đà, tinh túy từ biển cả. Tăng cường hương vị cho mọi món ăn của bạn.",
+    "discount": "Giảm đến 20%",
+    "from": 120000,
+    "buttonText": "Mua Ngay"
+  },
+  "banner_2": {
+    "sale": "Ưu đãi đặc biệt",
+    "title": "Mật Ong Nguyên Chất",
+    "subtitle": "Tốt cho sức khỏe",
+    "description": "100% mật ong tự nhiên, bổ dưỡng, tăng cường sức đề kháng",
+    "discount": "Giảm 50.000đ",
+    "from": 250000,
+    "buttonText": "Khám Phá Ngay"
+  },
+  "banner_3": {
+    "sale": "Sản phẩm bán chạy",
+    "title": "Bánh Trung Thu",
+    "subtitle": "Tinh hoa ẩm thực mùa trăng",
+    "description": "Bánh Trung Thu thơm ngon, đa dạng hương vị, quà tặng ý nghĩa",
+    "discount": "Free Ship",
+    "from": 350000,
+    "buttonText": "Đặt bánh trung thu"
+  },
+  "from": {
+    "from": "Từ"
+  },
+  "marquee": {
+    "shipping": "FREESHIP - 30K THÀNH VIÊN MỚI",
+    "discount": "🎁 GIẢM 10% CHO ĐƠN HÀNG ĐẦU TIÊN",
+    "promo": "🛒 MUA 2 TẶNG 1 NHIỀU SẢN PHẨM HOT"
+  },
+  "services": {
+    "free_delivery": {
+      "title": "Giao hàng miễn phí",
+      "subtitle": "Miễn phí vận chuyển cho đơn hàng trên 1.000.000đ",
+      "description": "Miễn phí vận chuyển tiêu chuẩn cho tất cả đơn hàng trên 1.000.000đ. Chúng tôi hợp tác với các dịch vụ chuyển phát uy tín để đảm bảo sản phẩm đến tay bạn an toàn và đúng hẹn.",
+      "features": [
+        "Miễn phí vận chuyển đơn hàng 1.000.000đ+",
+        "Giao hàng tiêu chuẩn: 3-5 ngày làm việc",
+        "Có hỗ trợ giao hàng nhanh",
+        "Theo dõi đơn hàng theo thời gian thực",
+        "Đóng gói an toàn"
+      ]
+    },
+    "easy_returns": {
+      "title": "Đổi trả dễ dàng",
+      "subtitle": "Bảo đảm hoàn trả trong 30 ngày",
+      "description": "Không hài lòng với sản phẩm? Không sao! Chính sách đổi trả linh hoạt cho phép bạn hoàn trả bất kỳ sản phẩm nào trong vòng 30 ngày kể từ ngày mua.",
+      "features": [
+        "Hoàn trả trong 30 ngày",
+        "Đảm bảo hoàn tiền 100%",
+        "Miễn phí phí vận chuyển trả hàng",
+        "Thủ tục đổi trả trực tuyến đơn giản",
+        "Không phí bổ sung"
+      ]
+    },
+    "support": {
+      "title": "Hỗ trợ 24/7",
+      "subtitle": "Đội ngũ chuyên gia luôn sẵn sàng",
+      "description": "Đội ngũ hỗ trợ khách hàng tận tâm của chúng tôi luôn sẵn sàng 24/7 để giải đáp mọi câu hỏi, thắc mắc hoặc vấn đề của bạn.",
+      "features": [
+        "Hỗ trợ 24/7",
+        "Chat trực tuyến",
+        "Hỗ trợ qua email và điện thoại",
+        "Tư vấn sản phẩm chuyên sâu",
+        "Theo dõi đơn hàng"
+      ]
+    },
+    "secure_payment": {
+      "title": "Thanh toán an toàn",
+      "subtitle": "Giao dịch 100% bảo mật",
+      "description": "Mua sắm an tâm với công nghệ mã hóa hiện đại và tiêu chuẩn bảo mật hàng đầu trong ngành.",
+      "features": [
+        "Mã hóa SSL",
+        "Đa dạng phương thức thanh toán",
+        "Bảo vệ chống gian lận",
+        "Tuân thủ PCI DSS",
+        "Quy trình thanh toán an toàn"
+      ]
+    }
   }
 }

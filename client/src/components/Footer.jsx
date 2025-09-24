@@ -131,8 +131,9 @@ const Footer = () => {
                   <Link
                     to={`/shop?category=${encodeURIComponent(cat.name)}`}
                     className="text-gray-600 hover:text-gray-900 text-sm transition-colors"
+                    onClick={() => setIsCategoryOpen(false)}
                   >
-                    {cat.name}
+                    {t(`categories.${cat.name}`)}
                   </Link>
                 </li>
               ))}
@@ -193,15 +194,18 @@ const Footer = () => {
               <img src={paymentCard} alt="Payment methods" className="h-8 object-contain opacity-60" />
             </div>
             <div className="flex gap-6">
-              {[t("footer.privacy_policy"), t("footer.terms_of_service")].map((link) => (
-                <a
-                  key={link}
-                  href="#"
-                  className="text-gray-500 hover:text-gray-900 text-sm transition-colors duration-200"
-                >
-                  {link}
-                </a>
-              ))}
+              <Link
+                to="/privacy-policy"
+                className="text-gray-500 hover:text-gray-900 text-sm transition-colors duration-200"
+              >
+                {t("footer.privacy_policy")}
+              </Link>
+              <Link
+                to="/terms-of-service"
+                className="text-gray-500 hover:text-gray-900 text-sm transition-colors duration-200"
+              >
+                {t("footer.terms_of_service")}
+              </Link>
             </div>
           </div>
         </div>

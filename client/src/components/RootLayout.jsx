@@ -10,27 +10,31 @@ import { Toaster } from "react-hot-toast";
 import MainLoader from "./MainLoader";
 import ServicesTag from "./ServicesTag";
 import { FaShippingFast } from "react-icons/fa";
+import { useTranslation } from "react-i18next";
 
 const RootLayout = () => {
+  const { t } = useTranslation();
+
   return (
     <Provider store={store}>
       <PersistGate loading={<MainLoader />} persistor={persistor}>
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-2 px-4 text-center text-sm font-medium shadow-sm">
-          <div className="flex items-center justify-center gap-2 flex-wrap overflow-hidden">
-            <div className="marquee">
-              <span className="flex items-center text-l font-semibold mr-2">
+          <div className="overflow-hidden">
+            <div className="marquee whitespace-nowrap">
+              <span className="inline-flex items-center text-sm font-semibold mr-8">
                 <FaShippingFast className="mr-2" />
-                FREESHIP - 30K THÀNH VIÊN MỚI
+                {t("marquee.shipping")}
               </span>
-              <span className="flex items-center text-l font-semibold mr-2">
-                🎁 GIẢM 10% CHO ĐƠN HÀNG ĐẦU TIÊN
+              <span className="inline-flex items-center text-sm font-semibold mr-8">
+                {t("marquee.discount")}
               </span>
-              <span className="flex items-center text-l font-semibold mr-2">
-                🛒 MUA 2 TẶNG 1 NHIỀU SẢN PHẨM HOT
+              <span className="inline-flex items-center text-sm font-semibold mr-8">
+                {t("marquee.promo")}
               </span>
             </div>
           </div>
         </div>
+
         <Header />
         <ScrollRestoration />
         <Outlet />

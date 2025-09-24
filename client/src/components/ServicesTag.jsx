@@ -4,78 +4,53 @@ import Container from "./Container";
 import { TbTruckDelivery } from "react-icons/tb";
 import { HiOutlineCurrencyDollar } from "react-icons/hi2";
 import { BiSupport } from "react-icons/bi";
-import { MdOutlinePayment } from "react-icons/md";
-import { MdClose } from "react-icons/md";
+import { MdOutlinePayment, MdClose } from "react-icons/md";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
+const ServicesTag = () => {
+  const { t } = useTranslation();
+
+  // dịch ở đây
 const services = [
   {
-    title: "Free Delivery",
-    subtitle: "Miễn phí vận chuyển cho đơn hàng trên 1.000.000đ",
+    title: t("services.free_delivery.title"),
+    subtitle: t("services.free_delivery.subtitle"),
     icon: <TbTruckDelivery />,
     details: {
-      description:
-        "Miễn phí vận chuyển tiêu chuẩn cho tất cả đơn hàng trên 1.000.000đ. Chúng tôi hợp tác với các dịch vụ chuyển phát uy tín để đảm bảo sản phẩm đến tay bạn an toàn và đúng hẹn.",
-      features: [
-        "Miễn phí vận chuyển đơn hàng 1.000.000đ+",
-        "Standard delivery: 3-5 business days",
-        "Express delivery available",
-        "Real-time tracking",
-        "Secure packaging",
-      ],
+      description: t("services.free_delivery.description"),
+      features: t("services.free_delivery.features", { returnObjects: true }),
     },
   },
   {
-    title: "Easy Returns",
-    subtitle: "30-day return guarantee",
+    title: t("services.easy_returns.title"),
+    subtitle: t("services.easy_returns.subtitle"),
     icon: <HiOutlineCurrencyDollar />,
     details: {
-      description:
-        "Not satisfied with your purchase? No problem! Our hassle-free return policy allows you to return any item within 30 days of purchase.",
-      features: [
-        "30-day return window",
-        "Full refund guarantee",
-        "Free return shipping",
-        "Easy online return process",
-        "No restocking fees",
-      ],
+      description: t("services.easy_returns.description"),
+      features: t("services.easy_returns.features", { returnObjects: true }),
     },
   },
   {
-    title: "24/7 Support",
-    subtitle: "Expert support anytime",
+    title: t("services.support.title"),
+    subtitle: t("services.support.subtitle"),
     icon: <BiSupport />,
     details: {
-      description:
-        "Our dedicated customer support team is available 24/7 to assist you with any questions, concerns, or issues you may have.",
-      features: [
-        "Round-the-clock availability",
-        "Live chat support",
-        "Email and phone support",
-        "Expert product guidance",
-        "Order tracking assistance",
-      ],
+      description: t("services.support.description"),
+      features: t("services.support.features", { returnObjects: true }),
     },
   },
   {
-    title: "Secure Payment",
-    subtitle: "100% secure transactions",
+    title: t("services.secure_payment.title"),
+    subtitle: t("services.secure_payment.subtitle"),
     icon: <MdOutlinePayment />,
     details: {
-      description:
-        "Shop with confidence knowing that all your transactions are protected by industry-leading security measures and encryption technology.",
-      features: [
-        "SSL encryption",
-        "Multiple payment options",
-        "Fraud protection",
-        "PCI DSS compliance",
-        "Secure checkout process",
-      ],
+      description: t("services.secure_payment.description"),
+      features: t("services.secure_payment.features", { returnObjects: true }),
     },
   },
 ];
 
-const ServicesTag = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -164,7 +139,7 @@ const ServicesTag = () => {
                 </p>
 
                 <h4 className="font-semibold text-gray-900 mb-3">
-                  Key Features:
+                  {t("services.keyFeatures")}
                 </h4>
                 <ul className="space-y-2">
                   {selectedService.details.features.map((feature, index) => (
@@ -185,11 +160,11 @@ const ServicesTag = () => {
                   onClick={closeModal}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
-                  Close
+                  {t("common.close")}
                 </button>
                 <Link to="/shop" className="flex-1" onClick={closeModal}>
                   <button className="w-full px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium">
-                    Shop Now
+                    {t("common.shop_now")}
                   </button>
                 </Link>
               </div>

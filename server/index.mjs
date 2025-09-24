@@ -19,6 +19,8 @@ const allowedOrigins = [
   // Add localhost for development
   "http://localhost:5174",
   "http://localhost:5173",
+  "http://localhost:4173",
+  "http://localhost:4174",
   "http://localhost:8081", // iOS simulator
   "http://10.0.2.2:8081", // Android emulator
   "http://10.0.2.2:8000", // Android emulator direct access

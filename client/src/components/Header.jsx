@@ -19,7 +19,6 @@ export const getHeaderNavigation = (t) => [
   { title: t("navigation.orders"), link: "/orders" },
 ];
 
-
 const Header = () => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -29,12 +28,12 @@ const Header = () => {
 
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [categories, setCategories] = useState([]);
-  const [showNav, setShowNav] = useState(true); // 🔹 state để ẩn/hiện hàng 2
 
   const toggleCategory = () => setIsCategoryOpen(!isCategoryOpen);
   const headerNavigation = getHeaderNavigation(t);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // 🔹 Fetch categories
+  // fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -61,45 +60,42 @@ const Header = () => {
     fetchCategories();
   }, [token]);
 
-  // 🔹 Lắng nghe scroll để ẩn/hiện navigation
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setShowNav(false);
-      } else {
-        setShowNav(true);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   return (
     <div className="border-b border-gray-200 sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
-      <Container className="py-2 lg:py-3 w-full flex flex-col gap-1">
-        {/* 🔹 Hàng 1 */}
-        <div className="flex items-center justify-between w-full">
-          {/* Category icon */}
+      <Container className="py-2 lg:py-3 w-full flex items-center justify-between gap-6">
+        {/* LEFT: Category + Logo */}
+        <div className="flex items-center gap-4 flex-shrink-0">
+          {/* Category */}
           <div className="relative">
             <button
-              onClick={toggleCategory}
+              onClick={() => setIsCategoryOpen(!isCategoryOpen)}
               className="flex items-center gap-1 text-gray-700 hover:text-black px-2 py-2 transition-all"
             >
               <img src={menuIcon} alt="categories" className="h-6 w-auto" />
             </button>
-            {isCategoryOpen && categories.length > 0 && (
-              <div className="absolute left-0 mt-2 w-64 bg-white shadow-lg rounded-lg border border-gray-100 z-50">
+
+            {isCategoryOpen && (
+              <div className="absolute left-0 top-full mt-2 w-64 bg-white shadow-lg rounded-lg border border-gray-100 z-50">
                 <ul className="py-2">
+                  {/* Navigation menu items */}
+                  {headerNavigation.map((item) => (
+                    <li key={item.title}>
+                      <Link
+                        to={item.link}
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                        onClick={() => setIsCategoryOpen(false)}
+                      >
+                        {item.title}
+                      </Link>
+                    </li>
+                  ))}
+
+                  {/* Divider giữa navigation và categories */}
                   <li>
-                    <Link
-                      to="/shop"
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
-                      onClick={() => setIsCategoryOpen(false)}
-                    >
-                      All Products
-                    </Link>
+                    <hr className="my-1 border-gray-200" />
                   </li>
+
+                  {/* Categories */}
                   {categories.map((cat) => (
                     <li key={cat._id}>
                       <Link
@@ -107,10 +103,11 @@ const Header = () => {
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
                         onClick={() => setIsCategoryOpen(false)}
                       >
-                        {cat.name}
+                        {t(`categories.${cat.name}`)}
                       </Link>
                     </li>
                   ))}
+
                 </ul>
               </div>
             )}
@@ -120,16 +117,48 @@ const Header = () => {
           <Link to={"/"} className="flex-shrink-0">
             <img src={logo} alt="logo" className="h-6 w-auto" />
           </Link>
+        </div>
 
-          {/* Search */}
-          <div className="flex-1 max-w-lg px-4">
-            <SearchInput />
+        {/* Search - Allow to shrink */}
+        <div className="hidden lg:block w-80 max-w-[320px] flex-shrink">
+          <SearchInput />
+        </div>
+
+        {/* RIGHT: Navigation + Cart + User + Language */}
+        <div className="flex items-center gap-4 flex-shrink-0">
+          {/* Navigation - Hidden on small screens to save space */}
+          <div className="hidden xl:flex items-center gap-4 text-xs uppercase font-medium text-gray-700">
+            {headerNavigation.map((item) => (
+              <NavLink
+                key={item?.title}
+                to={item?.link}
+                state={{ data: location.pathname.split("/")[1] }}
+                className={({ isActive }) =>
+                  `hover:text-black relative group transition-colors whitespace-nowrap ${isActive ? "text-black font-semibold" : "text-gray-700"
+                  }`
+                }
+              >
+                <div className="relative flex items-center">
+                  {item?.title}
+                  {item?.title === t("navigation.orders") &&
+                    userInfo &&
+                    orderCount > 0 && (
+                      <span className="absolute -right-2 -top-2 w-4 h-4 rounded-full text-xs bg-red-500 text-white flex items-center justify-center font-medium animate-pulse">
+                        {orderCount}
+                      </span>
+                    )}
+                </div>
+                <span
+                  className="absolute bottom-0 left-0 inline-block w-full h-0.5 bg-black origin-left transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out"
+                />
+              </NavLink>
+            ))}
           </div>
 
           {/* Cart */}
           <Link
             to={"/cart"}
-            className="text-2xl text-gray-700 hover:text-black relative transition-colors duration-300 p-2"
+            className="text-2xl text-gray-700 hover:text-black relative transition-colors duration-300 p-2 flex-shrink-0"
           >
             <IoMdCart />
             {products?.length > 0 && (
@@ -139,68 +168,32 @@ const Header = () => {
             )}
           </Link>
 
-          {/* User info */}
+          {/* User - Fixed width to prevent overflow */}
           {userInfo ? (
             <Link
               to={"/profile"}
-              className="text-sm text-gray-700 hover:text-black font-medium transition-colors duration-300 px-2 py-1 rounded-md hover:bg-gray-50"
+              className="flex items-center gap-2 px-2 py-1 text-sm text-gray-700 hover:text-black font-medium transition-colors hover:bg-gray-50 rounded-md max-w-[140px] min-w-[40px]"
             >
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center">
-                  <FaUserAlt className="text-xs text-gray-600" />
-                </div>
-                <span className="hidden lg:inline">{userInfo?.name}</span>
+              <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                <FaUserAlt className="text-xs text-gray-600" />
               </div>
+              <span className="hidden lg:inline truncate max-w-[80px]" title={userInfo?.name}>
+                {userInfo?.name}
+              </span>
             </Link>
           ) : (
             <Link
               to={"/signin"}
-              className="text-xl text-gray-700 hover:text-black relative transition-colors duration-300 p-2"
+              className="text-xl text-gray-700 hover:text-black p-2 flex-shrink-0"
             >
               <FaUserAlt />
             </Link>
           )}
 
           {/* Language */}
-          <LanguageSwitcher />
-        </div>
-
-        {/* 🔹 Hàng 2 - Navigation */}
-        <div
-          className={`hidden md:flex items-center gap-4 justify-center text-xs uppercase font-medium text-gray-700 transition-all duration-300 overflow-hidden ${
-            showNav ? "max-h-12 opacity-100" : "max-h-0 opacity-0"
-          }`}
-        >
-          {headerNavigation.map((item) => (
-            <NavLink
-              key={item?.title}
-              to={item?.link}
-              state={{ data: location.pathname.split("/")[1] }}
-              className={`hover:text-black duration-300 relative group overflow-hidden px-1 py-2 transition-colors ${
-                location?.pathname === item?.link
-                  ? "text-black font-semibold"
-                  : "text-gray-700"
-              }`}
-            >
-              <div className="relative flex items-center">
-                {item?.title}
-                {item?.title === t("navigation.orders") &&
-                  userInfo &&
-                  orderCount > 0 && (
-                    <span className="absolute -right-1 -top-2 w-4 h-4 rounded-full text-xs bg-red-500 text-white flex items-center justify-center font-medium animate-pulse">
-                      {orderCount}
-                    </span>
-                  )}
-              </div>
-              <span
-                className={`absolute bottom-0 left-0 inline-block w-full h-0.5 bg-black group-hover:translate-x-0 duration-300 ease-out ${
-                  location?.pathname === item?.link
-                    ? "translate-x-0"
-                    : "-translate-x-full"
-                }`}
-              />
-            </NavLink>
-          ))}
+          <div className="flex-shrink-0">
+            <LanguageSwitcher />
+          </div>
         </div>
       </Container>
     </div>

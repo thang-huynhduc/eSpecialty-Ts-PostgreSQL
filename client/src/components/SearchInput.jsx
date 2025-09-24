@@ -1,10 +1,10 @@
-import { useEffect } from "react";
-import { useRef } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IoCloseOutline } from "react-icons/io5";
 import { CiSearch } from "react-icons/ci";
 import { useNavigate } from "react-router-dom";
 import { getData } from "../helpers";
+import { debounce } from "lodash";
+
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const SearchInput = () => {
@@ -14,30 +14,33 @@ const SearchInput = () => {
   const [isLoading, setLoading] = useState(false);
   const searchRef = useRef(null);
 
-  useEffect(() => {
-    if (!search.trim()) {
+  const navigate = useNavigate();
+
+  // Debounce API call để giảm số lần request
+  const fetchProducts = debounce(async (query) => {
+    if (!query.trim()) {
       setFilteredProducts([]);
+      setLoading(false);
       return;
     }
-
-    const endpoint = `${API_URL}/api/products?_search=${search}`;
-
+    setLoading(true);
     try {
-      setLoading(true);
-      const getProducts = async () => {
-        const data = await getData(endpoint);
-        // Handle the new API response format that includes success field
-        setFilteredProducts(data?.products || []);
-      };
-      getProducts();
+      const endpoint = `${API_URL}/api/products?_search=${query}`;
+      const data = await getData(endpoint);
+      setFilteredProducts(data?.products || []);
     } catch (error) {
-      console.log("error", error);
+      console.error("Search error:", error);
     } finally {
       setLoading(false);
     }
+  }, 400);
+
+  useEffect(() => {
+    fetchProducts(search);
+    return fetchProducts.cancel;
   }, [search]);
 
-  const navigate = useNavigate();
+  // Đóng dropdown khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) {
@@ -46,12 +49,15 @@ const SearchInput = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   return (
-    <div ref={searchRef} className="flex-1 h-12 relative max-w-2xl">
+    <div
+      ref={searchRef}
+      className="flex-1 h-12 relative max-w-3xl w-full"
+    >
       <div className="relative h-full">
         <CiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
         <input
@@ -60,7 +66,7 @@ const SearchInput = () => {
           onChange={(e) => setSearch(e.target.value)}
           value={search}
           onFocus={() => setIsInputFocused(true)}
-          className="w-full h-full border border-gray-200 rounded-full outline-none pl-12 pr-12 text-gray-900 placeholder-gray-500 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+          className="w-full h-full border border-gray-200 rounded-full outline-none pl-12 pr-12 text-gray-900 placeholder-gray-500 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all duration-200 bg-gray-50 focus:bg-white text-sm"
         />
         {search && (
           <button
@@ -81,75 +87,66 @@ const SearchInput = () => {
                 <span>Searching...</span>
               </div>
             </div>
+          ) : filteredProducts?.length > 0 ? (
+            <div className="max-h-80 overflow-y-auto">
+              <div className="p-3 bg-gray-50 border-b border-gray-100">
+                <p className="text-sm text-gray-600 font-medium">
+                  {filteredProducts.length} product
+                  {filteredProducts.length !== 1 ? "s" : ""} found
+                </p>
+              </div>
+              {filteredProducts.map((item, index) => (
+                <div
+                  key={index}
+                  onClick={() => {
+                    setSearch("");
+                    setIsInputFocused(false);
+                    navigate(`/product/${item?._id}`, { state: { item } });
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors duration-150 border-b border-gray-50 last:border-b-0"
+                >
+                  <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                    {item?.images?.[0] || item?.image ? (
+                      <img
+                        src={item?.images?.[0] || item?.image}
+                        alt={item?.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <CiSearch className="text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-medium text-gray-900 truncate">
+                      {item?.name}
+                    </h4>
+                    {item?.price && (
+                      <p className="text-sm text-gray-600">${item.price}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
-            <>
-              {filteredProducts?.length > 0 ? (
-                <div className="max-h-80 overflow-y-auto">
-                  <div className="p-3 bg-gray-50 border-b border-gray-100">
-                    <p className="text-sm text-gray-600 font-medium">
-                      {filteredProducts.length} product
-                      {filteredProducts.length !== 1 ? "s" : ""} found
-                    </p>
-                  </div>
-                  {filteredProducts?.map((item, index) => (
-                    <div
-                      key={index}
-                      onClick={() => {
-                        setSearch("");
-                        setIsInputFocused(false);
-                        navigate(`/product/${item?._id}`, {
-                          state: {
-                            item: item,
-                          },
-                        });
-                      }}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors duration-150 border-b border-gray-50 last:border-b-0"
-                    >
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                        {item?.images?.[0] || item?.image ? (
-                          <img
-                            src={item?.images?.[0] || item?.image}
-                            alt={item?.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <CiSearch className="text-gray-400" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-gray-900 truncate">
-                          {item?.name}
-                        </h4>
-                        {item?.price && (
-                          <p className="text-sm text-gray-600">${item.price}</p>
-                        )}
-                      </div>
-                      <CiSearch className="text-gray-400 flex-shrink-0" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CiSearch className="text-2xl text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No results found
-                  </h3>
-                  <p className="text-gray-600">
-                    No products match{" "}
-                    <span className="font-semibold text-gray-900">
-                      &ldquo;{search}&rdquo;
-                    </span>
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Try adjusting your search terms
-                  </p>
-                </div>
-              )}
-            </>
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CiSearch className="text-2xl text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No results found
+              </h3>
+              <p className="text-gray-600">
+                No products match{" "}
+                <span className="font-semibold text-gray-900">
+                  “{search}”
+                </span>
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Try adjusting your search terms
+              </p>
+            </div>
           )}
         </div>
       )}

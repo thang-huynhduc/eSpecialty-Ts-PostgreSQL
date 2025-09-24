@@ -69,9 +69,8 @@ const Home = () => {
           <p className="text-3xl font-bold text-gray-800">{value}</p>
           {change && (
             <div
-              className={`flex items-center mt-2 text-sm ${
-                changeType === "positive" ? "text-green-600" : "text-red-600"
-              }`}
+              className={`flex items-center mt-2 text-sm ${changeType === "positive" ? "text-green-600" : "text-red-600"
+                }`}
             >
               <svg
                 className="w-4 h-4 mr-1"
@@ -170,12 +169,12 @@ const Home = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-        <div>
-          <Title>{t("dashboard.dashboard_overview")}</Title>
-          <p className="text-gray-600 mt-2">
-            {t("dashboard.welcome_message")}
-          </p>
-        </div>
+      <div>
+        <Title>{t("dashboard.dashboard_overview")}</Title>
+        <p className="text-gray-600 mt-2">
+          {t("dashboard.welcome_message")}
+        </p>
+      </div>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -292,12 +291,12 @@ const Home = () => {
                 >
                   <div>
                     <p className="font-semibold text-gray-800">
-                      {t("dashboard.order")} #{order._id?.slice(-8) || "N/A"}
+                      {t("order.order_number")} #{order._id?.slice(-8) || "N/A"}
                     </p>
                     <p className="text-sm text-gray-600">
                       {order.userId?.name ||
                         order.address?.firstName ||
-                        t("dashboard.customer")}
+                        t("order.customer")}
                     </p>
                     <p className="text-xs text-gray-500">
                       {formatDate(order.date)}
@@ -308,137 +307,148 @@ const Home = () => {
                       {formatCurrency(order.amount || 0)}
                     </p>
                     <span
-                      className={`inline-block px-2 py-1 text-xs rounded-full ${
-                        order.status === "delivered"
+                      className={`inline-block px-2 py-1 text-xs rounded-full 
+              ${order.status === "delivered"
                           ? "bg-green-100 text-green-800"
                           : order.status === "shipped"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
+                            ? "bg-blue-100 text-blue-800"
+                            : order.status === "cancelled"
+                              ? "bg-red-100 text-red-800"
+                              : order.status === "refunded"
+                                ? "bg-gray-100 text-gray-800"
+                                : "bg-yellow-100 text-yellow-800"
+                        }`}
                     >
-                      {order.status || "pending"}
+                      {t(`orders.${order.status}`) || t("orders.pending")}
                     </span>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-center py-8">{t("dashboard.no_recent_orders")}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Top Products */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-800">
-              {t("dashboard.popular_products")}
-            </h3>
-            <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-              {t("dashboard.view_all")}
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            {stats.topProducts.length > 0 ? (
-              stats.topProducts.map((product, index) => (
-                <div
-                  key={index}
-                  className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-800">
-                      {product.name || t("dashboard.product_name")}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {product.category || t("common.category")}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-800">
-                      {formatCurrency(product.price || 0)}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {t("dashboard.stock")}: {product.stock || 0}
-                    </p>
-                  </div>
-                </div>
-              ))
-            ) : (
               <p className="text-gray-500 text-center py-8">
-                {t("dashboard.no_products_available")}
+                {t("order.no_orders_yet")}
               </p>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
-        <h3 className="text-2xl font-bold mb-4">{t("dashboard.quick_actions")}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 rounded-xl p-4 text-left">
-            <div className="flex items-center space-x-3">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-              <span className="font-semibold">{t("dashboard.add_new_product")}</span>
+          {/* Top Products */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800">
+                {t("dashboard.popular_products")}
+              </h3>
+              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                {t("dashboard.view_all")}
+              </button>
             </div>
-          </button>
 
-          <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 rounded-xl p-4 text-left">
-            <div className="flex items-center space-x-3">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-              <span className="font-semibold">{t("dashboard.view_orders")}</span>
+            <div className="space-y-4">
+              {stats.topProducts.length > 0 ? (
+                stats.topProducts.map((product, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800">
+                        {product.name || t("dashboard.product_name")}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {product.category
+                          ? t(`categories.${product.category}`, {
+                            defaultValue: product.category,
+                          })
+                          : t("common.category")}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-800">
+                        {formatCurrency(product.price || 0)}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {t("dashboard.stock")}: {product.stock || 0}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-8">
+                  {t("dashboard.no_products_available")}
+                </p>
+              )}
             </div>
-          </button>
 
-          <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 rounded-xl p-4 text-left">
-            <div className="flex items-center space-x-3">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-              <span className="font-semibold">{t("dashboard.manage_users")}</span>
-            </div>
-          </button>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+          <h3 className="text-2xl font-bold mb-4">{t("dashboard.quick_actions")}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 rounded-xl p-4 text-left">
+              <div className="flex items-center space-x-3">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                <span className="font-semibold">{t("dashboard.add_new_product")}</span>
+              </div>
+            </button>
+
+            <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 rounded-xl p-4 text-left">
+              <div className="flex items-center space-x-3">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                <span className="font-semibold">{t("dashboard.view_orders")}</span>
+              </div>
+            </button>
+
+            <button className="bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 rounded-xl p-4 text-left">
+              <div className="flex items-center space-x-3">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+                <span className="font-semibold">{t("dashboard.manage_users")}</span>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+      );
 };
 
-export default Home;
+      export default Home;

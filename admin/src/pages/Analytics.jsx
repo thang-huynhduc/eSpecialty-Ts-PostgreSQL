@@ -28,8 +28,9 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import { serverUrl } from "../../config";
-
+import { useTranslation } from "react-i18next";
 const Analytics = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [quickStats, setQuickStats] = useState(null);
   const [analytics, setAnalytics] = useState(null);
@@ -98,28 +99,28 @@ const Analytics = () => {
 
   const displayStats = [
     {
-      title: "Tổng Doanh Thu",
+      title: t('analytics.stats.total_revenue'),
       value: formatVND(stats?.totalRevenue || 0),
       change: `+${stats?.growth.revenue || 0}%`,
       trend: "up",
       icon: <FaDollarSign />,
     },
     {
-      title: "Tổng Đơn Hàng",
+      title: t('analytics.stats.total_orders'),
       value: (stats?.totalOrders || 0).toLocaleString('vi-VN'),
       change: `+${stats?.growth.orders || 0}%`,
       trend: "up",
       icon: <FaShoppingCart />,
     },
     {
-      title: "Tổng Người Dùng",
+      title: t('analytics.stats.total_users'),
       value: (stats?.totalUsers || 0).toLocaleString('vi-VN'),
       change: `+${stats?.growth.users || 0}%`,
       trend: "up",
       icon: <FaUsers />,
     },
     {
-      title: "Tổng Sản Phẩm",
+      title: t('analytics.stats.total_products'),
       value: (stats?.totalProducts || 0).toLocaleString('vi-VN'),
       change: `+${stats?.growth.products || 0}%`,
       trend: "up",
@@ -174,10 +175,10 @@ const Analytics = () => {
           </div>
           <div>
             <h1 className="text-4xl font-bold text-gray-800">
-              Analytics Dashboard
+              {t('analytics.dashboard')}
             </h1>
             <p className="text-gray-600 text-lg">
-              Theo dõi hiệu suất kinh doanh realtime
+              {t('analytics.subtitle')}
             </p>
           </div>
         </div>
@@ -225,7 +226,7 @@ const Analytics = () => {
             <div className="relative z-10">
               <div className="flex items-center gap-4 mb-4">
                 <FaClock className="text-3xl" />
-                <h3 className="text-xl font-bold">Doanh Thu Hôm Nay</h3>
+                <h3 className="text-xl font-bold">{t('analytics.quick_stats.todays_sales')}</h3>
               </div>
               <p className="text-4xl font-bold">{formatVND(quickStats?.todaysSales || 0)}</p>
             </div>
@@ -236,7 +237,7 @@ const Analytics = () => {
             <div className="relative z-10">
               <div className="flex items-center gap-4 mb-4">
                 <FaShoppingCart className="text-3xl" />
-                <h3 className="text-xl font-bold">Đơn Hàng Hôm Nay</h3>
+                <h3 className="text-xl font-bold">{t('analytics.quick_stats.todays_orders')}</h3>
               </div>
               <p className="text-4xl font-bold">{quickStats?.todaysOrders?.toLocaleString('vi-VN') || 0}</p>
             </div>
@@ -252,7 +253,7 @@ const Analytics = () => {
           >
             <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
               <FaChartLine />
-              Biểu Đồ Doanh Thu & Đơn Hàng
+              {t('analytics.charts.revenue_orders')}
             </h3>
             <ResponsiveContainer width="100%" height={350}>
               <AreaChart data={monthlyRevenueData}>
@@ -294,7 +295,7 @@ const Analytics = () => {
           >
             <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
               <FaEye />
-              Trạng Thái Đơn Hàng
+              {t('analytics.charts.order_status')}
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -345,7 +346,7 @@ const Analytics = () => {
         >
           <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
             <FaUsers />
-            Biểu Đồ Đăng Ký Người Dùng
+            {t('analytics.charts.user_registrations')}
           </h3>
           <ResponsiveContainer width="100%" height={350}>
             <BarChart data={userRegistrationData}>
@@ -377,7 +378,7 @@ const Analytics = () => {
           >
             <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
               <FaClock />
-              Đơn Hàng Gần Đây
+              {t('analytics.sections.recent_orders')}
             </h3>
             <div className="space-y-4">
               {stats?.recentOrders.map((order, index) => (
@@ -418,7 +419,7 @@ const Analytics = () => {
           >
             <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
               <FaFireAlt />
-              Sản Phẩm Hàng Đầu
+              {t('analytics.sections.top_products')}
             </h3>
             <div className="space-y-4">
               {stats?.topProducts.map((product, index) => (
@@ -454,7 +455,7 @@ const Analytics = () => {
           >
             <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-3">
               <FaUsers />
-              Người Dùng Gần Đây
+              {t('analytics.sections.recent_users')}
             </h3>
             <div className="space-y-4">
               {stats?.recentUsers.map((user, index) => (

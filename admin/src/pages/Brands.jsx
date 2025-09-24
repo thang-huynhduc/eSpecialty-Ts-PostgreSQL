@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Container from "../components/Container";
+import {useTranslation} from "react-i18next";
 import {
   FaPlus,
   FaEdit,
@@ -14,6 +15,7 @@ import {
 import { IoMdClose } from "react-icons/io";
 
 const Brands = () => {
+  const { t } = useTranslation();
   const { token } = useSelector((state) => state.auth);
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,15 +48,15 @@ const Brands = () => {
       if (data.success) {
         setBrands(data.brands);
       } else {
-        toast.error(data.message || "Failed to fetch brands");
+        toast.error(data.message || t('brands.fetchError'));
       }
     } catch (error) {
       console.error("Fetch brands error:", error);
-      toast.error("Failed to fetch brands");
+      toast.error(t('brands.fetchError'));
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, t]);
 
   useEffect(() => {
     fetchBrands();
@@ -86,12 +88,12 @@ const Brands = () => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      toast.error("Brand name is required");
+      toast.error(t('brands.nameRequired'));
       return;
     }
 
     if (!formData.image && !editingBrand) {
-      toast.error("Brand image is required");
+      toast.error(t('brands.imageRequired'));
       return;
     }
 
@@ -123,17 +125,17 @@ const Brands = () => {
       if (data.success) {
         toast.success(
           editingBrand
-            ? "Brand updated successfully"
-            : "Brand created successfully"
+            ? t('brands.updateSuccess')
+            : t('brands.createSuccess')
         );
         fetchBrands();
         closeModal();
       } else {
-        toast.error(data.message || "Failed to save brand");
+        toast.error(data.message || t('brands.saveError'));
       }
     } catch (error) {
       console.error("Submit brand error:", error);
-      toast.error("Failed to save brand");
+      toast.error(t('brands.saveError'));
     } finally {
       setSubmitting(false);
     }
@@ -141,7 +143,7 @@ const Brands = () => {
 
   // Handle delete brand
   const handleDelete = async (brandId) => {
-    if (!window.confirm("Are you sure you want to delete this brand?")) {
+    if (!window.confirm(t('brands.deleteConfirm'))) {
       return;
     }
 
@@ -159,14 +161,14 @@ const Brands = () => {
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Brand deleted successfully");
+        toast.success(t('brands.deleteSuccess'));
         fetchBrands();
       } else {
-        toast.error(data.message || "Failed to delete brand");
+        toast.error(data.message || t('brands.deleteError'));
       }
     } catch (error) {
       console.error("Delete brand error:", error);
-      toast.error("Failed to delete brand");
+      toast.error(t('brands.deleteError'));
     }
   };
 
@@ -219,25 +221,25 @@ const Brands = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Brands
+              {t('brands.title')}
             </h1>
-            <p className="text-gray-600 mt-1">Manage product brands</p>
+            <p className="text-gray-600 mt-1">{t('brands.subtitle')}</p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={fetchBrands}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              title="Refresh Brands"
+              title={t('brands.refresh')}
             >
               <FaSync className="w-4 h-4" />
-              Refresh
+              {t('brands.refresh')}
             </button>
             <button
               onClick={() => openModal()}
               className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
             >
               <FaPlus />
-              Add Brand
+              {t('brands.addBrand')}
             </button>
           </div>
         </div>
@@ -248,7 +250,7 @@ const Brands = () => {
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search brands..."
+              placeholder={t('brands.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
@@ -266,19 +268,19 @@ const Brands = () => {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Logo
+                        {t('brands.logo')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Brand Name
+                        {t('brands.brandName')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
+                        {t('brands.description')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Website
+                        {t('brands.website')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        {t('brands.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -335,19 +337,19 @@ const Brands = () => {
           <div className="text-center py-12">
             <FaImage className="mx-auto text-6xl text-gray-300 mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              {searchTerm ? "No brands found" : "No brands yet"}
+              {searchTerm ? t('brands.noBrandsFound') : t('brands.noBrandsYet')}
             </h3>
             <p className="text-gray-500 mb-6">
               {searchTerm
-                ? "Try adjusting your search terms"
-                : "Start by creating your first brand"}
+                ? t('brands.adjustSearchTerms')
+                : t('brands.createFirstBrand')}
             </p>
             {!searchTerm && (
               <button
                 onClick={() => openModal()}
                 className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
               >
-                Create Brand
+                {t('brands.createBrand')}
               </button>
             )}
           </div>
@@ -360,19 +362,19 @@ const Brands = () => {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Logo
+                        {t('brands.logo')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Brand Name
+                        {t('brands.brandName')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
+                        {t('brands.description')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Website
+                        {t('brands.website')}
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        {t('brands.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -396,7 +398,7 @@ const Brands = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-600 max-w-xs truncate">
-                            {brand.description || "No description"}
+                            {brand.description || t('brands.noDescription')}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -408,11 +410,11 @@ const Brands = () => {
                               className="flex items-center gap-1 text-blue-600 text-sm hover:underline"
                             >
                               <FaExternalLinkAlt className="text-xs" />
-                              Visit
+                              {t('brands.visit')}
                             </a>
                           ) : (
                             <span className="text-sm text-gray-400">
-                              No website
+                              {t('brands.noWebsite')}
                             </span>
                           )}
                         </td>
@@ -423,14 +425,14 @@ const Brands = () => {
                               className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
                             >
                               <FaEdit className="text-xs" />
-                              Edit
+                              {t('brands.edit')}
                             </button>
                             <button
                               onClick={() => handleDelete(brand._id)}
                               className="flex items-center gap-1 px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
                             >
                               <FaTrash className="text-xs" />
-                              Delete
+                              {t('brands.delete')}
                             </button>
                           </div>
                         </td>
@@ -472,7 +474,7 @@ const Brands = () => {
                         className="flex items-center gap-1 text-blue-600 text-sm mb-3 hover:underline"
                       >
                         <FaExternalLinkAlt />
-                        Visit Website
+                        {t('brands.visitWebsite')}
                       </a>
                     )}
                     <div className="flex gap-2">
@@ -481,14 +483,14 @@ const Brands = () => {
                         className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
                       >
                         <FaEdit />
-                        Edit
+                        {t('brands.edit')}
                       </button>
                       <button
                         onClick={() => handleDelete(brand._id)}
                         className="flex items-center gap-1 px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
                       >
                         <FaTrash />
-                        Delete
+                        {t('brands.delete')}
                       </button>
                     </div>
                   </div>
@@ -511,7 +513,7 @@ const Brands = () => {
             <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center p-6 border-b">
                 <h2 className="text-xl font-semibold">
-                  {editingBrand ? "Edit Brand" : "Add Brand"}
+                  {editingBrand ? t('brands.editBrand') : t('brands.addBrand')}
                 </h2>
                 <button
                   onClick={closeModal}
@@ -524,7 +526,7 @@ const Brands = () => {
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Brand Name *
+                    {t('brands.brandName')} *
                   </label>
                   <input
                     type="text"
@@ -532,14 +534,14 @@ const Brands = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    placeholder="Enter brand name"
+                    placeholder={t('brands.namePlaceholder')}
                     required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
+                    {t('brands.description')}
                   </label>
                   <textarea
                     name="description"
@@ -547,13 +549,13 @@ const Brands = () => {
                     onChange={handleInputChange}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    placeholder="Enter brand description"
+                    placeholder={t('brands.descriptionPlaceholder')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Website URL
+                    {t('brands.websiteUrl')}
                   </label>
                   <input
                     type="url"
@@ -567,7 +569,7 @@ const Brands = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Brand Logo *
+                    {t('brands.brandLogo')} *
                   </label>
                   <input
                     type="file"
@@ -592,7 +594,7 @@ const Brands = () => {
                     onClick={closeModal}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    Cancel
+                    {t('brands.cancel')}
                   </button>
                   <button
                     type="submit"
@@ -600,10 +602,10 @@ const Brands = () => {
                     className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
                   >
                     {submitting
-                      ? "Saving..."
+                      ? t('brands.saving')
                       : editingBrand
-                      ? "Update"
-                      : "Create"}
+                      ? t('brands.update')
+                      : t('brands.create')}
                   </button>
                 </div>
               </form>

@@ -6,6 +6,7 @@ import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
 import { setOrderCount } from "../redux/especialtySlice";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
   FaShoppingBag,
   FaCreditCard,
@@ -24,6 +25,7 @@ import {
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Order = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.eSpecialtyReducer.userInfo);
@@ -141,8 +143,8 @@ const Order = () => {
       if (data.success) {
         toast.success("Đơn hàng đã được hủy thành công");
         // Cập nhật state local
-        setOrders(orders.map(o => 
-          o._id === order._id 
+        setOrders(orders.map(o =>
+          o._id === order._id
             ? { ...o, status: "cancelled", paymentStatus: data.order.paymentStatus, updatedAt: data.order.updatedAt }
             : o
         ));
@@ -196,6 +198,12 @@ const Order = () => {
     }
   };
 
+  const getStatusLabel = (status) => {
+    return t(`order.${status}`, status);
+  };
+  const getPaymentStatusLabel = (status) => {
+    return t(`order.${status}`, status);
+  };
   const getPaymentStatusColor = (status) => {
     switch (status) {
       case "pending":
@@ -209,7 +217,6 @@ const Order = () => {
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
-
   if (loading) {
     return (
       <Container>
@@ -253,14 +260,14 @@ const Order = () => {
           <div className="flex flex-col space-y-2">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <FaShoppingBag className="w-8 h-8" />
-              Đơn hàng của tôi
+              {t("orders.my_orders")}
             </h1>
             <nav className="flex text-sm text-gray-500">
               <Link to="/" className="hover:text-gray-700 transition-colors">
-                Trang chủ
+                {t("orders.home")}
               </Link>
               <span className="mx-2">/</span>
-              <span className="text-gray-900">Đơn hàng</span>
+              <span className="text-gray-900">{t("orders.orders")}</span>
             </nav>
           </div>
         </Container>
@@ -277,14 +284,14 @@ const Order = () => {
             <div className="max-w-md mx-auto">
               <FaShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-6" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Chưa có đơn hàng nào
+                {t("orders.no_orders_yet")}
               </h2>
               <p className="text-gray-600 mb-8">
-                Hãy bắt đầu mua sắm để tạo đơn hàng đầu tiên của bạn
+                {t("orders.no_orders_message")}
               </p>
               <Link to="/shop">
                 <button className="bg-gray-900 text-white px-8 py-3 rounded-md hover:bg-gray-800 transition-colors font-medium">
-                  Bắt đầu mua sắm
+                  {t("orders.start_shopping")}
                 </button>
               </Link>
             </div>
@@ -293,13 +300,13 @@ const Order = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <p className="text-gray-600">
-                {orders.length} đơn hàng
+                {orders.length} {t("orders.order_found")}
               </p>
               <button
                 onClick={fetchUserOrders}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
               >
-                <FaSyncAlt className="w-4 h-4" /> Làm mới
+                <FaSyncAlt className="w-4 h-4" /> {t("orders.refresh")}
               </button>
             </div>
 
@@ -314,7 +321,7 @@ const Order = () => {
                           onClick={() => handleSort("_id")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          Mã đơn
+                          {t("orders.order_id")}
                           {sortConfig.key === "_id" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -331,7 +338,7 @@ const Order = () => {
                           onClick={() => handleSort("date")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          Ngày đặt
+                          {t("orders.date")}
                           {sortConfig.key === "date" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -344,14 +351,14 @@ const Order = () => {
                         </button>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Sản phẩm
+                        {t("orders.items")}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <button
                           onClick={() => handleSort("amount")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          Tổng tiền
+                          {t("orders.total_header")}
                           {sortConfig.key === "amount" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -368,7 +375,7 @@ const Order = () => {
                           onClick={() => handleSort("status")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          Trạng thái
+                          {t("orders.status_header")}
                           {sortConfig.key === "status" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
@@ -381,10 +388,10 @@ const Order = () => {
                         </button>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Thanh toán
+                        {t("orders.payment_header")}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Hành động
+                        {t("orders.actions_header")}
                       </th>
                     </tr>
                   </thead>
@@ -441,12 +448,12 @@ const Order = () => {
                             </div>
                             <div>
                               <div className="text-sm text-gray-900">
-                                {order.items.length} sản phẩm
+                                {order.items.length} {t("orders.items")}
                               </div>
                               <div className="text-sm text-gray-500 truncate max-w-xs">
                                 {order.items[0]?.name}
                                 {order.items.length > 1 &&
-                                  `, +${order.items.length - 1} khác`}
+                                  `, +${order.items.length - 1} ${t("orders.others")}`}
                               </div>
                             </div>
                           </div>
@@ -463,9 +470,10 @@ const Order = () => {
                             )}`}
                           >
                             {getStatusIcon(order.status)}
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            {getStatusLabel(order.status)}
                           </span>
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPaymentStatusColor(
@@ -477,10 +485,10 @@ const Order = () => {
                             ) : (
                               <FaCreditCard className="w-3 h-3" />
                             )}
-                            {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
-                            
+                            {getPaymentStatusLabel(order.paymentStatus)}
                           </span>
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex gap-2">
                             {/* Chỉ hiển thị nút hủy khi trạng thái là pending */}
@@ -490,7 +498,7 @@ const Order = () => {
                                 className="text-red-600 hover:text-red-900 transition-colors flex flex-row gap-2 justify-center items-center"
                                 title="Hủy đơn hàng"
                               >
-                                <FaTimes className="w-4 h-4" /> Hủy Đơn
+                                <FaTimes className="w-4 h-4" /> {t("orders.cancel")}
                               </button>
                             )}
                           </div>
@@ -532,7 +540,7 @@ const Order = () => {
                     Bạn có chắc chắn muốn hủy đơn hàng{" "}
                     <span className="font-semibold">
                       #{cancelModal.order._id.slice(-8).toUpperCase()}
-                    </span>? 
+                    </span>?
                     <br />
                     Hành động này không thể hoàn tác.
                   </p>

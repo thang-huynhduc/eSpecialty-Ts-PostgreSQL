@@ -6,8 +6,11 @@ import Title from "../ui/title";
 import ProductCard from "../ProductCard";
 import { getData } from "../../helpers";
 import { config } from "../../../config";
+import { useTranslation } from "react-i18next";
 
 const BestSellers = () => {
+  const { t } = useTranslation();
+
   const settings = {
     infinite: true,
     speed: 500,
@@ -69,7 +72,7 @@ const BestSellers = () => {
     return (
       <div className="w-full py-10">
         <div className="flex items-center justify-between">
-          <Title className="text-2xl mb-3 font-bold">Our Bestsellers</Title>
+          <Title className="text-2xl mb-3 font-bold">{t("product.best_sellers")}</Title>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {Array.from({ length: 4 }).map((_, index) => (
@@ -93,7 +96,7 @@ const BestSellers = () => {
   return (
     <div className="w-full py-10">
       <div className="flex items-center justify-between">
-        <Title className="text-2xl mb-3 font-bold">Our Bestsellers</Title>
+        <Title className="text-2xl mb-3 font-bold">{t("product.best_sellers")}</Title>
         {/* <Link to={"/shop"}>See all</Link> */}
       </div>
 

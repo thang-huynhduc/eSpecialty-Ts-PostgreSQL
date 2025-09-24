@@ -41,6 +41,9 @@ const Shop = () => {
       }));
     }
   }, [location.search]);
+  const categoryLabel = filters.category
+    ? t(`categories.${filters.category}`)
+    : t("categories.all");
 
   // Fetch products with pagination and filters
   useEffect(() => {
@@ -288,7 +291,7 @@ const Shop = () => {
                 <span className="text-sm text-gray-600">{t("shop.active_filters_label")}</span>
                 {filters.category && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-900 text-white text-sm rounded-full">
-                    {t("shop.category_filter")} {filters.category}
+                    {t("shop.category_filter")} {categoryLabel}
                     <button
                       onClick={() => handleFilterChange({ category: "" })}
                       className="ml-1 hover:text-gray-300"

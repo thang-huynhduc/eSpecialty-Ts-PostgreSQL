@@ -11,8 +11,10 @@ import {
   FaSync,
 } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
+import { useTranslation } from "react-i18next";
 
 const Categories = () => {
+  const { t } = useTranslation();
   const { token } = useSelector((state) => state.auth);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,15 +44,15 @@ const Categories = () => {
       if (data.success) {
         setCategories(data.categories);
       } else {
-        toast.error(data.message || "Failed to fetch categories");
+        toast.error(data.message || t('categories.messages.fetchError'));
       }
     } catch (error) {
       console.error("Fetch categories error:", error);
-      toast.error("Failed to fetch categories");
+      toast.error(t('categories.messages.fetchError'));
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, t]);
 
   useEffect(() => {
     fetchCategories();
@@ -82,12 +84,12 @@ const Categories = () => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      toast.error("Category name is required");
+      toast.error(t('categories.validation.nameRequired'));
       return;
     }
 
     if (!formData.image && !editingCategory) {
-      toast.error("Category image is required");
+      toast.error(t('categories.validation.imageRequired'));
       return;
     }
 
@@ -102,9 +104,8 @@ const Categories = () => {
       }
 
       const url = editingCategory
-        ? `${import.meta.env.VITE_BACKEND_URL}/api/category/${
-            editingCategory._id
-          }`
+        ? `${import.meta.env.VITE_BACKEND_URL}/api/category/${editingCategory._id
+        }`
         : `${import.meta.env.VITE_BACKEND_URL}/api/category`;
 
       const response = await fetch(url, {
@@ -120,17 +121,17 @@ const Categories = () => {
       if (data.success) {
         toast.success(
           editingCategory
-            ? "Category updated successfully"
-            : "Category created successfully"
+            ? t('categories.messages.updateSuccess')
+            : t('categories.messages.createSuccess')
         );
         fetchCategories();
         closeModal();
       } else {
-        toast.error(data.message || "Failed to save category");
+        toast.error(data.message || t('categories.messages.saveError'));
       }
     } catch (error) {
       console.error("Submit category error:", error);
-      toast.error("Failed to save category");
+      toast.error(t('categories.messages.saveError'));
     } finally {
       setSubmitting(false);
     }
@@ -138,7 +139,7 @@ const Categories = () => {
 
   // Handle delete category
   const handleDelete = async (categoryId) => {
-    if (!window.confirm("Are you sure you want to delete this category?")) {
+    if (!window.confirm(t('categories.messages.deleteConfirm'))) {
       return;
     }
 
@@ -156,14 +157,14 @@ const Categories = () => {
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Category deleted successfully");
+        toast.success(t('categories.messages.deleteSuccess'));
         fetchCategories();
       } else {
-        toast.error(data.message || "Failed to delete category");
+        toast.error(data.message || t('categories.messages.deleteError'));
       }
     } catch (error) {
       console.error("Delete category error:", error);
-      toast.error("Failed to delete category");
+      toast.error(t('categories.messages.deleteError'));
     }
   };
 
@@ -213,25 +214,25 @@ const Categories = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Categories
+              {t('categories.title')}
             </h1>
-            <p className="text-gray-600 mt-1">Manage product categories</p>
+            <p className="text-gray-600 mt-1">{t('categories.subtitle')}</p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={fetchCategories}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              title="Refresh Categories"
+              title={t('categories.actions.refreshTitle')}
             >
               <FaSync className="w-4 h-4" />
-              Refresh
+              {t('categories.actions.refresh')}
             </button>
             <button
               onClick={() => openModal()}
               className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
             >
               <FaPlus />
-              Add Category
+              {t('categories.actions.addCategory')}
             </button>
           </div>
         </div>
@@ -242,7 +243,7 @@ const Categories = () => {
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search categories..."
+              placeholder={t('categories.search.placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
@@ -260,16 +261,16 @@ const Categories = () => {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Image
+                        {t('categories.table.image')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Name
+                        {t('categories.table.name')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
+                        {t('categories.table.description')}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        {t('categories.table.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -324,19 +325,19 @@ const Categories = () => {
           <div className="text-center py-12">
             <FaImage className="mx-auto text-6xl text-gray-300 mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              {searchTerm ? "No categories found" : "No categories yet"}
+              {searchTerm ? t('categories.messages.noCategoriesFound') : t('categories.messages.noCategories')}
             </h3>
             <p className="text-gray-500 mb-6">
               {searchTerm
-                ? "Try adjusting your search terms"
-                : "Start by creating your first category"}
+                ? t('categories.messages.tryAdjustingSearch')
+                : t('categories.messages.startCreating')}
             </p>
             {!searchTerm && (
               <button
                 onClick={() => openModal()}
                 className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
               >
-                Create Category
+                {t('categories.messages.createFirstCategory')}
               </button>
             )}
           </div>
@@ -349,16 +350,16 @@ const Categories = () => {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Image
+                        {t('categories.table.image')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Name
+                        {t('categories.table.name')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
+                        {t('categories.table.description')}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        {t('categories.table.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -374,12 +375,12 @@ const Categories = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {category.name}
+                            {t(`categories.${category.name}`, { defaultValue: category.name })}
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-600 max-w-xs truncate">
-                            {category.description || "No description"}
+                            {category.description || t('categories.messages.noDescription')}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -389,14 +390,14 @@ const Categories = () => {
                               className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
                             >
                               <FaEdit />
-                              Edit
+                              {t('categories.actions.edit')}
                             </button>
                             <button
                               onClick={() => handleDelete(category._id)}
                               className="flex items-center gap-1 px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
                             >
                               <FaTrash />
-                              Delete
+                              {t('categories.actions.delete')}
                             </button>
                           </div>
                         </td>
@@ -435,14 +436,14 @@ const Categories = () => {
                           className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
                         >
                           <FaEdit />
-                          Edit
+                          {t('categories.actions.edit')}
                         </button>
                         <button
                           onClick={() => handleDelete(category._id)}
                           className="flex items-center gap-1 px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
                         >
                           <FaTrash />
-                          Delete
+                          {t('categories.actions.delete')}
                         </button>
                       </div>
                     </div>
@@ -466,7 +467,7 @@ const Categories = () => {
             <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center p-6 border-b">
                 <h2 className="text-xl font-semibold">
-                  {editingCategory ? "Edit Category" : "Add Category"}
+                  {editingCategory ? t('categories.modal.editTitle') : t('categories.modal.addTitle')}
                 </h2>
                 <button
                   onClick={closeModal}
@@ -479,7 +480,7 @@ const Categories = () => {
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category Name *
+                    {t('categories.modal.nameLabel')}
                   </label>
                   <input
                     type="text"
@@ -487,14 +488,14 @@ const Categories = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    placeholder="Enter category name"
+                    placeholder={t('categories.modal.namePlaceholder')}
                     required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
+                    {t('categories.modal.descriptionLabel')}
                   </label>
                   <textarea
                     name="description"
@@ -502,13 +503,13 @@ const Categories = () => {
                     onChange={handleInputChange}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                    placeholder="Enter category description"
+                    placeholder={t('categories.modal.descriptionPlaceholder')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category Image *
+                    {t('categories.modal.imageLabel')}
                   </label>
                   <input
                     type="file"
@@ -533,7 +534,7 @@ const Categories = () => {
                     onClick={closeModal}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    Cancel
+                    {t('categories.actions.cancel')}
                   </button>
                   <button
                     type="submit"
@@ -541,10 +542,10 @@ const Categories = () => {
                     className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
                   >
                     {submitting
-                      ? "Saving..."
+                      ? t('categories.actions.saving')
                       : editingCategory
-                      ? "Update"
-                      : "Create"}
+                        ? t('categories.actions.update')
+                        : t('categories.actions.create')}
                   </button>
                 </div>
               </form>

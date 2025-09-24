@@ -3,36 +3,36 @@ import { Link } from "react-router-dom";
 import Container from "../components/Container";
 import { FaUsers, FaGlobe, FaAward, FaHeart } from "react-icons/fa";
 import { MdSecurity, MdLocalShipping, MdSupport } from "react-icons/md";
-
-const stats = [
-  { number: "50K+", label: "Happy Customers", icon: <FaUsers /> },
-  { number: "100+", label: "Countries Served", icon: <FaGlobe /> },
-  { number: "5 Years", label: "Industry Experience", icon: <FaAward /> },
-  { number: "99%", label: "Customer Satisfaction", icon: <FaHeart /> },
-];
-
-const values = [
-  {
-    icon: <MdSecurity />,
-    title: "Trust & Security",
-    description:
-      "Your security is our priority. We use industry-leading encryption and security measures to protect your data and transactions.",
-  },
-  {
-    icon: <MdLocalShipping />,
-    title: "Fast & Reliable",
-    description:
-      "Quick delivery and reliable service. We partner with trusted shipping providers to ensure your orders arrive on time.",
-  },
-  {
-    icon: <MdSupport />,
-    title: "Customer First",
-    description:
-      "24/7 customer support and hassle-free returns. Our dedicated team is always here to help you with any questions or concerns.",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 const About = () => {
+  const { t } = useTranslation();
+
+  const stats = [
+    { number: "50K+", label: t("about_us.stats.customers"), icon: <FaUsers /> },
+    { number: "100+", label: t("about_us.stats.countries"), icon: <FaGlobe /> },
+    { number: "5 Years", label: t("about_us.stats.experience"), icon: <FaAward /> },
+    { number: "99%", label: t("about_us.stats.satisfaction"), icon: <FaHeart /> },
+  ];
+
+  const values = [
+    {
+      icon: <MdSecurity />,
+      title: t("about_us.values.trust.title"),
+      description: t("about_us.values.trust.description"),
+    },
+    {
+      icon: <MdLocalShipping />,
+      title: t("about_us.values.fast.title"),
+      description: t("about_us.values.fast.description"),
+    },
+    {
+      icon: <MdSupport />,
+      title: t("about_us.values.customer.title"),
+      description: t("about_us.values.customer.description"),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -45,13 +45,10 @@ const About = () => {
             className="text-center max-w-4xl mx-auto"
           >
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              About especialty Shopping
+              {t("about_us.hero.title")}
             </h1>
             <p className="text-xl text-gray-300 leading-relaxed">
-              We&apos;re passionate about bringing you the best shopping
-              experience with quality products, exceptional service, and
-              unbeatable prices. Discover why millions trust us for their
-              shopping needs.
+              {t("about_us.hero.subtitle")}
             </p>
           </motion.div>
         </Container>
@@ -92,29 +89,12 @@ const About = () => {
               transition={{ duration: 0.6 }}
             >
               <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Our Story
+                {t("about_us.story.title")}
               </h2>
               <div className="space-y-4 text-gray-700 leading-relaxed">
-                <p>
-                  Founded in 2025, especialty Shopping began with a simple mission:
-                  to make quality products accessible to everyone, everywhere.
-                  What started as a small online store has grown into a trusted
-                  marketplace serving customers across the globe.
-                </p>
-                <p>
-                  We believe that shopping should be more than just a
-                  transaction – it should be an experience that delights and
-                  inspires. That&apos;s why we carefully curate our product
-                  selection, partner with reliable suppliers, and invest in
-                  cutting-edge technology to ensure every interaction with our
-                  platform is seamless.
-                </p>
-                <p>
-                  Today, we&apos;re proud to serve over 50,000 happy customers
-                  worldwide, offering everything from the latest fashion trends
-                  to innovative gadgets, all backed by our commitment to
-                  quality, affordability, and exceptional customer service.
-                </p>
+                <p>{t("about_us.story.p1")}</p>
+                <p>{t("about_us.story.p2")}</p>
+                <p>{t("about_us.story.p3")}</p>
               </div>
             </motion.div>
             <motion.div
@@ -129,10 +109,10 @@ const About = () => {
                     <span className="text-4xl text-white">🛍️</span>
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900">
-                    Quality First
+                    {t("about_us.story.highlight.title")}
                   </h3>
                   <p className="text-gray-600 mt-2">
-                    Every product is carefully selected
+                    {t("about_us.story.highlight.subtitle")}
                   </p>
                 </div>
               </div>
@@ -146,11 +126,10 @@ const About = () => {
         <Container>
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Our Values
+              {t("about_us.values.title")}
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              These core principles guide everything we do and shape the
-              experience we create for our customers.
+              {t("about_us.values.subtitle")}
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
@@ -187,21 +166,20 @@ const About = () => {
             className="text-center max-w-3xl mx-auto"
           >
             <h2 className="text-3xl font-bold mb-6">
-              Ready to Start Shopping?
+              {t("about_us.cta.title")}
             </h2>
             <p className="text-gray-300 text-lg mb-8">
-              Join thousands of satisfied customers and discover why especialty
-              Shopping is the preferred choice for online shopping.
+              {t("about_us.cta.subtitle")}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/shop">
                 <button className="px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-colors font-semibold">
-                  Shop Now
+                  {t("about_us.cta.shop")}
                 </button>
               </Link>
               <Link to="/contact">
                 <button className="px-8 py-4 border border-white text-white rounded-lg hover:bg-white hover:text-gray-900 transition-colors font-semibold">
-                  Contact Us
+                  {t("about_us.cta.contact")}
                 </button>
               </Link>
             </div>

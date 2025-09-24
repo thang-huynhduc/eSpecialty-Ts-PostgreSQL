@@ -33,7 +33,7 @@
     "subscribe": "Subscribe",
     "subscribe_success": "✓ Successfully subscribed!",
     "copyright": "© 2025 especialty. All rights reserved.",
-    "we_accept": "We accept:",
+    "we_accept": "We accept",
     "privacy_policy": "Privacy Policy",
     "terms_of_service": "Terms of Service",
     "email_required": "Please provide an Email!",
@@ -76,6 +76,8 @@
     "error": "Error",
     "success": "Success",
     "save": "Save",
+    "close": "Close",
+    "shop_now": "Shop Now",
     "cancel": "Cancel",
     "confirm": "Confirm",
     "delete": "Delete",
@@ -160,6 +162,7 @@
     "home": "Home",
     "filters": "Filters",
     "showing": "Showing",
+    "to": "to",
     "of": "of",
     "results": "results",
     "show": "Show",
@@ -209,7 +212,8 @@
     "2_5m_to_5m": "2,500,000đ - 5,000,000đ",
     "above_5m": "Above 5,000,000đ",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "go_to_page": "Go to page"
   },
   "profile": {
     "welcome_back": "Welcome back",
@@ -281,7 +285,7 @@
     "updating": "Updating...",
     "update_address": "Update Address",
     "full_name_label": "Full Name",
-    "email_address_label": "Email Address", 
+    "email_address_label": "Email Address",
     "phone_number_label": "Phone Number",
     "address_label_field": "Address",
     "account_type_label": "Account Type",
@@ -291,21 +295,21 @@
     "add_first_address_desc": "Add your first delivery address to get started",
     "recent_orders_title": "Recent Orders",
     "order_id_label": "Order ID",
-    "date_label": "Date", 
+    "date_label": "Date",
     "items_label": "Items",
     "total_label": "Total",
     "status_label": "Status",
     "item_single": "item",
     "items_plural": "items",
     "delivered": "Delivered",
-    "shipped": "Shipped", 
+    "shipped": "Shipped",
     "cancelled": "Cancelled",
     "pending": "Pending",
     "confirmed": "Confirmed",
     "account_stats_title": "Account Stats",
     "items_in_cart_label": "Items in Cart",
     "total_orders_label": "Total Orders",
-    "pending_orders_label": "Pending Orders", 
+    "pending_orders_label": "Pending Orders",
     "completed_orders_label": "Completed Orders",
     "saved_addresses_label": "Saved Addresses",
     "quick_actions_title": "Quick Actions",
@@ -322,7 +326,7 @@
     "address_label_required": "Address Label *",
     "select_address_type_placeholder": "Select address type",
     "home_option": "Home",
-    "work_option": "Work", 
+    "work_option": "Work",
     "hometown_option": "Hometown",
     "street_address_required": "Street Address *",
     "house_number_placeholder": "House number and street name",
@@ -341,7 +345,7 @@
     "delete_address_success": "Address deleted successfully",
     "set_default_success": "Default address updated successfully",
     "add_address_error": "Failed to add address",
-    "update_address_error": "Failed to update address", 
+    "update_address_error": "Failed to update address",
     "delete_address_error": "Failed to delete address",
     "set_default_error": "Failed to set default address"
   },
@@ -452,30 +456,55 @@
     "never_forget": "Never Forget",
     "never_forget_desc": "Keep your favorite items organized and easily accessible"
   },
-  "about": {
-    "about_specialty_shopping": "About eSpecialty Shopping",
-    "about_description": "We're passionate about bringing you the best shopping experience with quality products, exceptional service, and unbeatable prices. Discover why millions trust us for their shopping needs.",
-    "happy_customers": "Happy Customers",
-    "countries_served": "Countries Served",
-    "industry_experience": "Industry Experience",
-    "customer_satisfaction": "Customer Satisfaction",
-    "our_story": "Our Story",
-    "story_content": "Founded in 2025, eSpecialty Shopping began with a simple mission: to make quality products accessible to everyone, everywhere.",
-    "trust_security": "Trust & Security",
-    "trust_security_desc": "Your security is our priority. We use industry-leading encryption and security measures to protect your data and transactions.",
-    "fast_reliable": "Fast & Reliable",
-    "fast_reliable_desc": "Quick delivery and reliable service. We partner with trusted shipping providers to ensure your orders arrive on time.",
-    "customer_first": "Customer First",
-    "customer_first_desc": "24/7 customer support and hassle-free returns. Our dedicated team is always here to help you with any questions or concerns.",
-    "get_started_today": "Get Started Today",
-    "join_millions": "Join millions of satisfied customers and experience the difference. Start your shopping journey with us today.",
-    "explore_products": "Explore Products",
-    "contact_us": "Contact Us"
+  "about_us": {
+    "hero": {
+      "title": "About especialty Shopping",
+      "subtitle": "We're passionate about bringing you the best shopping experience with quality products, exceptional service, and unbeatable prices. Discover why millions trust us for their shopping needs."
+    },
+    "stats": {
+      "customers": "Happy Customers",
+      "countries": "Countries Served",
+      "experience": "Industry Experience",
+      "satisfaction": "Customer Satisfaction"
+    },
+    "story": {
+      "title": "Our Story",
+      "p1": "Founded in 2025, especialty Shopping began with a simple mission: to make quality products accessible to everyone, everywhere. What started as a small online store has grown into a trusted marketplace serving customers across the globe.",
+      "p2": "We believe that shopping should be more than just a transaction – it should be an experience that delights and inspires. That's why we carefully curate our product selection, partner with reliable suppliers, and invest in cutting-edge technology to ensure every interaction with our platform is seamless.",
+      "p3": "Today, we're proud to serve over 50,000 happy customers worldwide, offering everything from the latest fashion trends to innovative gadgets, all backed by our commitment to quality, affordability, and exceptional customer service.",
+      "highlight": {
+        "title": "Quality First",
+        "subtitle": "Every product is carefully selected"
+      }
+    },
+    "values": {
+      "title": "Our Values",
+      "subtitle": "These core principles guide everything we do and shape the experience we create for our customers.",
+      "trust": {
+        "title": "Trust & Security",
+        "description": "Your security is our priority. We use industry-leading encryption and security measures to protect your data and transactions."
+      },
+      "fast": {
+        "title": "Fast & Reliable",
+        "description": "Quick delivery and reliable service. We partner with trusted shipping providers to ensure your orders arrive on time."
+      },
+      "customer": {
+        "title": "Customer First",
+        "description": "24/7 customer support and hassle-free returns. Our dedicated team is always here to help you with any questions or concerns."
+      }
+    },
+    "cta": {
+      "title": "Ready to Start Shopping?",
+      "subtitle": "Join thousands of satisfied customers and discover why especialty Shopping is the preferred choice for online shopping.",
+      "shop": "Shop Now",
+      "contact": "Contact Us"
+    }
   },
-  "checkout": {
+  "checkout_order": {
     "back_to_orders": "Back to Orders",
     "checkout": "Checkout",
     "order_details": "Order Details",
+    "order_confirmation": "Order Confirmation",
     "order_id": "Order ID",
     "order_date": "Order Date",
     "order_status": "Order Status",
@@ -562,5 +591,113 @@
     "order_placed_success": "Order placed successfully!",
     "failed_place_order": "Failed to place order",
     "item_removed_success": "removed from cart!"
+  },
+  "about": {
+    "videoTitle": "Vietnamese Specialties",
+    "heading": "Why should you choose eSpecialty?",
+    "paragraph1": "eSpecialty brings together <strong>famous specialties from all regions of Vietnam</strong>, from Phu Quoc fish sauce, Central Highlands honey to traditional mooncakes.",
+    "paragraph2": "We are committed to delivering high-quality products carefully selected from reputable producers, at reasonable prices."
+  },
+  "categories": {
+    "Bộ Quà Tặng Thực Phẩm": "Gift Sets",
+    "Gia Vị và Nguyên Liệu Nấu Ăn": "Spices & Cooking Ingredients",
+    "Mật Ong": "Honey",
+    "Đồ Ăn Vặt": "Snacks",
+    "Thực Phẩm Bổ Dưỡng": "Healthy Food",
+    "Gạo, Mì, Nui": "Rice and Pasta",
+    "Socola": "Chocolate",
+    "Mứt, hạt": "Nuts & Jam"
+  },
+  "product of the year": {
+    "Product of the Year": "Product of the Year",
+    "description": "Discover our most innovative and popular product that has captured hearts worldwide. Experience excellence in every detail.",
+    "shop_now": "Shop Now"
+  },
+  "banner_1": {
+    "sale": "Best Seller",
+    "title": "Fish Sauce",
+    "subtitle": "Experience the pure essence of the sea, perfect for every family meal",
+    "description": "Premium traditional fish sauce, rich and authentic flavor from the ocean. Elevate the taste of all your dishes.",
+    "discount": "Up to 20% Off",
+    "from": 120000,
+    "buttonText": "Shop Now"
+  },
+  "banner_2": {
+    "sale": "Special Offer",
+    "title": "Pure Honey",
+    "subtitle": "Good for your health",
+    "description": "100% natural honey, nutritious and immune-boosting.",
+    "discount": "Save 50,000₫",
+    "from": 250000,
+    "buttonText": "Discover Now"
+  },
+  "banner_3": {
+    "sale": "Best Seller",
+    "title": "Mooncake",
+    "subtitle": "The essence of Mid-Autumn flavors",
+    "description": "Delicious mooncakes with diverse flavors, a meaningful gift for the festive season.",
+    "discount": "Free Shipping",
+    "from": 350000,
+    "buttonText": "Order Mooncakes"
+  },
+  "from": {
+    "from": "from"
+  },
+  "marquee": {
+    "shipping": "FREESHIP - 30K FOR NEW MEMBERS",
+    "discount": "🎁 10% OFF YOUR FIRST ORDER",
+    "promo": "🛒 BUY 2 GET 1 FREE ON HOT PRODUCTS"
+  },
+  "services": {
+    "free_delivery": {
+      "title": "Free Delivery",
+      "subtitle": "Free shipping on orders over 1,000,000₫",
+      "description": "Enjoy free standard delivery on all orders above 1,000,000₫. We partner with trusted couriers to ensure your products arrive safely and on time.",
+      "features": [
+        "Free shipping on orders 1,000,000₫+",
+        "Standard delivery: 3-5 business days",
+        "Express delivery available",
+        "Real-time tracking",
+        "Secure packaging"
+      ]
+    },
+    "easy_returns": {
+      "title": "Easy Returns",
+      "subtitle": "30-day return guarantee",
+      "description": "Not satisfied with your purchase? No problem! Our hassle-free return policy allows you to return any item within 30 days of purchase.",
+      "features": [
+        "30-day return window",
+        "Full refund guarantee",
+        "Free return shipping",
+        "Easy online return process",
+        "No restocking fees"
+      ]
+    },
+    "support": {
+      "title": "24/7 Support",
+      "subtitle": "Expert support anytime",
+      "description": "Our dedicated customer support team is available 24/7 to assist you with any questions, concerns, or issues you may have.",
+      "features": [
+        "Round-the-clock availability",
+        "Live chat support",
+        "Email and phone support",
+        "Expert product guidance",
+        "Order tracking assistance"
+      ]
+    },
+    "secure_payment": {
+      "title": "Secure Payment",
+      "subtitle": "100% secure transactions",
+      "details": {
+        "description": "Shop with confidence knowing that all your transactions are protected by industry-leading security measures and encryption technology.",
+        "features": [
+          "SSL encryption",
+          "Multiple payment options",
+          "Fraud protection",
+          "PCI DSS compliance",
+          "Secure checkout process"
+        ]
+      }
+    }
   }
 }

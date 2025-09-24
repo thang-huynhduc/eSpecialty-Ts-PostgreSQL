@@ -6,6 +6,8 @@ import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
 import PayPalPayment from "../components/PayPalPayment";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+
 import {
   FaCheckCircle,
   FaMoneyBillWave,
@@ -20,12 +22,13 @@ import {
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const Checkout = () => {
+  const { t } = useTranslation();
   const { orderId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [paymentStep, setPaymentStep] = useState("selection"); // 'selection', 'paypal', 'processing'
+  const [paymentStep, setPaymentStep] = useState("selection");
 
   const fetchOrderDetails = useCallback(async () => {
     try {
@@ -42,17 +45,17 @@ const Checkout = () => {
       if (data.success) {
         setOrder(data.order);
       } else {
-        toast.error("Order not found");
+        toast.error(t("checkout_order.order_not_found")); // i18n
         navigate("/orders");
       }
     } catch (error) {
       console.error("Error fetching order:", error);
-      toast.error("Failed to load order details");
+      toast.error(t("checkout_order.loading_order")); // i18n
       navigate("/orders");
     } finally {
       setLoading(false);
     }
-  }, [orderId, navigate]);
+  }, [orderId, navigate, t]);
 
   useEffect(() => {
     if (orderId) {
@@ -64,24 +67,20 @@ const Checkout = () => {
     if (paymentMethod === "paypal") {
       setPaymentStep("paypal");
     } else if (paymentMethod === "cod") {
-      toast.success("Order confirmed with Cash on Delivery");
+      toast.success(t("checkout_order.order_confirmed_cod")); // i18n
     }
   };
 
   const handlePayPalSuccess = (captureId, orderData) => {
-    // Clear cart after successful payment
     dispatch(resetCart());
-    
-    // Refresh order details to get updated status
     fetchOrderDetails().then(() => {
-      toast.success("PayPal payment completed successfully!");
+      toast.success(t("checkout_order.paypal_payment_completed")); // i18n
       navigate(
         `/payment-success?order_id=${orderId}&capture_id=${captureId}&payment_method=paypal`
       );
     }).catch(error => {
       console.error("Error refreshing order details:", error);
-      // Still navigate even if refresh fails
-      toast.success("PayPal payment completed successfully!");
+      toast.success(t("checkout_order.paypal_payment_completed")); // i18n
       navigate(
         `/payment-success?order_id=${orderId}&capture_id=${captureId}&payment_method=paypal`
       );
@@ -94,7 +93,7 @@ const Checkout = () => {
 
   const handlePayPalError = (error) => {
     console.error("PayPal payment error:", error);
-    toast.error("PayPal payment failed. Please try again.");
+    toast.error(t("checkout_order.paypal_payment_failed")); // i18n
     setPaymentStep("selection");
   };
 
@@ -103,7 +102,7 @@ const Checkout = () => {
   };
 
   const handleItemClick = (item) => {
-      navigate(`/product/${item.productId._id}`); // Không truyền state nữa
+    navigate(`/product/${item.productId._id}`);
   };
 
   const getStatusColor = (status) => {
@@ -141,7 +140,7 @@ const Checkout = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-gray-900 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading order details...</p>
+          <p className="text-gray-600">{t("checkout_order.loading_order")}</p> {/* i18n */}
         </div>
       </div>
     );
@@ -152,16 +151,16 @@ const Checkout = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Order Not Found
+            {t("checkout_order.order_not_found")} {/* i18n */}
           </h2>
           <p className="text-gray-600 mb-4">
-            The requested order could not be found.
+            {t("checkout_order.back_to_orders")} {/* i18n */}
           </p>
           <button
             onClick={() => navigate("/orders")}
             className="bg-gray-900 text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
           >
-            View All Orders
+            {t("checkout_order.back_to_orders")} {/* i18n */}
           </button>
         </div>
       </div>
@@ -177,9 +176,11 @@ const Checkout = () => {
             <FaCheckCircle className="w-8 h-8 text-green-600" />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Order Confirmation
+                {t("checkout_order.order_confirmation")} {/* i18n */}
               </h1>
-              <p className="text-gray-600">Order ID: #{order._id}</p>
+              <p className="text-gray-600">
+                {t("checkout_order.order_id")}: #{order._id}
+              </p>
             </div>
           </div>
         </Container>
@@ -192,39 +193,38 @@ const Checkout = () => {
             {/* Order Status */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Order Status
+                {t("checkout_order.order_status")} {/* i18n */}
               </h2>
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-gray-700">
-                    Order Status:
+                    {t("checkout_order.order_status")}:
                   </span>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
                       order.status
                     )}`}
                   >
-                    {order.status.charAt(0).toUpperCase() +
-                      order.status.slice(1)}
+                    {t(`order.${order.status}`)} {/* i18n */}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-gray-700">
-                    Payment:
+                    {t("checkout_order.payment_status")}:
                   </span>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPaymentStatusColor(
                       order.paymentStatus
                     )}`}
                   >
-                    {order.paymentStatus.charAt(0).toUpperCase() +
-                      order.paymentStatus.slice(1)}
+                    {t(`checkout_order.${order.paymentStatus}`)} {/* i18n */}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <FaClock className="w-4 h-4 text-gray-500" />
                   <span className="text-sm text-gray-600">
-                    Placed on {new Date(order.date).toLocaleDateString()}
+                    {t("checkout_order.order_date")}:{" "}
+                    {new Date(order.date).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -234,12 +234,12 @@ const Checkout = () => {
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="p-6 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Order Items
+                  {t("checkout_order.order_items")} {/* i18n */}
                 </h2>
               </div>
               <div className="divide-y divide-gray-200">
                 {order.items.map((item, index) => (
-                  <div 
+                  <div
                     key={index}
                     className="p-6 flex items-center space-x-4"
                   >
@@ -248,20 +248,20 @@ const Checkout = () => {
                         <img
                           src={item.image}
                           alt={item.name}
-                          className="w-full h-full object-cover cursor-pointer" // Thêm cursor-pointer
+                          className="w-full h-full object-cover cursor-pointer"
                           onClick={() => handleItemClick(item)}
                         />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 
-                        className="text-lg font-medium text-gray-900 truncate cursor-pointer" 
+                      <h3
+                        className="text-lg font-medium text-gray-900 truncate cursor-pointer"
                         onClick={() => handleItemClick(item)}
                       >
                         {item.name}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        Số Lượng: {item.quantity}
+                        {t("checkout_order.quantity")}: {item.quantity} {/* i18n */}
                       </p>
                     </div>
                     <div className="text-right">
@@ -269,7 +269,7 @@ const Checkout = () => {
                         <PriceFormat amount={item.price} />
                       </div>
                       <div className="text-sm text-gray-600">
-                        Tổng:{" "}
+                        {t("checkout_order.total")}:{" "} {/* i18n */}
                         <PriceFormat amount={item.price * item.quantity} />
                       </div>
                     </div>
@@ -282,7 +282,7 @@ const Checkout = () => {
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <FaMapMarkerAlt className="w-5 h-5" />
-                Delivery Address
+                {t("checkout_order.delivery_address")} {/* i18n */}
               </h2>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -319,25 +319,25 @@ const Checkout = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Payment
+                {t("checkout_order.payment_method")} {/* i18n */}
               </h2>
 
               {/* Order Summary */}
               <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
                 <div className="flex justify-between">
                   <span className="text-gray-600">
-                    Subtotal ({order.items.length} items)
+                    {t("checkout_order.subtotal")} ({order.items.length} {t("checkout_order.order_items")})
                   </span>
                   <span className="font-medium">
                     <PriceFormat amount={order.amount} />
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium text-green-600">Free</span>
+                  <span className="text-gray-600">{t("checkout_order.shipping")}</span>
+                  <span className="font-medium text-green-600">{t("checkout_order.free")}</span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold">
-                  <span className="text-gray-900">Total</span>
+                  <span className="text-gray-900">{t("checkout_order.total")}</span>
                   <span className="text-gray-900">
                     <PriceFormat amount={order.amount} />
                   </span>
@@ -350,7 +350,7 @@ const Checkout = () => {
                   {paymentStep === "selection" && (
                     <>
                       <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                        Choose Payment Method
+                        {t("checkout_order.choose_payment")} {/* i18n */}
                       </h3>
 
                       {order.paymentMethod === "cod" ? (
@@ -360,10 +360,10 @@ const Checkout = () => {
                               <FaMoneyBillWave className="w-6 h-6 text-green-600" />
                               <div>
                                 <h4 className="font-semibold text-green-800">
-                                  Cash on Delivery
+                                  {t("checkout_order.cash_on_delivery")} {/* i18n */}
                                 </h4>
                                 <p className="text-sm text-green-700">
-                                  Pay when your order is delivered
+                                  {t("checkout_order.pay_with_cod")} {/* i18n */}
                                 </p>
                               </div>
                             </div>
@@ -374,7 +374,7 @@ const Checkout = () => {
                             className="w-full flex items-center justify-center gap-3 bg-yellow-500 text-white py-3 px-4 rounded-lg hover:bg-yellow-600 transition-colors font-medium"
                           >
                             <FaPaypal className="w-5 h-5" />
-                            Pay with PayPal
+                            {t("checkout_order.pay_with_paypal")} {/* i18n */}
                           </button>
                         </div>
                       ) : (
@@ -384,7 +384,7 @@ const Checkout = () => {
                             className="w-full flex items-center justify-center gap-3 bg-yellow-500 text-white py-3 px-4 rounded-lg hover:bg-yellow-600 transition-colors font-medium"
                           >
                             <FaPaypal className="w-5 h-5" />
-                            Pay with PayPal
+                            {t("checkout_order.pay_with_paypal")} {/* i18n */}
                           </button>
 
                           <div className="text-center">
@@ -396,13 +396,12 @@ const Checkout = () => {
                             className="w-full flex items-center justify-center gap-3 bg-gray-100 text-gray-900 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                           >
                             <FaMoneyBillWave className="w-5 h-5" />
-                            Cash on Delivery
+                            {t("checkout_order.pay_with_cod")} {/* i18n */}
                           </button>
                         </>
                       )}
                     </>
                   )}
-
 
                   {paymentStep === "paypal" && (
                     <div className="space-y-4">
@@ -414,7 +413,7 @@ const Checkout = () => {
                           <FaArrowLeft className="w-4 h-4 text-gray-600" />
                         </button>
                         <h3 className="text-lg font-semibold text-gray-900">
-                          PayPal Payment
+                          {t("checkout_order.online_payment")} {/* i18n */}
                         </h3>
                       </div>
 
@@ -436,10 +435,10 @@ const Checkout = () => {
                     <FaCheckCircle className="w-6 h-6 text-green-600" />
                     <div>
                       <h4 className="font-semibold text-green-800">
-                        Payment Completed
+                        {t("checkout_order.payment_status")} {/* i18n */}
                       </h4>
                       <p className="text-sm text-green-700">
-                        Your payment has been processed successfully
+                        {t("checkout_order.paypal_payment_completed")} {/* i18n */}
                       </p>
                     </div>
                   </div>
@@ -451,7 +450,7 @@ const Checkout = () => {
                   onClick={() => navigate("/orders")}
                   className="w-full bg-gray-100 text-gray-900 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                 >
-                  View All Orders
+                  {t("checkout_order.back_to_orders")} {/* i18n */}
                 </button>
               </div>
             </div>
@@ -459,6 +458,8 @@ const Checkout = () => {
         </div>
       </Container>
     </div>
+
+
   );
 };
 

@@ -15,8 +15,10 @@ import {
 } from "react-icons/fa";
 import { MdOutlineInventory, MdLowPriority } from "react-icons/md";
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 const Inventory = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('overview');
   const [inventoryStats, setInventoryStats] = useState({
     totalProducts: 0,
@@ -151,14 +153,14 @@ const Inventory = () => {
         fetchInventoryStats();
         fetchLowStockItems();
         fetchOutOfStockItems();
-        toast.success('Stock updated successfully!');
+        toast.success(t('inventory.messages.stockUpdated'));
       }
     } catch (error) {
       console.error('Error updating stock:', error);
-      toast.error('Error updating stock');
+      toast.error(t('inventory.messages.errorUpdating'));
     }
     setLoading(false);
-  }, [bulkUpdateItems, API_TOKEN, fetchInventoryStats, fetchLowStockItems, fetchOutOfStockItems]);
+  }, [bulkUpdateItems, API_TOKEN, fetchInventoryStats, fetchLowStockItems, fetchOutOfStockItems, t]);
 
   const handleStockEdit = useCallback((item) => {
     setEditingStock({
@@ -187,23 +189,6 @@ const Inventory = () => {
     delete newEditingStock[item._id];
     setEditingStock(newEditingStock);
   }, [editingStock]);
-
-  // To export csv
-  // const exportInventoryReport = useCallback(() => {
-  //   const csvContent = "data:text/csv;charset=utf-8," 
-  //     + "Tên sản phẩm,Tồn kho hiện tại,Danh mục,Giá,Giá trị tồn kho\n"
-  //     + lowStockItems.map(item => 
-  //         `${item.name},${item.stock},${item.category},${item.price},${item.price * item.stock}`
-  //       ).join("\n");
-    
-  //   const encodedUri = encodeURI(csvContent);
-  //   const link = document.createElement("a");
-  //   link.setAttribute("href", encodedUri);
-  //   link.setAttribute("download", "inventory_report.csv");
-  //   document.body.appendChild(link);
-  //   link.click();
-  //   document.body.removeChild(link);
-  // }, [lowStockItems]);
 
   useEffect(() => {
     fetchInventoryStats();
@@ -283,7 +268,7 @@ const Inventory = () => {
           <h4 className="font-medium text-gray-900">{item.name}</h4>
           <p className="text-sm text-gray-600">{item.category}</p>
           <p className="text-sm text-gray-500">{item.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</p>
-          <p className='text-green-600'> Đã bán: {item.soldQuantity}</p>
+          <p className='text-green-600'> {t('inventory.product.sold')}: {item.soldQuantity}</p>
         </div>
       </div>
       
@@ -306,13 +291,13 @@ const Inventory = () => {
               onClick={() => onSave(item)}
               className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
             >
-              <FaSave /> Lưu
+              <FaSave /> {t('inventory.buttons.save')}
             </button>
             <button
               onClick={() => onCancel(item)}
               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             >
-              <FaTimes /> Hủy
+              <FaTimes /> {t('inventory.buttons.cancel')}
             </button>
           </>
         ) : (
@@ -328,7 +313,7 @@ const Inventory = () => {
               onClick={() => onEdit(item)}
               className="p-2 text-white bg-red-500 hover:bg-red-400 rounded-lg transition-colors"
             >
-              Restock
+              {t('inventory.buttons.restock')}
             </button>
           </>
         )}
@@ -357,10 +342,10 @@ const Inventory = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Quản lý kho hàng
+          {t('inventory.title')}
         </h1>
         <p className="text-gray-600">
-          Theo dõi và quản lý kho hàng của bạn với thông tin theo thời gian thực
+          {t('inventory.subtitle')}
         </p>
       </div>
 
@@ -368,35 +353,35 @@ const Inventory = () => {
       <div className="flex flex-wrap gap-2 mb-6 bg-white p-4 rounded-xl shadow-sm">
         <TabButton
           id="overview"
-          label="Tổng quan"
+          label={t('inventory.tabs.overview')}
           icon={<MdOutlineInventory />}
           active={activeTab === 'overview'}
           onClick={setActiveTab}
         />
         <TabButton
           id="low-stock"
-          label="Hàng tồn thấp"
+          label={t('inventory.tabs.low-stock')}
           icon={<FaExclamationTriangle />}
           active={activeTab === 'low-stock'}
           onClick={setActiveTab}
         />
         <TabButton
           id="out-of-stock"
-          label="Hết hàng"
+          label={t('inventory.tabs.out-of-stock')}
           icon={<MdLowPriority />}
           active={activeTab === 'out-of-stock'}
           onClick={setActiveTab}
         />
         <TabButton
           id="movements"
-          label="Lịch sử kho"
+          label={t('inventory.tabs.movements')}
           icon={<FaHistory />}
           active={activeTab === 'movements'}
           onClick={setActiveTab}
         />
         <TabButton
           id="valuation"
-          label="Định giá kho"
+          label={t('inventory.tabs.valuation')}
           icon={<FaChartBar />}
           active={activeTab === 'valuation'}
           onClick={setActiveTab}
@@ -409,25 +394,25 @@ const Inventory = () => {
           {/* Inventory Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
-              title="Tổng sản phẩm"
+              title={t('inventory.stats.totalProducts')}
               value={inventoryStats.totalProducts}
               icon={<FaBoxes />}
               color="blue"
             />
             <StatCard
-              title="Sản phẩm tồn thấp"
+              title={t('inventory.stats.lowStockProducts')}
               value={inventoryStats.lowStockProducts}
               icon={<FaExclamationTriangle />}
               color="yellow"
             />
             <StatCard
-              title="Hết hàng"
+              title={t('inventory.stats.outOfStockProducts')}
               value={inventoryStats.outOfStockProducts}
               icon={<MdLowPriority />}
               color="red"
             />
             <StatCard
-              title="Còn hàng"
+              title={t('inventory.stats.inStockProducts')}
               value={inventoryStats.inStockProducts}
               icon={<FaCheckCircle />}
               color="green"
@@ -437,25 +422,25 @@ const Inventory = () => {
           {/* Value Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Giá trị kho</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('inventory.stats.inventoryValue')}</h3>
               <div className="text-3xl font-bold text-green-600">
                 {inventoryStats.totalValue?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
               </div>
-              <p className="text-gray-600 text-sm mt-2">Tổng giá trị kho hàng</p>
+              <p className="text-gray-600 text-sm mt-2">{t('inventory.stats.totalInventoryValue')}</p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Tổng đã bán</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('inventory.stats.totalSold')}</h3>
               <div className="text-3xl font-bold text-blue-600">
                 {inventoryStats.totalSold?.toLocaleString()}
               </div>
-              <p className="text-gray-600 text-sm mt-2">Số lượng đơn vị đã bán</p>
+              <p className="text-gray-600 text-sm mt-2">{t('inventory.stats.totalUnitsSold')}</p>
             </div>
           </div>
 
           {/* Quick Actions */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-6 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900">Hành động nhanh</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('inventory.quickActions.title')}</h3>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -464,28 +449,28 @@ const Inventory = () => {
                   className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-yellow-500 hover:bg-yellow-50 transition-colors"
                 >
                   <FaBell className="text-2xl text-gray-400 mb-2 mx-auto" />
-                  <p className="text-sm font-medium text-gray-600">Kiểm tra cảnh báo</p>
+                  <p className="text-sm font-medium text-gray-600">{t('inventory.quickActions.checkAlerts')}</p>
                 </button>
                 <button
                   // onClick={exportInventoryReport}
                   className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
                 >
                   <FaDownload className="text-2xl text-gray-400 mb-2 mx-auto" />
-                  <p className="text-sm font-medium text-gray-600">Xuất báo cáo</p>
+                  <p className="text-sm font-medium text-gray-600">{t('inventory.quickActions.exportReport')}</p>
                 </button>
                 <button
                   onClick={() => setActiveTab('movements')}
                   className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
                 >
                   <FaHistory className="text-2xl text-gray-400 mb-2 mx-auto" />
-                  <p className="text-sm font-medium text-gray-600">Xem lịch sử</p>
+                  <p className="text-sm font-medium text-gray-600">{t('inventory.quickActions.viewHistory')}</p>
                 </button>
                 <button
                   onClick={() => setActiveTab('valuation')}
                   className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors"
                 >
                   <FaChartBar className="text-2xl text-gray-400 mb-2 mx-auto" />
-                  <p className="text-sm font-medium text-gray-600">Báo cáo định giá</p>
+                  <p className="text-sm font-medium text-gray-600">{t('inventory.quickActions.valuationReport')}</p>
                 </button>
               </div>
             </div>
@@ -499,14 +484,14 @@ const Inventory = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Ngưỡng cảnh báo:</label>
+                <label className="text-sm font-medium text-gray-700">{t('inventory.lowStock.threshold')}</label>
                 <input
                   type="number"
                   defaultValue={stockThreshold}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       setStockThreshold(parseInt(e.target.value) || 10);
-                      e.target.blur(); // optional: tự thoát focus sau khi Enter
+                      e.target.blur();
                     }
                   }}
                   className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -517,7 +502,7 @@ const Inventory = () => {
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Tìm kiếm sản phẩm..."
+                  placeholder={t('inventory.lowStock.search')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -531,7 +516,7 @@ const Inventory = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 <FaSave />
-                Lưu thay đổi ({bulkUpdateItems.length})
+                {t('inventory.lowStock.saveChanges')} ({bulkUpdateItems.length})
               </button>
             )}
           </div>
@@ -541,7 +526,7 @@ const Inventory = () => {
               <div className="flex items-center gap-2">
                 <FaExclamationTriangle className="text-yellow-500" />
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Cảnh báo tồn thấp ({filteredLowStock.length})
+                  {t('inventory.lowStock.title')} ({filteredLowStock.length})
                 </h3>
               </div>
             </div>
@@ -549,7 +534,7 @@ const Inventory = () => {
               {filteredLowStock.length === 0 ? (
                 <div className="text-center py-8">
                   <FaCheckCircle className="text-4xl text-green-500 mx-auto mb-4" />
-                  <p className="text-gray-600">Không tìm thấy sản phẩm tồn thấp!</p>
+                  <p className="text-gray-600">{t('inventory.lowStock.noItems')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -578,7 +563,7 @@ const Inventory = () => {
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Tìm kiếm sản phẩm..."
+                placeholder={t('inventory.outOfStock.search')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -591,7 +576,7 @@ const Inventory = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 <FaSave />
-                Lưu thay đổi ({bulkUpdateItems.length})
+                {t('inventory.lowStock.saveChanges')} ({bulkUpdateItems.length})
               </button>
             )}
           </div>
@@ -601,7 +586,7 @@ const Inventory = () => {
               <div className="flex items-center gap-2">
                 <MdLowPriority className="text-red-500" />
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Sản phẩm hết hàng ({filteredOutOfStock.length})
+                  {t('inventory.outOfStock.title')} ({filteredOutOfStock.length})
                 </h3>
               </div>
             </div>
@@ -609,7 +594,7 @@ const Inventory = () => {
               {filteredOutOfStock.length === 0 ? (
                 <div className="text-center py-8">
                   <FaCheckCircle className="text-4xl text-red-500 mx-auto mb-4" />
-                  <p className="text-gray-600">Không có sản phẩm hết hàng!</p>
+                  <p className="text-gray-600">{t('inventory.outOfStock.noItems')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -637,7 +622,7 @@ const Inventory = () => {
             <div className="flex items-center gap-2">
               <FaHistory className="text-blue-500" />
               <h3 className="text-lg font-semibold text-gray-900">
-                Lịch sử kho gần đây
+                {t('inventory.movements.title')}
               </h3>
             </div>
           </div>
@@ -648,13 +633,13 @@ const Inventory = () => {
                   <div>
                     <h4 className="font-medium text-gray-900">{movement.name}</h4>
                     <p className="text-sm text-gray-600">
-                      Cập nhật lần cuối: {new Date(movement.lastUpdated).toLocaleDateString('vi-VN')}
+                      {t('inventory.movements.lastUpdated')} {new Date(movement.lastUpdated).toLocaleDateString('vi-VN')}
                     </p>
                   </div>
                   <div className="text-left">
-                    <p className="text-sm text-gray-600">Tồn kho</p>
+                    <p className="text-sm text-gray-600">{t('inventory.movements.stock')}</p>
                     <div className="text-xl font-bold text-gray-900">{movement.currentStock}</div>
-                    <p className="text-sm text-blue-600">Đã bán: {movement.soldQuantity}</p>
+                    <p className="text-sm text-blue-600">{t('inventory.movements.sold')} {movement.soldQuantity}</p>
                   </div>
                 </div>
               ))}
@@ -668,41 +653,41 @@ const Inventory = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Tổng định giá</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('inventory.valuation.totalValuation')}</h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Giá trị kho:</span>
+                  <span className="text-gray-600">{t('inventory.valuation.inventoryValue')}</span>
                   <span className="font-semibold text-green-600">
                     {inventoryValuation.totalInventoryValue?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Giá trị bán hàng:</span>
+                  <span className="text-gray-600">{t('inventory.valuation.salesValue')}</span>
                   <span className="font-semibold text-blue-600">
                     {inventoryValuation.totalSoldValue?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                   </span>
                 </div>
                 <div className="flex justify-between border-t pt-3">
-                  <span className="text-gray-900 font-medium">Tổng sản phẩm:</span>
+                  <span className="text-gray-900 font-medium">{t('inventory.valuation.totalProducts')}</span>
                   <span className="font-semibold">{inventoryValuation.totalProducts}</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Danh mục hàng đầu</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('inventory.valuation.topCategories')}</h3>
               <div className="space-y-3">
                 {inventoryValuation.categoryBreakdown?.slice(0, 5).map((category, index) => (
                   <div key={index} className="flex justify-between items-center">
                     <div>
                       <span className="font-medium text-gray-900">{category.category}</span>
-                      <p className="text-sm text-gray-600">{category.totalProducts} sản phẩm</p>
+                      <p className="text-sm text-gray-600">{category.totalProducts} {t('inventory.valuation.products')}</p>
                     </div>
                     <div className="text-right">
                       <span className="font-semibold text-gray-900">
                         {category.inventoryValue?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                       </span>
-                      <p className="text-sm text-gray-600">{category.totalStock} đơn vị</p>
+                      <p className="text-sm text-gray-600">{category.totalStock} {t('inventory.valuation.units')}</p>
                     </div>
                   </div>
                 ))}
@@ -712,18 +697,18 @@ const Inventory = () => {
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-6 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900">Phân tích danh mục</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t('inventory.valuation.categoryAnalysis')}</h3>
             </div>
             <div className="p-6">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Danh mục</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-900">Sản phẩm</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-900">Tổng tồn</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900">Giá trị kho</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-900">Giá trị bán</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">{t('inventory.valuation.category')}</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-900">{t('inventory.valuation.productsCount')}</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-900">{t('inventory.valuation.totalStock')}</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-900">{t('inventory.valuation.inventoryValueCol')}</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-900">{t('inventory.valuation.salesValueCol')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -754,7 +739,7 @@ const Inventory = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <div className="flex items-center gap-3">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span className="text-gray-700">Đang cập nhật kho...</span>
+              <span className="text-gray-700">{t('inventory.messages.updatingStock')}</span>
             </div>
           </div>
         </div>

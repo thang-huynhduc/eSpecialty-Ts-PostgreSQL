@@ -5,6 +5,7 @@ import SkeletonLoader from "../components/SkeletonLoader";
 import PriceFormat from "../components/PriceFormat";
 import { formatVND } from "../utils/currency";
 import { serverUrl } from "../../config";
+import { useTranslation } from "react-i18next";
 import {
   FaEdit,
   FaTrash,
@@ -31,6 +32,7 @@ import {
 } from "react-icons/fa";
 
 const Orders = () => {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,16 +73,23 @@ const Orders = () => {
       if (data.success) {
         setOrders(data.orders);
       } else {
-        toast.error(data.message || "Failed to fetch orders");
+        toast.error(data.message || t("orders.messages.fetchError"));
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
-      toast.error("Failed to load orders");
+      toast.error(t("orders.messages.fetchError"));
     } finally {
       setLoading(false);
     }
   };
+  // Helper function để dịch status
+  const translateStatus = (status) => {
+    return t(`orders.status.${status}`, { defaultValue: status });
+  };
 
+  const translatePaymentStatus = (status) => {
+    return t(`orders.paymentStatus.${status}`, { defaultValue: status });
+  };
   // Update order status
   const updateOrderStatus = async (orderId, status, paymentStatus = null) => {
     try {
@@ -102,7 +111,7 @@ const Orders = () => {
 
       const data = await response.json();
       if (data.success) {
-        toast.success("Order updated successfully");
+        toast.success(t("orders.messages.updateSuccess"));
         fetchOrders(); // Refresh orders
         setShowEditModal(false);
         setEditingOrder(null);
@@ -115,17 +124,17 @@ const Orders = () => {
           setSelectedOrder(updatedOrder);
         }
       } else {
-        toast.error(data.message || "Failed to update order");
+        toast.error(data.message || t("orders.messages.updateError"));
       }
     } catch (error) {
       console.error("Error updating order:", error);
-      toast.error("Failed to update order");
+      toast.error(t("orders.messages.updateError"));
     }
   };
 
   // Delete order
   const deleteOrder = async (orderId) => {
-    if (!window.confirm("Are you sure you want to delete this order?")) {
+    if (!window.confirm(t("orders.messages.confirmDelete"))) {
       return;
     }
 
@@ -142,7 +151,7 @@ const Orders = () => {
 
       const data = await response.json();
       if (data.success) {
-        toast.success("Order deleted successfully");
+        toast.success(t("orders.messages.deleteSuccess"));
         fetchOrders(); // Refresh orders
         // Close detail modal if deleted order is currently being viewed
         if (selectedOrder && selectedOrder._id === orderId) {
@@ -150,11 +159,11 @@ const Orders = () => {
           setSelectedOrder(null);
         }
       } else {
-        toast.error(data.message || "Failed to delete order");
+        toast.error(data.message || t("orders.messages.deleteError"));
       }
     } catch (error) {
       console.error("Error deleting order:", error);
-      toast.error("Failed to delete order");
+      toast.error(t("orders.messages.deleteError"));
     }
   };
 
@@ -256,7 +265,7 @@ const Orders = () => {
   const getPageNumbers = () => {
     const pageNumbers = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i);
@@ -264,18 +273,18 @@ const Orders = () => {
     } else {
       const startPage = Math.max(1, currentPage - 2);
       const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-      
+
       if (startPage > 1) {
         pageNumbers.push(1);
         if (startPage > 2) {
           pageNumbers.push('...');
         }
       }
-      
+
       for (let i = startPage; i <= endPage; i++) {
         pageNumbers.push(i);
       }
-      
+
       if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
           pageNumbers.push('...');
@@ -283,7 +292,7 @@ const Orders = () => {
         pageNumbers.push(totalPages);
       }
     }
-    
+
     return pageNumbers;
   };
 
@@ -357,7 +366,7 @@ const Orders = () => {
   if (loading) {
     return (
       <div>
-        <Title>Orders List</Title>
+        <Title>{t("orders.orders.title")}</Title>
         <div className="mt-6">
           <SkeletonLoader type="orders" />
         </div>
@@ -368,14 +377,14 @@ const Orders = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <Title>Orders Management</Title>
+        <Title>{t("orders.title")}</Title>
         <button
           onClick={fetchOrders}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          title="Refresh Orders"
+          title={t("orders.refresh")}
         >
           <FaSync className="w-4 h-4" />
-          Refresh
+          {t("orders.refresh")}
         </button>
       </div>
 
@@ -385,7 +394,7 @@ const Orders = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs lg:text-sm font-medium text-gray-600">
-                Total Orders
+                {t("orders.stats.totalOrders")}
               </p>
               <p className="text-xl lg:text-2xl font-bold text-gray-900">
                 {orders.length}
@@ -399,7 +408,7 @@ const Orders = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs lg:text-sm font-medium text-gray-600">
-                Pending
+                {t("orders.stats.pending")}
               </p>
               <p className="text-xl lg:text-2xl font-bold text-yellow-600">
                 {orders.filter((o) => o.status === "pending").length}
@@ -409,11 +418,12 @@ const Orders = () => {
           </div>
         </div>
 
+
         <div className="bg-white rounded-lg border border-gray-200 p-4 lg:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs lg:text-sm font-medium text-gray-600">
-                Delivered
+                {t("orders.stats.delivered")}
               </p>
               <p className="text-xl lg:text-2xl font-bold text-green-600">
                 {orders.filter((o) => o.status === "delivered").length}
@@ -427,10 +437,10 @@ const Orders = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs lg:text-sm font-medium text-gray-600">
-                Revenue
+                {t("orders.stats.revenue")}
               </p>
               <p className="text-xl lg:text-2xl font-bold text-purple-600">
-                <PriceFormat 
+                <PriceFormat
                   amount={orders.reduce((sum, order) => sum + order.amount, 0)}
                 />
               </p>
@@ -448,7 +458,7 @@ const Orders = () => {
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search orders..."
+              placeholder={t("orders.filters.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
@@ -461,10 +471,10 @@ const Orders = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
           >
-            <option value="all">All Status</option>
+            <option value="all">{t("orders.filters.allStatus")}</option>
             {statusOptions.map((status) => (
               <option key={status} value={status}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+                {translateStatus(status)}
               </option>
             ))}
           </select>
@@ -475,10 +485,10 @@ const Orders = () => {
             onChange={(e) => setPaymentFilter(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
           >
-            <option value="all">All Payments</option>
+            <option value="all">{t("orders.filters.allPayments")}</option>
             {paymentStatusOptions.map((status) => (
               <option key={status} value={status}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+                {translatePaymentStatus(status)}
               </option>
             ))}
           </select>
@@ -490,9 +500,9 @@ const Orders = () => {
               onChange={(e) => setSortBy(e.target.value)}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
             >
-              <option value="date">Sort by Date</option>
-              <option value="amount">Sort by Amount</option>
-              <option value="status">Sort by Status</option>
+              <option value="date">{t("orders.filters.sortByDate")}</option>
+              <option value="amount">{t("orders.filters.sortByAmount")}</option>
+              <option value="status">{t("orders.filters.sortByStatus")}</option>
             </select>
             <button
               onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
@@ -507,7 +517,7 @@ const Orders = () => {
         {/* Orders per page selector */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Show:</span>
+            <span className="text-sm text-gray-600">{t("orders.filters.show")}:</span>
             <select
               value={ordersPerPage}
               onChange={(e) => {
@@ -521,12 +531,16 @@ const Orders = () => {
               <option value={20}>20</option>
               <option value={50}>50</option>
             </select>
-            <span className="text-sm text-gray-600">orders per page</span>
+            <span className="text-sm text-gray-600">{t("orders.filters.ordersPerPage")}</span>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">
-              Showing {totalOrders > 0 ? startIndex + 1 : 0} to {Math.min(endIndex, totalOrders)} of {totalOrders} orders
+              {t("orders.filters.showing", {
+                from: totalOrders > 0 ? startIndex + 1 : 0,
+                to: Math.min(endIndex, totalOrders),
+                total: totalOrders
+              })}
             </span>
           </div>
         </div>
@@ -539,35 +553,35 @@ const Orders = () => {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Order ID
+                  {t("orders.table.orderId")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
+                  {t("orders.table.customer")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
+                  {t("orders.table.date")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Items
+                  {t("orders.table.items")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
+                  {t("orders.table.amount")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  {t("orders.table.status")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Payment
+                  {t("orders.table.payment")}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  {t("orders.table.actions")}
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentOrders.map((order) => (
-                <tr 
-                  key={order._id} 
+                <tr
+                  key={order._id}
                   className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => handleViewOrderDetails(order)}
                 >
@@ -645,7 +659,7 @@ const Orders = () => {
                           handleViewOrderDetails(order);
                         }}
                         className="text-gray-600 hover:text-gray-900 p-1 rounded"
-                        title="View Details"
+                        title={t("orders.buttons.view")}
                       >
                         <FaEye className="w-4 h-4" />
                       </button>
@@ -655,7 +669,7 @@ const Orders = () => {
                           handleEditOrder(order);
                         }}
                         className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                        title="Edit Order"
+                        title={t("orders.buttons.edit")}
                       >
                         <FaEdit className="w-4 h-4" />
                       </button>
@@ -665,7 +679,7 @@ const Orders = () => {
                           deleteOrder(order._id);
                         }}
                         className="text-red-600 hover:text-red-900 p-1 rounded"
-                        title="Delete Order"
+                        title={t("orders.buttons.delete")}
                       >
                         <FaTrash className="w-4 h-4" />
                       </button>
@@ -700,7 +714,7 @@ const Orders = () => {
               Showing {startIndex + 1} to {Math.min(endIndex, totalOrders)} of {totalOrders} results
             </span>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={goToPreviousPage}
@@ -709,26 +723,25 @@ const Orders = () => {
             >
               Previous
             </button>
-            
+
             <div className="flex gap-1">
               {getPageNumbers().map((pageNumber, index) => (
                 <button
                   key={index}
                   onClick={() => typeof pageNumber === 'number' && goToPage(pageNumber)}
                   disabled={pageNumber === '...'}
-                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    pageNumber === currentPage
-                      ? 'text-blue-600 bg-blue-50 border border-blue-200'
-                      : pageNumber === '...'
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${pageNumber === currentPage
+                    ? 'text-blue-600 bg-blue-50 border border-blue-200'
+                    : pageNumber === '...'
                       ? 'text-gray-400 cursor-default'
                       : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   {pageNumber}
                 </button>
               ))}
             </div>
-            
+
             <button
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
@@ -887,7 +900,7 @@ const Orders = () => {
                     {totalOrders} total orders
                   </span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <button
                     onClick={goToPreviousPage}
@@ -896,26 +909,25 @@ const Orders = () => {
                   >
                     Previous
                   </button>
-                  
+
                   <div className="flex gap-1">
                     {getPageNumbers().slice(0, 5).map((pageNumber, index) => (
                       <button
                         key={index}
                         onClick={() => typeof pageNumber === 'number' && goToPage(pageNumber)}
                         disabled={pageNumber === '...'}
-                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                          pageNumber === currentPage
-                            ? 'text-blue-600 bg-blue-50 border border-blue-200'
-                            : pageNumber === '...'
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${pageNumber === currentPage
+                          ? 'text-blue-600 bg-blue-50 border border-blue-200'
+                          : pageNumber === '...'
                             ? 'text-gray-400 cursor-default'
                             : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'
-                        }`}
+                          }`}
                       >
                         {pageNumber}
                       </button>
                     ))}
                   </div>
-                  
+
                   <button
                     onClick={goToNextPage}
                     disabled={currentPage === totalPages}
@@ -1134,7 +1146,7 @@ const Orders = () => {
                             }}
                           />
                         </div>
-                        
+
                         {/* Product Info */}
                         <div className="flex-1 min-w-0">
                           <h5 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
