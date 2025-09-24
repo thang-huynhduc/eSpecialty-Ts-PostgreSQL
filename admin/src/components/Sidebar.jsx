@@ -146,9 +146,8 @@ const Sidebar = () => {
             </span>
           </button>
           <div
-            className={`ml-3 sm:ml-4 space-y-1 transition-all duration-300 overflow-hidden ${
-              isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-            }`}
+            className={`ml-3 sm:ml-4 space-y-1 transition-all duration-300 overflow-hidden ${isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+              }`}
           >
             {item.children?.map((child) => renderNavItem(child, true))}
           </div>
@@ -161,19 +160,17 @@ const Sidebar = () => {
         key={item.title}
         to={item.path}
         className={({ isActive }) =>
-          `flex items-center justify-between gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 mx-1 sm:mx-2 rounded-lg transition-all duration-200 group ${
-            isActive
-              ? "bg-gradient-to-r from-black to-gray-800 text-white shadow-lg"
-              : "text-gray-700 hover:bg-gray-50 hover:text-black"
+          `flex items-center justify-between gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 mx-1 sm:mx-2 rounded-lg transition-all duration-200 group ${isActive
+            ? "bg-gradient-to-r from-black to-gray-800 text-white shadow-lg"
+            : "text-gray-700 hover:bg-gray-50 hover:text-black"
           } ${isChild ? "text-sm" : ""}`
         }
         title={item.description}
       >
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           <span
-            className={`${
-              isChild ? "text-sm sm:text-base" : "text-base sm:text-lg"
-            } transition-transform group-hover:scale-110 flex-shrink-0`}
+            className={`${isChild ? "text-sm sm:text-base" : "text-base sm:text-lg"
+              } transition-transform group-hover:scale-110 flex-shrink-0`}
           >
             {item.icon}
           </span>

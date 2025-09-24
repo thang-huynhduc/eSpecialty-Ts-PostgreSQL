@@ -162,7 +162,36 @@
     "address": "Địa chỉ",
     "city": "Thành phố",
     "country": "Quốc gia",
-    "zipcode": "Mã bưu điện"
+    "zipcode": "Mã bưu điện",
+        "goHome": "Quay lại trang chủ",
+    "home": "Trang chủ",
+    "addToCart": "Thêm vào giỏ hàng",
+    "inStock": "Còn hàng: {{count}} sản phẩm có sẵn",
+    "outOfStock": "Hết hàng",
+    "inCart": "Trong giỏ: {{count}} sản phẩm",
+    "inCart_plural": "Trong giỏ: {{count}} sản phẩm",
+    "sku": "Mã sản phẩm",
+    "category": "Danh mục",
+    "tags": "Thẻ",
+    "description": "Mô tả",
+    "reviews": "Đánh giá",
+    "relatedProducts": "Sản phẩm liên quan",
+    "noRelatedProducts": "Không tìm thấy sản phẩm liên quan",
+    "clickToZoom": "Nhấn để phóng to",
+    "rated": "Đánh giá {{rating}} trên 5 dựa trên {{count}} đánh giá",
+    "rated_plural": "Đánh giá {{rating}} trên 5 dựa trên {{count}} đánh giá",
+    "noReviews": "Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá!",
+    "customerReviews": "Đánh giá của khách hàng",
+    "addToWishlist": "Thêm vào yêu thích",
+    "share": "Chia sẻ",
+    "cannotAddMore": "Không thể thêm nữa, đã đạt giới hạn tồn kho!",
+    "onlyAvailable": "Chỉ còn {{count}} sản phẩm trong kho!",
+    "addedToCart": "{{productName}}... đã thêm vào giỏ hàng!",
+    "outOfStockError": "Sản phẩm này đã hết hàng!"
+  },
+  "tabs": {
+    "description": "mô tả",
+    "reviews": "đánh giá"
   },
   "cart": {
     "shopping_cart": "Giỏ hàng",
@@ -176,7 +205,6 @@
     "shipping": "Phí vận chuyển",
     "total": "Tổng cộng"
   },
-
   "order": {
     "order_history": "Lịch sử đơn hàng",
     "order_details": "Chi tiết đơn hàng",
@@ -190,19 +218,6 @@
     "delivered": "Đã giao hàng",
     "cancelled": "Đã hủy",
     "refunded": "Đã hoàn tiền"
-  },
-  "profile": {
-    "my_profile": "Hồ sơ của tôi",
-    "personal_info": "Thông tin cá nhân",
-    "change_password": "Đổi mật khẩu",
-    "order_history": "Lịch sử đơn hàng",
-    "wishlist": "Danh sách yêu thích",
-    "addresses": "Địa chỉ",
-    "logout": "Đăng xuất",
-    "update_profile": "Cập nhật hồ sơ",
-    "current_password": "Mật khẩu hiện tại",
-    "new_password": "Mật khẩu mới",
-    "confirm_password": "Xác nhận mật khẩu"
   },
   "language": {
     "vietnamese": "Tiếng Việt",
@@ -399,7 +414,16 @@
     "add_address_error": "Không thể thêm địa chỉ",
     "update_address_error": "Không thể cập nhật địa chỉ",
     "delete_address_error": "Không thể xóa địa chỉ",
-    "set_default_error": "Không thể đặt địa chỉ mặc định"
+    "set_default_error": "Không thể đặt địa chỉ mặc định",
+    "my_profile": "Hồ sơ của tôi",
+    "personal_info": "Thông tin cá nhân",
+    "change_password": "Đổi mật khẩu",
+    "order_history": "Lịch sử đơn hàng",
+    "addresses": "Địa chỉ",
+    "update_profile": "Cập nhật hồ sơ",
+    "current_password": "Mật khẩu hiện tại",
+    "new_password": "Mật khẩu mới",
+    "confirm_password": "Xác nhận mật khẩu"
   },
   "orders": {
     "my_orders": "Đơn hàng của tôi",

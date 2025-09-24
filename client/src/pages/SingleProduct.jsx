@@ -9,8 +9,10 @@ import { serverUrl } from "../../config";
 import toast from "react-hot-toast";
 import PropTypes from "prop-types";
 import ProductTitle from "../components/products/ProductTitle";
+import { useTranslation } from "react-i18next";
 
 const SingleProduct = () => {
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -41,13 +43,12 @@ const SingleProduct = () => {
         const data = await response.json();
         if (data.success) {
           setProductInfo(data.product);
-          // Khởi tạo quantity về 1
           setQuantity(1);
         } else {
-          setError("Product not found");
+          setError(t("common.productNotFound", "Product not found"));
         }
       } catch (err) {
-        setError("Failed to load product");
+        setError(t("common.failedToLoad", "Failed to load product"));
         console.error("Error fetching product:", err);
       } finally {
         setLoading(false);
@@ -55,7 +56,7 @@ const SingleProduct = () => {
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     const fetchRelatedProducts = async () => {
@@ -91,22 +92,24 @@ const SingleProduct = () => {
     } else if (type === "decrement" && quantity > 1) {
       setQuantity((prev) => prev - 1);
     } else if (type === "increment" && quantity >= availableStock) {
-      toast.error("Cannot add more, stock limit reached!");
+      toast.error(t("common.cannotAddMore"));
     }
   };
 
   const handleAddToCart = () => {
     if (!productInfo?.stock || productInfo.stock === 0) {
-      toast.error("This product is out of stock!");
+      toast.error(t("common.outOfStockError"));
       return;
     }
     if (quantity + cartQuantity > productInfo.stock) {
-      toast.error(`Only ${availableStock} items available in stock!`);
+      toast.error(t("common.onlyAvailable", { count: availableStock }));
       return;
     }
     dispatch(addToCart({ ...productInfo, quantity }));
-    toast.success(`${productInfo?.name.substring(0, 10)}... added to cart!`);
-    setQuantity(1); // Reset quantity về 1 sau khi thêm vào giỏ
+    toast.success(t("common.addedToCart", { 
+      productName: productInfo?.name.substring(0, 10) 
+    }));
+    setQuantity(1);
   };
 
   if (loading) {
@@ -114,7 +117,7 @@ const SingleProduct = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading product...</p>
+          <p className="text-gray-600">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -124,12 +127,14 @@ const SingleProduct = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-2">{error || "Product not found"}</h2>
+          <h2 className="text-2xl font-bold text-red-600 mb-2">
+            {error || t("common.productNotFound", "Product not found")}
+          </h2>
           <button
             onClick={() => navigate("/")}
             className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors"
           >
-            Go back to Home
+            {t("common.goHome")}
           </button>
         </div>
       </div>
@@ -146,11 +151,26 @@ const SingleProduct = () => {
           productInfo?.image,
         ].filter((img) => img);
 
+  // Format currency based on language
+  const formatCurrency = (amount) => {
+    const locale = i18n.language === 'vi' ? 'vi-VN' : 'en-US';
+    const currency = i18n.language === 'vi' ? 'VND' : 'USD';
+    
+    return new Number(amount).toLocaleString(locale, {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: i18n.language === 'vi' ? 0 : 2,
+    });
+  };
+
   return (
     <div className="bg-white min-h-screen">
       <Container className="py-8">
+        {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-sm text-gray-500 mb-8">
-          <span className="hover:text-gray-700 cursor-pointer">Home</span>
+          <span className="hover:text-gray-700 cursor-pointer" onClick={() => navigate("/")}>
+            {t("common.home")}
+          </span>
           <span>/</span>
           <span className="hover:text-gray-700 cursor-pointer capitalize">
             {productInfo?.category}
@@ -160,6 +180,7 @@ const SingleProduct = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+          {/* Product Images */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -173,10 +194,11 @@ const SingleProduct = () => {
               <img
                 src={productImages[selectedImage] || "/placeholder-image.jpg"}
                 alt={productInfo?.name}
-                className={`w-full h-full object-cover transition-all duration-500 ${isImageZoomed
+                className={`w-full h-full object-cover transition-all duration-500 ${
+                  isImageZoomed
                     ? "scale-150 cursor-zoom-out"
                     : "hover:scale-105 group-hover:scale-105"
-                  }`}
+                }`}
                 onError={(e) => {
                   e.target.src = "/placeholder-image.jpg";
                 }}
@@ -184,7 +206,7 @@ const SingleProduct = () => {
               {!isImageZoomed && (
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 flex items-center justify-center">
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
-                    Click to zoom
+                    {t("common.clickToZoom")}
                   </div>
                 </div>
               )}
@@ -194,10 +216,11 @@ const SingleProduct = () => {
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`aspect-square overflow-hidden bg-gray-50 rounded-lg border-2 transition-all duration-200 ${selectedImage === index
+                  className={`aspect-square overflow-hidden bg-gray-50 rounded-lg border-2 transition-all duration-200 ${
+                    selectedImage === index
                       ? "border-black"
                       : "border-transparent hover:border-gray-300"
-                    }`}
+                  }`}
                 >
                   <img
                     src={image || "/placeholder-image.jpg"}
@@ -212,70 +235,65 @@ const SingleProduct = () => {
             </div>
           </motion.div>
 
+          {/* Product Info */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="space-y-6"
           >
-            {/* Product Title */}
             <ProductTitle name={productInfo?.name} />
-
 
             {/* Price */}
             <div className="flex items-center gap-4">
               {productInfo?.oldPrice && (
                 <span className="text-2xl text-gray-400 line-through">
-                  {new Number(productInfo.oldPrice).toLocaleString("vi-VN", {
-                    style: "currency",
-                    currency: "VND",
-                    minimumFractionDigits: 0,
-                  })}
+                  {formatCurrency(productInfo.oldPrice)}
                 </span>
               )}
               <span className="text-3xl font-light text-gray-900">
-                {new Number(productInfo?.price).toLocaleString("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                  minimumFractionDigits: 0,
-                })}
+                {formatCurrency(productInfo?.price)}
               </span>
               {productInfo?.oldPrice && (
                 <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium">
-                  Save{" "}
-                  {new Number(productInfo.oldPrice - productInfo.price).toLocaleString("vi-VN", {
-                    style: "currency",
-                    currency: "VND",
-                    minimumFractionDigits: 0,
+                  {t("common.save", { 
+                    amount: formatCurrency(productInfo.oldPrice - productInfo.price) 
                   })}
                 </span>
               )}
             </div>
+
+            {/* Ratings */}
             <div className="flex items-center gap-3">
               <div className="flex items-center">
                 {Array.from({ length: 5 }).map((_, index) => (
                   <MdStar
                     key={index}
-                    className={`w-5 h-5 ${index < Math.floor(productInfo?.ratings || 0)
+                    className={`w-5 h-5 ${
+                      index < Math.floor(productInfo?.ratings || 0)
                         ? "text-yellow-400"
                         : "text-gray-300"
-                      }`}
+                    }`}
                   />
                 ))}
               </div>
               <span className="text-sm text-gray-600">
-                Rated {productInfo?.ratings?.toFixed(1) || "0.0"} out of 5 based
-                on {productInfo?.reviews?.length || 0} customer reviews
+                {t("common.rated", {
+                  rating: productInfo?.ratings?.toFixed(1) || "0.0",
+                  count: productInfo?.reviews?.length || 0
+                })}
               </span>
             </div>
+
             <p className="text-gray-600 leading-relaxed text-lg">
               {productInfo?.description}
             </p>
+
             <div className="space-y-6">
               {/* Quantity Selector */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Quantity
+                  {t("common.quantity")}
                 </label>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
@@ -294,9 +312,7 @@ const SingleProduct = () => {
                         if (value >= 1 && value <= availableStock) {
                           setQuantity(value);
                         } else if (value > availableStock) {
-                          toast.error(
-                            `Only ${availableStock} items available in stock!`
-                          );
+                          toast.error(t("common.onlyAvailable", { count: availableStock }));
                           setQuantity(availableStock);
                         } else {
                           setQuantity(1);
@@ -325,16 +341,12 @@ const SingleProduct = () => {
                   }`}
                 >
                   {productInfo?.stock > 0
-                    ? `In stock: ${availableStock} items available`
-                    : "Out of stock"}
+                    ? t("common.inStock", { count: availableStock })
+                    : t("common.outOfStock")}
                 </p>
                 {cartQuantity > 0 && (
                   <p className="text-sm text-gray-500">
-                    In cart:{" "}
-                    <span className="font-medium text-gray-700">
-                      {cartQuantity}
-                    </span>{" "}
-                    item{cartQuantity > 1 ? "s" : ""}
+                    {t("common.inCart", { count: cartQuantity })}
                   </p>
                 )}
               </div>
@@ -345,35 +357,39 @@ const SingleProduct = () => {
                 disabled={!productInfo?.stock || productInfo.stock === 0}
                 className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-all duration-300 font-medium uppercase tracking-wide transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Add to Cart
+                {t("common.addToCart")}
               </button>
             </div>
+
+            {/* Action Buttons */}
             <div className="flex items-center gap-4 pt-4 border-t border-gray-200">
               <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
                 <MdFavoriteBorder className="w-5 h-5" />
-                Add to Wishlist
+                {t("common.addToWishlist")}
               </button>
               <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
                 <MdShare className="w-5 h-5" />
-                Share
+                {t("common.share")}
               </button>
             </div>
+
+            {/* Product Details */}
             <div className="space-y-2 pt-4 border-t border-gray-200 text-sm">
               <p>
-                <span className="font-medium">SKU:</span>{" "}
+                <span className="font-medium">{t("common.sku")}:</span>{" "}
                 <span className="text-gray-600">
                   {productInfo?._id?.slice(-6) || "N/A"}
                 </span>
               </p>
               <p>
-                <span className="font-medium">Category:</span>{" "}
+                <span className="font-medium">{t("common.category")}:</span>{" "}
                 <span className="text-gray-600 capitalize">
                   {productInfo?.category}
                 </span>
               </p>
               {productInfo?.tags && (
                 <p>
-                  <span className="font-medium">Tags:</span>{" "}
+                  <span className="font-medium">{t("common.tags")}:</span>{" "}
                   <span className="text-gray-600">{productInfo.tags}</span>
                 </p>
               )}
@@ -381,6 +397,7 @@ const SingleProduct = () => {
           </motion.div>
         </div>
 
+        {/* Tabs Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -392,38 +409,30 @@ const SingleProduct = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-4 text-sm font-medium uppercase tracking-wider transition-colors relative ${activeTab === tab
+                className={`pb-4 text-sm font-medium uppercase tracking-wider transition-colors relative ${
+                  activeTab === tab
                     ? "text-black border-b-2 border-black"
                     : "text-gray-500 hover:text-gray-700"
-                  }`}
+                }`}
               >
                 {tab === "reviews"
-                  ? `Reviews (${productInfo?.reviews?.length || 0})`
-                  : tab}
+                  ? `${t(`tabs.${tab}`)} (${productInfo?.reviews?.length || 0})`
+                  : t(`tabs.${tab}`)}
               </button>
             ))}
           </div>
           <div className="min-h-[200px]">
             {activeTab === "description" && (
               <div className="prose prose-lg max-w-none">
-                <h3 className="text-2xl font-light mb-4">Description</h3>
+                <h3 className="text-2xl font-light mb-4">{t("common.description")}</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  {productInfo?.description || "No description available."}
-                </p>
-                <p className="text-gray-600 leading-relaxed mt-4">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ut
-                  ullamcorper leo, eget euismod orci. Cum sociis natoque
-                  penatibus et magnis dis parturient montes nascetur ridiculus
-                  mus. Vestibulum ultricies aliquam convallis. Maecenas ut
-                  tellus mi. Proin tincidunt, lectus eu volutpat mattis, ante
-                  metus lacinia tellus, vitae condimentum nulla enim bibendum
-                  nibh.
+                  {productInfo?.description || t("common.noDescription")}
                 </p>
               </div>
             )}
             {activeTab === "reviews" && (
               <div className="space-y-6">
-                <h3 className="text-2xl font-light mb-6">Customer Reviews</h3>
+                <h3 className="text-2xl font-light mb-6">{t("common.customerReviews")}</h3>
                 {productInfo?.reviews?.length > 0 ? (
                   <div className="space-y-6">
                     {productInfo.reviews.map((review, index) => (
@@ -443,17 +452,16 @@ const SingleProduct = () => {
                                 {review.reviewerName}
                               </h4>
                               <div className="flex items-center">
-                                {Array.from({ length: 5 }).map(
-                                  (_, starIndex) => (
-                                    <MdStar
-                                      key={starIndex}
-                                      className={`w-4 h-4 ${starIndex < review.rating
-                                          ? "text-yellow-400"
-                                          : "text-gray-300"
-                                        }`}
-                                    />
-                                  )
-                                )}
+                                {Array.from({ length: 5 }).map((_, starIndex) => (
+                                  <MdStar
+                                    key={starIndex}
+                                    className={`w-4 h-4 ${
+                                      starIndex < review.rating
+                                        ? "text-yellow-400"
+                                        : "text-gray-300"
+                                    }`}
+                                  />
+                                ))}
                               </div>
                             </div>
                             <p className="text-gray-600 leading-relaxed">
@@ -465,15 +473,14 @@ const SingleProduct = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500">
-                    No reviews yet. Be the first to leave a review!
-                  </p>
+                  <p className="text-gray-500">{t("common.noReviews")}</p>
                 )}
               </div>
             )}
           </div>
         </motion.div>
 
+        {/* Related Products */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -481,7 +488,7 @@ const SingleProduct = () => {
           className="border-t border-gray-200 pt-16 mt-16"
         >
           <h2 className="text-2xl font-light text-center mb-12">
-            Related Products
+            {t("common.relatedProducts")}
           </h2>
           {loadingRelated ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -505,11 +512,7 @@ const SingleProduct = () => {
                 >
                   <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
                     <img
-                      src={
-                        product.image ||
-                        product.images?.[0] ||
-                        "/placeholder-image.jpg"
-                      }
+                      src={product.image || product.images?.[0] || "/placeholder-image.jpg"}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
@@ -525,10 +528,11 @@ const SingleProduct = () => {
                       {Array.from({ length: 5 }).map((_, starIndex) => (
                         <MdStar
                           key={starIndex}
-                          className={`w-4 h-4 ${starIndex < Math.floor(product.ratings || 4)
+                          className={`w-4 h-4 ${
+                            starIndex < Math.floor(product.ratings || 4)
                               ? "text-yellow-400"
                               : "text-gray-300"
-                            }`}
+                          }`}
                         />
                       ))}
                     </div>
@@ -539,22 +543,11 @@ const SingleProduct = () => {
                   <div className="flex items-center gap-2 mb-3">
                     {product.discountedPercentage > 0 && (
                       <span className="text-sm text-gray-400 line-through">
-                        {new Number(
-                          product.price /
-                          (1 - product.discountedPercentage / 100)
-                        ).toLocaleString("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                          minimumFractionDigits: 0,
-                        })}
+                        {formatCurrency(product.price / (1 - product.discountedPercentage / 100))}
                       </span>
                     )}
                     <span className="text-lg font-light text-gray-900">
-                      {new Number(product.price).toLocaleString("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                        minimumFractionDigits: 0,
-                      })}
+                      {formatCurrency(product.price)}
                     </span>
                     {product.discountedPercentage > 0 && (
                       <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium">
@@ -567,20 +560,22 @@ const SingleProduct = () => {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (!product?.stock || product.stock === 0) {
-                        toast.error("This product is out of stock!");
+                        toast.error(t("common.outOfStockError"));
                         return;
                       }
                       const cartItem = products.find((item) => item._id === product._id);
                       const cartQty = cartItem ? cartItem.quantity : 0;
                       if (cartQty >= product.stock) {
-                        toast.error("Cannot add more, stock limit reached!");
+                        toast.error(t("common.cannotAddMore"));
                         return;
                       }
                       dispatch(addToCart({ ...product, quantity: 1 }));
-                      toast.success(`${product.name.substring(0, 10)}... added to cart!`);
+                      toast.success(t("common.addedToCart", { 
+                        productName: product.name.substring(0, 10) 
+                      }));
                     }}
                   >
-                    Add to Cart
+                    {t("common.addToCart")}
                   </button>
                 </div>
               ))}
@@ -588,7 +583,7 @@ const SingleProduct = () => {
           ) : (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">
-                No related products found.
+                {t("common.noRelatedProducts")}
               </p>
             </div>
           )}

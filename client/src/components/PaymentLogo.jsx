@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-
+import vnpay from "../assets/images/vnpay-logo.png";
 const paypalLogo = import.meta.env.VITE_PAYPAL_LOGO_URL;
 const vnpayLogo = import.meta.env.VITE_VNPAY_LOGO_URL;
 const codLogo = import.meta.env.VITE_COD_LOGO_URL;
@@ -8,7 +8,7 @@ const FALLBACKS = {
   paypal:
     "https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg",
   vnpay:
-    "https://seeklogo.com/vector-logo/428006/vnpay",
+    vnpay || "https://vnpay.vn/wp-content/uploads/2020/06/logo-vnpay.png",
   cod:
     "https://static.thenounproject.com/png/cash-on-delivery-icon-4286952-512.png",
 };

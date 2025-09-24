@@ -39,7 +39,7 @@
     "email_required": "Please provide an Email!",
     "email_invalid": "Please give a valid Email!"
   },
-"auth": {
+  "auth": {
     "welcome_back": "Welcome Back",
     "signin_subtitle": "Sign in to your account to continue shopping",
     "email_address": "Email Address",
@@ -114,8 +114,7 @@
     "too_many_attempts": "Too many registration attempts. Please try again after {{minutes}} minutes.",
     "lockout_message": "Account temporarily locked. Please try again after {{minutes}} minutes.",
     "invalid_name": "Name contains invalid characters",
-     "suspected_injection": "Input contains unsafe content"
-
+    "suspected_injection": "Input contains unsafe content"
   },
   "product": {
     "new_arrivals": "New Arrivals",
@@ -163,7 +162,36 @@
     "address": "Address",
     "city": "City",
     "country": "Country",
-    "zipcode": "Zipcode"
+    "zipcode": "Zipcode",
+        "goHome": "Go back to Home",
+    "home": "Home",
+    "addToCart": "Add to Cart",
+    "inStock": "In stock: {{count}} items available",
+    "outOfStock": "Out of stock",
+    "inCart": "In cart: {{count}} item",
+    "inCart_plural": "In cart: {{count}} items",
+    "sku": "SKU",
+    "category": "Category",
+    "tags": "Tags",
+    "description": "Description",
+    "reviews": "Reviews",
+    "relatedProducts": "Related Products",
+    "noRelatedProducts": "No related products found",
+    "clickToZoom": "Click to zoom",
+    "rated": "Rated {{rating}} out of 5 based on {{count}} customer review",
+    "rated_plural": "Rated {{rating}} out of 5 based on {{count}} customer reviews",
+    "noReviews": "No reviews yet. Be the first to leave a review!",
+    "customerReviews": "Customer Reviews",
+    "addToWishlist": "Add to Wishlist",
+    "share": "Share",
+    "cannotAddMore": "Cannot add more, stock limit reached!",
+    "onlyAvailable": "Only {{count}} items available in stock!",
+    "addedToCart": "{{productName}}... added to cart!",
+    "outOfStockError": "This product is out of stock!"
+  },
+  "tabs": {
+    "description": "description",
+    "reviews": "reviews"
   },
   "cart": {
     "shopping_cart": "Shopping Cart",
@@ -201,19 +229,6 @@
     "delivered": "Delivered",
     "cancelled": "Cancelled",
     "refunded": "Refunded"
-  },
-  "profile": {
-    "my_profile": "My Profile",
-    "personal_info": "Personal Information",
-    "change_password": "Change Password",
-    "order_history": "Order History",
-    "wishlist": "Wishlist",
-    "addresses": "Addresses",
-    "logout": "Logout",
-    "update_profile": "Update Profile",
-    "current_password": "Current Password",
-    "new_password": "New Password",
-    "confirm_password": "Confirm Password"
   },
   "language": {
     "vietnamese": "Tiếng Việt",
@@ -410,7 +425,16 @@
     "add_address_error": "Failed to add address",
     "update_address_error": "Failed to update address",
     "delete_address_error": "Failed to delete address",
-    "set_default_error": "Failed to set default address"
+    "set_default_error": "Failed to set default address",
+    "my_profile": "My Profile",
+    "personal_info": "Personal Information",
+    "change_password": "Change Password",
+    "order_history": "Order History",
+    "addresses": "Addresses",
+    "update_profile": "Update Profile",
+    "current_password": "Current Password",
+    "new_password": "New Password",
+    "confirm_password": "Confirm Password"
   },
   "orders": {
     "my_orders": "My Orders",

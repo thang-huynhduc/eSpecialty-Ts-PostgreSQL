@@ -4,7 +4,6 @@ import { useDispatch } from "react-redux";
 import { resetCart } from "../redux/especialtySlice";
 import Container from "../components/Container";
 import PriceFormat from "../components/PriceFormat";
-import PaymentLogo from "../components/PaymentLogo";
 import PayPalPayment from "../components/PayPalPayment";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -358,8 +357,8 @@ const Checkout = () => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium text-green-600">{order.shippingFee}</span>
+                  <span className="text-gray-600">{t("checkout_order.shipping")}</span>
+                  <span className="font-medium text-green-600">{t("checkout_order.free")}</span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold">
                   <span className="text-gray-900">{t("checkout_order.total")}</span>
@@ -398,7 +397,7 @@ const Checkout = () => {
                             onClick={handlePayOnline}
                             className="w-full flex items-center justify-center gap-3 bg-yellow-500 text-white py-3 px-4 rounded-lg hover:bg-yellow-600 transition-colors font-medium"
                           >
-                            <PaymentLogo method="paypal" className="h-5" />
+                            <FaPaypal className="w-5 h-5" />
                             {t("checkout_order.pay_with_paypal")} {/* i18n */}
                           </button>
 
@@ -406,7 +405,7 @@ const Checkout = () => {
                             onClick={handleVNPay}
                             className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                           >
-                            <PaymentLogo method="vnpay" className="h-5" />
+                            <FaCreditCard className="w-5 h-5" />
                             Pay with VNPay
                           </button>
                         </div>
@@ -416,7 +415,7 @@ const Checkout = () => {
                             onClick={() => handlePayment("paypal")}
                             className="w-full flex items-center justify-center gap-3 bg-yellow-500 text-white py-3 px-4 rounded-lg hover:bg-yellow-600 transition-colors font-medium"
                           >
-                            <PaymentLogo method="paypal" className="h-5" />
+                            <FaPaypal className="w-5 h-5" />
                             {t("checkout_order.pay_with_paypal")} {/* i18n */}
                           </button>
 
@@ -428,7 +427,7 @@ const Checkout = () => {
                             onClick={handleVNPay}
                             className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                           >
-                            <PaymentLogo method="vnpay" className="h-5" />
+                            <FaCreditCard className="w-5 h-5" />
                             Pay with VNPay
                           </button>
 
@@ -436,7 +435,7 @@ const Checkout = () => {
                             onClick={() => handlePayment("cod")}
                             className="w-full flex items-center justify-center gap-3 bg-gray-100 text-gray-900 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                           >
-                            <PaymentLogo method="cod" className="h-5" />
+                            <FaMoneyBillWave className="w-5 h-5" />
                             {t("checkout_order.pay_with_cod")} {/* i18n */}
                           </button>
                         </>
