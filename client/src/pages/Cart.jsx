@@ -25,6 +25,8 @@ import {
   FaCheck,
   FaChevronDown,
   FaChevronUp,
+  FaTruck,
+  FaSpinner,
 } from "react-icons/fa";
 
 const Cart = () => {
@@ -45,15 +47,25 @@ const Cart = () => {
     ward: "",
     district: "",
     city: "",
+    provinceId: "",
+    districtId: "",
+    wardCode: "",
     zipCode: "",
     country: "Vietnam",
     phone: "",
     isDefault: false,
   });
-  // eslint-disable-next-line no-unused-vars
   const [addressData, setAddressData] = useState(null);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  
+  // Shipping related states
+  const [shippingFee, setShippingFee] = useState(0);
+  const [shippingServices, setShippingServices] = useState([]);
+  const [selectedService, setSelectedService] = useState(null);
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+  const [shippingError, setShippingError] = useState(null);
+  
   const API_URL = import.meta.env.VITE_BACKEND_URL; 
 
   useEffect(() => {
@@ -79,6 +91,17 @@ const Cart = () => {
     }
   }, [userInfo]);
 
+  // Calculate shipping when address or products change
+  useEffect(() => {
+    if (selectedAddress && products.length > 0) {
+      calculateShippingFee();
+    } else {
+      setShippingFee(0);
+      setShippingServices([]);
+      setSelectedService(null);
+    }
+  }, [selectedAddress, products]);
+
   const fetchAddresses = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -101,6 +124,132 @@ const Cart = () => {
     }
   };
 
+  const calculateShippingFee = async () => {
+    if (!selectedAddress || !products.length) return;
+
+    setIsCalculatingShipping(true);
+    setShippingError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      // Calculate total weight from products
+      const totalWeight = products.reduce((total, item) => {
+        return total + ((item.weight || 500) * item.quantity);
+      }, 0);
+
+      // First, get available shipping services
+      const servicesResponse = await fetch(
+        `${API_URL}/api/shipping/services/1454/${selectedAddress.districtId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const servicesData = await servicesResponse.json();
+      
+      if (servicesData.success && servicesData.data?.length > 0) {
+        setShippingServices(servicesData.data);
+        
+        // Use the first available service to calculate fee
+        const firstService = servicesData.data[0];
+        setSelectedService(firstService);
+
+        // Calculate shipping fee
+        const feeResponse = await fetch(
+          `${API_URL}/api/shipping/calculate-fee`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              toDistrictId: parseInt(selectedAddress.districtId),
+              toWardCode: selectedAddress.wardCode,
+              weight: totalWeight,
+              serviceId: firstService.service_id,
+              serviceTypeId: firstService.service_type_id,
+              items: products.map(item => ({
+                name: item.name,
+                quantity: item.quantity,
+                weight: item.weight || 500
+              }))
+            }),
+          }
+        );
+
+        const feeData = await feeResponse.json();
+        
+        if (feeData.success && feeData.data) {
+          setShippingFee(feeData.data.total || 0);
+        } else {
+          throw new Error(feeData.message || "Failed to calculate shipping fee");
+        }
+      } else {
+        throw new Error("No shipping services available for this location");
+      }
+    } catch (error) {
+      console.error("Error calculating shipping:", error);
+      setShippingError(error.message);
+      setShippingFee(0);
+      setShippingServices([]);
+      setSelectedService(null);
+    } finally {
+      setIsCalculatingShipping(false);
+    }
+  };
+
+  const handleServiceChange = async (service) => {
+    if (!selectedAddress || !products.length) return;
+
+    setSelectedService(service);
+    setIsCalculatingShipping(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      const totalWeight = products.reduce((total, item) => {
+        return total + ((item.weight || 500) * item.quantity);
+      }, 0);
+
+      const feeResponse = await fetch(
+        `${API_URL}/api/shipping/calculate-fee`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            toDistrictId: parseInt(selectedAddress.districtId),
+            toWardCode: selectedAddress.wardCode,
+            weight: totalWeight,
+            serviceId: service.service_id,
+            items: products.map(item => ({
+              name: item.name,
+              quantity: item.quantity,
+              weight: item.weight || 500
+            }))
+          }),
+        }
+      );
+
+      const feeData = await feeResponse.json();
+      
+      if (feeData.success && feeData.data) {
+        setShippingFee(feeData.data.total || 0);
+      }
+    } catch (error) {
+      console.error("Error calculating shipping for service:", error);
+      toast.error("Failed to calculate shipping fee for selected service");
+    } finally {
+      setIsCalculatingShipping(false);
+    }
+  };
+
   const handleAddAddress = async (e) => {
     e.preventDefault();
     setIsAddingAddress(true);
@@ -113,7 +262,12 @@ const Cart = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(addressForm),
+        body: JSON.stringify({
+          ...addressForm,
+          provinceId: addressData?.provinceId,
+          districtId: addressData?.districtId,
+          wardCode: addressData?.wardCode,
+        }),
       });
 
       const data = await response.json();
@@ -124,10 +278,14 @@ const Cart = () => {
         setAddressForm({
           label: "",
           street: "",
+          ward: "",
+          district: "",
           city: "",
-          state: "",
+          provinceId: "",
+          districtId: "",
+          wardCode: "",
           zipCode: "",
-          country: "",
+          country: "Vietnam",
           phone: "",
           isDefault: false,
         });
@@ -143,8 +301,6 @@ const Cart = () => {
   };
 
   const handlePlaceOrder = async () => {
-    // console.log("hello");
-
     if (!userInfo) {
       toast.error(t("cart.please_login_order"));
       return;
@@ -152,6 +308,11 @@ const Cart = () => {
 
     if (!selectedAddress) {
       toast.error(t("cart.please_select_address"));
+      return;
+    }
+
+    if (shippingError) {
+      toast.error("Please resolve shipping calculation issues before placing order");
       return;
     }
 
@@ -167,7 +328,9 @@ const Cart = () => {
         },
         body: JSON.stringify({
           items: products,
-          amount: discount, // Use the discounted amount as final total
+          amount: discount + shippingFee, // Include shipping fee in total
+          shippingFee: shippingFee,
+          shippingService: selectedService,
           address: {
             ...selectedAddress,
             email: userInfo.email,
@@ -180,13 +343,10 @@ const Cart = () => {
       if (data.success) {
         toast.success(t("cart.order_placed_success"));
         dispatch(resetCart());
-        // Update order count
         dispatch(setOrderCount(orderCount + 1));
-        // Redirect to orders page or checkout page
         window.location.href = `/checkout/${data.orderId}`;
       } else {
         console.log("error", data);
-
         toast.error(data.message || t("cart.failed_place_order"));
       }
     } catch (error) {
@@ -658,6 +818,77 @@ const Cart = () => {
                   </div>
                 )}
 
+                {/* Shipping Options Section */}
+                {selectedAddress && products.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <FaTruck className="w-5 h-5" />
+                      Shipping Options
+                    </h3>
+                    
+                    {isCalculatingShipping ? (
+                      <div className="border border-gray-200 rounded-lg p-4 text-center">
+                        <FaSpinner className="w-6 h-6 text-blue-600 mx-auto mb-2 animate-spin" />
+                        <p className="text-gray-600 text-sm">Calculating shipping fee...</p>
+                      </div>
+                    ) : shippingError ? (
+                      <div className="border border-red-200 bg-red-50 rounded-lg p-4">
+                        <p className="text-red-600 text-sm mb-2">Shipping calculation error:</p>
+                        <p className="text-red-700 text-sm font-medium">{shippingError}</p>
+                        <button
+                          onClick={calculateShippingFee}
+                          className="mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                        >
+                          Try again
+                        </button>
+                      </div>
+                    ) : shippingServices.length > 0 ? (
+                      <div className="space-y-3">
+                        {shippingServices.map((service) => (
+                          <div
+                            key={service.service_id}
+                            className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                              selectedService?.service_id === service.service_id
+                                ? "border-blue-500 bg-blue-50"
+                                : "border-gray-200 hover:border-gray-300"
+                            }`}
+                            onClick={() => handleServiceChange(service)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-medium text-sm text-gray-900">
+                                    {service.short_name}
+                                  </span>
+                                  {selectedService?.service_id === service.service_id && (
+                                    <FaCheck className="w-4 h-4 text-blue-600" />
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-600">{service.service_type_name}</p>
+                              </div>
+                              {selectedService?.service_id === service.service_id && shippingFee > 0 && (
+                                <div className="text-right">
+                                  <div className="text-sm font-semibold text-gray-900">
+                                    <PriceFormat amount={shippingFee} />
+                                  </div>
+                                  <div className="text-xs text-gray-500">Shipping fee</div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : selectedAddress ? (
+                      <div className="border border-gray-200 rounded-lg p-4 text-center">
+                        <FaTruck className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-500 text-sm">
+                          No shipping services available for this location
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">
                   {t("cart.order_summary_title")}
                 </h3>
@@ -682,8 +913,23 @@ const Cart = () => {
                   )}
 
                   <div className="flex justify-between py-2">
-                    <span className="text-gray-600">{t("cart.shipping_label")}</span>
-                    <span className="font-medium text-gray-900">{t("cart.free_shipping")}</span>
+                    <span className="text-gray-600 flex items-center gap-2">
+                      <FaTruck className="w-4 h-4" />
+                      Shipping Fee
+                    </span>
+                    <span className="font-medium text-gray-900">
+                      {isCalculatingShipping ? (
+                        <FaSpinner className="w-4 h-4 animate-spin" />
+                      ) : shippingFee > 0 ? (
+                        <PriceFormat amount={shippingFee} />
+                      ) : shippingError ? (
+                        <span className="text-red-600 text-sm">Error</span>
+                      ) : selectedAddress ? (
+                        "Calculating..."
+                      ) : (
+                        "Select address"
+                      )}
+                    </span>
                   </div>
 
                   <div className="border-t border-gray-200 pt-4">
@@ -692,7 +938,7 @@ const Cart = () => {
                         {t("cart.total_order")}
                       </span>
                       <span className="text-lg font-semibold text-gray-900">
-                        <PriceFormat amount={discount} />
+                        <PriceFormat amount={discount + shippingFee} />
                       </span>
                     </div>
                   </div>
@@ -700,13 +946,20 @@ const Cart = () => {
 
                 <button
                   onClick={handlePlaceOrder}
-                  disabled={!userInfo || !selectedAddress || isPlacingOrder}
+                  disabled={!userInfo || !selectedAddress || isPlacingOrder || shippingError || isCalculatingShipping}
                   className="w-full bg-gray-900 text-white py-4 px-6 rounded-md hover:bg-gray-800 transition-colors font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {!userInfo ? (
                     t("cart.login_to_place_order")
                   ) : !selectedAddress ? (
                     t("cart.select_address_continue")
+                  ) : shippingError ? (
+                    "Fix shipping issues"
+                  ) : isCalculatingShipping ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <FaSpinner className="w-4 h-4 animate-spin" />
+                      Calculating shipping...
+                    </div>
                   ) : isPlacingOrder ? (
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -830,6 +1083,9 @@ const Cart = () => {
                     city: data.provinceName,
                     district: data.districtName,
                     ward: data.wardName,
+                    provinceId: data.provinceId,
+                    districtId: data.districtId,
+                    wardCode: data.wardCode
                   }));
                 }} 
               />

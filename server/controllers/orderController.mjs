@@ -6,7 +6,7 @@ import ghnService from "../services/ghnService.js";
 // Create a new order
 const createOrder = async (req, res) => {
   try {
-    const { items, amount, address } = req.body;
+    const { items, amount, address, shippingFee  } = req.body;
     const userId = req.user?.id;
     
     // Validate authentication
@@ -120,7 +120,6 @@ const createOrder = async (req, res) => {
     }
 
     // Calculate shipping fee if address has required GHN fields
-    let shippingFee = 0;
     if (address.districtId && address.wardCode) {
       const shippingResult = await ghnService.calculateShippingFee({
         toDistrictId: address.districtId,

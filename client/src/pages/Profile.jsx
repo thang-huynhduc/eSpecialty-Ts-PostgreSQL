@@ -58,14 +58,17 @@ const Profile = () => {
     ward: "",
     district: "",
     city: "",
+    provinceId: "", 
+    districtId: "", 
+    wardCode: "",   
     zipCode: "",
     country: "Vietnam",
     phone: "",
     isDefault: false,
   });
-  // eslint-disable-next-line no-unused-vars
   const [addressData, setAddressData] = useState(null);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [initialValues, setInitialValues] = useState(null);
 
   // Function to fetch user profile
   const fetchUserProfile = async () => {
@@ -95,7 +98,7 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
-        toast.error(t("common.error"));
+      toast.error(t("common.error"));
     } finally {
       setProfileLoading(false);
     }
@@ -160,6 +163,7 @@ const Profile = () => {
       
       const method = editingAddress ? 'PUT' : 'POST';
 
+      // Ensure addressForm includes provinceId, districtId, wardCode
       const response = await axios({
         method,
         url,
@@ -167,13 +171,18 @@ const Profile = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        data: addressForm,
+        data: {
+          ...addressForm,
+          provinceId: addressForm.provinceId,
+          districtId: addressForm.districtId,
+          wardCode: addressForm.wardCode,
+        },
       });
 
       if (response.data.success) {
         toast.success(editingAddress ? t("profile.update_address_success") : t("profile.add_address_success")); 
         fetchUserAddresses();
-        fetchUserProfile(); // Refresh profile data
+        fetchUserProfile();
         setShowAddressModal(false);
         setEditingAddress(null);
         resetAddressForm();
@@ -245,64 +254,62 @@ const Profile = () => {
       ward: "",
       district: "",
       city: "",
+      provinceId: "", 
+      districtId: "", 
+      wardCode: "",   
       zipCode: "",
       country: "Vietnam",
       phone: "",
       isDefault: false,
     });
     setAddressData(null);
+    setInitialValues(null);
   };
 
-const openAddressModal = (address = null) => {
-  if (address) {
-    setEditingAddress(address);
-    const initialValues = {
-      provinceName: address.city,
-      districtName: address.district,
-      wardName: address.ward,
-    };
-    setAddressForm({
-      label: address.label || "",
-      street: address.street || "",
-      ward: address.ward || "",
-      district: address.district || "",
-      city: address.city || "",
-      zipCode: address.zipCode || "",
-      country: address.country || "Vietnam",
-      phone: address.phone || "",
-      isDefault: address.isDefault || false,
-    });
-    // Pass memoized initialValues to AddressSelector
-    setInitialValues(initialValues);
-  } else {
-    setEditingAddress(null);
-    resetAddressForm();
-    setInitialValues(null);
-  }
-  setShowAddressModal(true);
-};
-
-// Add state for initialValues
-const [initialValues, setInitialValues] = useState(null);
+  const openAddressModal = (address = null) => {
+    if (address) {
+      setEditingAddress(address);
+      setAddressForm({
+        label: address.label || "",
+        street: address.street || "",
+        ward: address.ward || "",
+        district: address.district || "",
+        city: address.city || "",
+        provinceId: address.provinceId || "", 
+        districtId: address.districtId || "", 
+        wardCode: address.wardCode || "",     
+        zipCode: address.zipCode || "",
+        country: address.country || "Vietnam",
+        phone: address.phone || "",
+        isDefault: address.isDefault || false,
+      });
+      setInitialValues({
+        provinceName: address.city,
+        districtName: address.district,
+        wardName: address.ward,
+        provinceId: address.provinceId, 
+        districtId: address.districtId, 
+        wardCode: address.wardCode,     
+      });
+    } else {
+      setEditingAddress(null);
+      resetAddressForm();
+      setInitialValues(null);
+    }
+    setShowAddressModal(true);
+  };
 
   const handleAddressChange = useCallback((data) => {
     setAddressData(data);
-    setAddressForm((prev) => {
-      // Only update if the values have changed
-      if (
-        prev.city !== data.provinceName ||
-        prev.district !== data.districtName ||
-        prev.ward !== data.wardName
-      ) {
-        return {
-          ...prev,
-          city: data.provinceName,
-          district: data.districtName,
-          ward: data.wardName,
-        };
-      }
-      return prev; // Return previous state if no changes
-    });
+    setAddressForm((prev) => ({
+      ...prev,
+      city: data.provinceName || "",
+      district: data.districtName || "",
+      ward: data.wardName || "",
+      provinceId: data.provinceId || "", 
+      districtId: data.districtId || "", 
+      wardCode: data.wardCode || "",     
+    }));
   }, []);
 
   // Check authentication
@@ -913,8 +920,9 @@ const [initialValues, setInitialValues] = useState(null);
               </div>
 
               {/* Vietnamese Address Selector */}
-              <AddressSelector onAddressChange={handleAddressChange} 
-                initialValues={initialValues} 
+              <AddressSelector 
+                onAddressChange={handleAddressChange} 
+                initialValues={initialValues}
               />
 
               <div>

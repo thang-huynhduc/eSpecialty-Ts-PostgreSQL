@@ -357,8 +357,8 @@ const Checkout = () => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{t("checkout_order.shipping")}</span>
-                  <span className="font-medium text-green-600">{t("checkout_order.free")}</span>
+                  <span className="text-gray-600">Shipping</span>
+                  <span className="font-medium text-green-600">{order.shippingFee}</span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold">
                   <span className="text-gray-900">{t("checkout_order.total")}</span>
