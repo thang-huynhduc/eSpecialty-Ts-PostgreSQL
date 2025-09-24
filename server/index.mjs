@@ -4,10 +4,16 @@ import "dotenv/config";
 import cors from "cors";
 import { fileURLToPath } from "url";
 import path from "path";
+import dotenv from "dotenv";
+
+const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
+dotenv.config({ path: envFile });
 import { readdirSync } from "fs";
 import instanceMongodb from "./config/mongodb.js";
 import connectCloudinary from "./config/cloudinary.js";
 import morgan from "morgan";
+
+
 
 const port = process.env.PORT;
 

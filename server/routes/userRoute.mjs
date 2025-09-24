@@ -19,6 +19,12 @@ import {
   setDefaultAddress,
   getUserAddresses,
   uploadUserAvatar,
+  verifyOtp,
+  requestPasswordReset,
+  resetPassword,
+  changePassword,
+  requestUnlock,
+  unlockAccount,
 } from "../controllers/userController.mjs";
 import adminAuth from "../middleware/adminAuth.js";
 import userAuth from "../middleware/userAuth.js";
@@ -32,10 +38,16 @@ const routeValue = "/api/user/";
 router.post(`${routeValue}register`, userRegister);
 router.post(`${routeValue}login`, userLogin);
 router.post(`${routeValue}admin`, adminLogin);
+router.post(`${routeValue}verify-otp`, verifyOtp); // For OTP verification (register/unlock/etc.)
+router.post(`${routeValue}request-reset`, requestPasswordReset); // Request password reset OTP
+router.post(`${routeValue}reset-password`, resetPassword); // Reset password with OTP
+router.post(`${routeValue}request-unlock`, requestUnlock); // Request unlock OTP
+router.post(`${routeValue}unlock-account`, unlockAccount); // Unlock with OTP
 
 // User-protected routes
 router.get(`${routeValue}profile`, userAuth, getUserProfile);
 router.put(`${routeValue}profile`, userAuth, updateUserProfile);
+router.put(`${routeValue}change-password`, userAuth, changePassword); // Change password (authenticated, no OTP)
 router.post(`${routeValue}cart/add`, userAuth, addToCart);
 router.put(`${routeValue}cart/update`, userAuth, updateCart);
 router.get(`${routeValue}cart`, userAuth, getUserCart);

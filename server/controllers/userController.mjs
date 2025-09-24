@@ -2,6 +2,8 @@ import validator from "validator";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
+import otpModel from "../models/otpModel.js";
+import { sendOtpEmail } from "../services/emaiService.js";
 import { cloudinary, deleteCloudinaryImage } from "../config/cloudinary.js";
 import fs from "fs";
 
@@ -17,6 +19,7 @@ const cleanupTempFile = (filePath) => {
   }
 };
 
+// Create JWT with lastPasswordChange for session invalidation
 const createToken = (user) => {
   return jwt.sign(
     {
@@ -24,28 +27,51 @@ const createToken = (user) => {
       email: user.email,
       name: user.name,
       role: user.role,
+      lastPasswordChange: user.lastPasswordChange,
     },
     process.env.JWT_SECRET,
     { expiresIn: "1d" }
   );
 };
 
+// Sanitize inputs to prevent injection (A03:2021 Injection)
+const sanitizeInput = (input) => {
+  return validator.escape(input);
+};
+
+// Helper to generate OTP and hash it
+const generateOtp = async (userId, type) => {
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+  const otpHash = await bcrypt.hash(otpCode, 10);
+  await otpModel.create({ userId, otpHash, type });
+  return otpCode;
+};
+
 // Route for user login
 const userLogin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+    email = sanitizeInput(email);
+    password = sanitizeInput(password);
+
     const user = await userModel.findOne({ email });
     if (!user) {
       return res.json({ success: false, message: "Incorrect email or password" });
     }
 
     if (!user.isActive) {
-      return res.json({ success: false, message: "Account is inactive, please contact admin" });
+      return res.json({ success: false, message: "Account is inactive, please contact admin or request unlock" });
+    }
+
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      return res.json({ success: false, message: `Account locked until ${user.lockUntil.toISOString()}. Request unlock via email.` });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
-      // Update last login
+      user.failedLoginAttempts = 0;
+      user.lockUntil = undefined;
       user.lastLogin = new Date();
       await user.save();
 
@@ -62,7 +88,12 @@ const userLogin = async (req, res) => {
         message: "User logged in successfully",
       });
     } else {
-      res.json({ success: false, message: "Invalid correct email or password" });
+      user.failedLoginAttempts += 1;
+      if (user.failedLoginAttempts >= 5) {
+        user.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+      }
+      await user.save();
+      res.json({ success: false, message: "Invalid email or password" });
     }
   } catch (error) {
     console.log("User Login Error", error);
@@ -73,20 +104,17 @@ const userLogin = async (req, res) => {
 // Route for user registration
 const userRegister = async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      password,
-      role = "user",
-      address,
-      isActive = true,
-    } = req.body;
+    let { name, email, password, role = "user" } = req.body;
+
+    name = sanitizeInput(name);
+    email = sanitizeInput(email);
+    password = sanitizeInput(password);
+
     const existingUser = await userModel.findOne({ email });
     if (existingUser) {
       return res.json({ success: false, message: "User already exists" });
     }
 
-    // Validating email format & strong password
     if (!validator.isEmail(email)) {
       return res.json({
         success: false,
@@ -101,7 +129,6 @@ const userRegister = async (req, res) => {
       });
     }
 
-    // Only allow admin role creation if the request comes from an admin
     if (role === "admin" && (!req.user || req.user.role !== "admin")) {
       return res.json({
         success: false,
@@ -109,7 +136,6 @@ const userRegister = async (req, res) => {
       });
     }
 
-    // Hashing user password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -118,18 +144,63 @@ const userRegister = async (req, res) => {
       email,
       password: hashedPassword,
       role: role,
-      isActive: isActive,
-      address: address || {
-        street: "",
-        city: "",
-        state: "",
-        zipCode: "",
-        country: "",
-        phone: "",
-      },
+      verified: false,
+      addresses: [],
+      lastPasswordChange: new Date(),
     });
 
     const user = await newUser.save();
+
+    const otpCode = await generateOtp(user._id, 'register');
+    const emailSent = await sendOtpEmail(email, otpCode, 'Verify Your Registration', 'register');
+
+    if (!emailSent) {
+      await otpModel.deleteOne({ userId: user._id, type: 'register' });
+      await userModel.findByIdAndDelete(user._id);
+      return res.json({ success: false, message: "Failed to send verification email" });
+    }
+
+    res.json({
+      success: true,
+      message: "Registration successful! Please verify your email with the OTP sent.",
+      userId: user._id,
+    });
+  } catch (error) {
+    console.log("User Register Error", error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// Verify OTP
+const verifyOtp = async (req, res) => {
+  try {
+    const { userId, otpCode, type } = req.body;
+
+    const otpRecord = await otpModel.findOne({ userId, type });
+    if (!otpRecord) {
+      return res.json({ success: false, message: "OTP not found or expired" });
+    }
+
+    const isMatch = await bcrypt.compare(otpCode, otpRecord.otpHash);
+    if (!isMatch) {
+      return res.json({ success: false, message: "Invalid OTP" });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+
+    if (type === 'register') {
+      user.verified = true;
+    } else if (type === 'unlockAccount') {
+      user.failedLoginAttempts = 0;
+      user.lockUntil = undefined;
+      user.isActive = true;
+    }
+
+    await user.save();
+    await otpRecord.deleteOne(); // Replaced remove() with deleteOne()
 
     const token = createToken(user);
 
@@ -142,18 +213,22 @@ const userRegister = async (req, res) => {
         email: user.email,
         role: user.role,
       },
-      message: "User registered successfully!",
+      message: `${type.charAt(0).toUpperCase() + type.slice(1)} verified successfully`,
     });
   } catch (error) {
-    console.log("User Register Error", error);
+    console.log("Verify OTP Error", error);
     res.json({ success: false, message: error.message });
   }
 };
 
-// Route for admin login (now uses role-based authentication)
+// Admin login
 const adminLogin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+    email = sanitizeInput(email);
+    password = sanitizeInput(password);
+
     const user = await userModel.findOne({ email });
 
     if (!user) {
@@ -168,9 +243,14 @@ const adminLogin = async (req, res) => {
       return res.json({ success: false, message: "Account is deactivated" });
     }
 
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      return res.json({ success: false, message: `Account locked until ${user.lockUntil.toISOString()}. Request unlock via email.` });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
-      // Update last login
+      user.failedLoginAttempts = 0;
+      user.lockUntil = undefined;
       user.lastLogin = new Date();
       await user.save();
 
@@ -187,10 +267,160 @@ const adminLogin = async (req, res) => {
         message: "Welcome admin",
       });
     } else {
+      user.failedLoginAttempts += 1;
+      if (user.failedLoginAttempts >= 5) {
+        user.lockUntil = new Date(Date.now() + 15 * 60 * 1000);
+      }
+      await user.save();
       res.json({ success: false, message: "Invalid credentials" });
     }
   } catch (error) {
     console.log("Admin Login Error", error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// Request password reset OTP
+const requestPasswordReset = async (req, res) => {
+  try {
+    let { email } = req.body;
+    email = sanitizeInput(email);
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+
+    const otpCode = await generateOtp(user._id, 'resetPassword');
+    const emailSent = await sendOtpEmail(email, otpCode, 'Password Reset OTP', 'resetPassword');
+
+    if (!emailSent) {
+      await otpModel.deleteOne({ userId: user._id, type: 'resetPassword' });
+      return res.json({ success: false, message: "Failed to send reset email" });
+    }
+
+    res.json({ success: true, message: "OTP sent to your email for password reset", userId: user._id });
+  } catch (error) {
+    console.log("Request Reset Error", error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// Reset password with OTP
+const resetPassword = async (req, res) => {
+  try {
+    const { userId, otpCode, newPassword } = req.body;
+
+    const otpRecord = await otpModel.findOne({ userId, type: 'resetPassword' });
+    if (!otpRecord) {
+      return res.json({ success: false, message: "OTP not found or expired" });
+    }
+
+    const isMatch = await bcrypt.compare(otpCode, otpRecord.otpHash);
+    if (!isMatch) {
+      return res.json({ success: false, message: "Invalid OTP" });
+    }
+
+    if (newPassword.length < 8) {
+      return res.json({ success: false, message: "Password must be at least 8 characters" });
+    }
+
+    const user = await userModel.findById(userId);
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    user.lastPasswordChange = new Date();
+    await user.save();
+    await otpRecord.deleteOne(); // Replaced remove() with deleteOne()
+
+    res.json({ success: true, message: "Password reset successfully" });
+  } catch (error) {
+    console.log("Reset Password Error", error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// Change password (authenticated, no OTP)
+const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const user = await userModel.findById(req.user.id);
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.json({ success: false, message: "Invalid old password" });
+    }
+
+    if (newPassword.length < 8) {
+      return res.json({ success: false, message: "Password must be at least 8 characters" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    user.lastPasswordChange = new Date();
+    await user.save();
+
+    res.json({ success: true, message: "Password changed successfully" });
+  } catch (error) {
+    console.log("Change Password Error", error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// Request account unlock OTP
+const requestUnlock = async (req, res) => {
+  try {
+    let { email } = req.body;
+    email = sanitizeInput(email);
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+
+    if (!user.lockUntil || user.lockUntil <= Date.now()) {
+      return res.json({ success: false, message: "Account is not locked" });
+    }
+
+    const otpCode = await generateOtp(user._id, 'unlockAccount');
+    const emailSent = await sendOtpEmail(email, otpCode, 'Account Unlock OTP', 'unlockAccount');
+
+    if (!emailSent) {
+      await otpModel.deleteOne({ userId: user._id, type: 'unlockAccount' });
+      return res.json({ success: false, message: "Failed to send unlock email" });
+    }
+
+    res.json({ success: true, message: "OTP sent to your email for account unlock", userId: user._id });
+  } catch (error) {
+    console.log("Request Unlock Error", error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// Unlock account with OTP
+const unlockAccount = async (req, res) => {
+  try {
+    const { userId, otpCode } = req.body;
+
+    const otpRecord = await otpModel.findOne({ userId, type: 'unlockAccount' });
+    if (!otpRecord) {
+      return res.json({ success: false, message: "OTP not found or expired" });
+    }
+
+    const isMatch = await bcrypt.compare(otpCode, otpRecord.otpHash);
+    if (!isMatch) {
+      return res.json({ success: false, message: "Invalid OTP" });
+    }
+
+    const user = await userModel.findById(userId);
+    user.failedLoginAttempts = 0;
+    user.lockUntil = undefined;
+    user.isActive = true;
+    await user.save();
+    await otpRecord.deleteOne(); 
+
+    res.json({ success: true, message: "Account unlocked successfully" });
+  } catch (error) {
+    console.log("Unlock Account Error", error);
     res.json({ success: false, message: error.message });
   }
 };
@@ -340,7 +570,7 @@ const addAddress = async (req, res) => {
     const paramUserId = req.params?.userId; 
     const targetUserId = userId || paramUserId;
     console.log("req.body", req.body);
-    let { label, street, ward, district, city, zipCode, country, phone, isDefault } =
+    let { label, street, ward, district, city,provinceId, districtId, wardCode ,zipCode, country, phone, isDefault } =
       req.body;
 
     // Validate required fields
@@ -369,6 +599,9 @@ const addAddress = async (req, res) => {
       ward,
       district,
       city,
+      provinceId,
+      districtId,
+      wardCode,
       zipCode,
       country,
       phone: phone || "",
@@ -580,28 +813,6 @@ const uploadUserAvatar = async (req, res) => {
 
     res.json({ success: false, message: error.message });
   }
-};
-
-export {
-  userLogin,
-  userRegister,
-  adminLogin,
-  getUsers,
-  removeUser,
-  updateUser,
-  getUserProfile,
-  updateUserProfile,
-  addToCart,
-  updateCart,
-  getUserCart,
-  clearCart,
-  createAdmin,
-  addAddress,
-  updateAddress,
-  deleteAddress,
-  setDefaultAddress,
-  getUserAddresses,
-  uploadUserAvatar,
 };
 
 // Get user profile
@@ -878,4 +1089,32 @@ const createAdmin = async (req, res) => {
     console.log("Create Admin Error", error);
     res.json({ success: false, message: error.message });
   }
+};
+
+export {
+  userLogin,
+  userRegister,
+  adminLogin,
+  getUsers,
+  removeUser,
+  updateUser,
+  getUserProfile,
+  updateUserProfile,
+  addToCart,
+  updateCart,
+  getUserCart,
+  clearCart,
+  createAdmin,
+  addAddress,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
+  getUserAddresses,
+  uploadUserAvatar,
+  verifyOtp,
+  requestPasswordReset,
+  resetPassword,
+  changePassword,
+  requestUnlock,
+  unlockAccount,
 };

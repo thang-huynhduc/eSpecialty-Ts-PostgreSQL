@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { getData } from "../../helpers";
 import { config } from "../../../config";
 import { debounce } from "lodash";
+import toast from "react-hot-toast";
 
 const ProductsSideNav = ({ onFilterChange, filters, onClearFilters }) => {
   const { t } = useTranslation();
@@ -128,11 +129,11 @@ useEffect(() => {
     handlePriceChangeDebounced(min, max);
   };
 
-const handleCategoryChange = (categoryName) => {
-  onFilterChange({
-    category: filters.category === categoryName ? "" : categoryName,
-  });
-};
+  const handleCategoryChange = (category) => {
+    onFilterChange({
+      category: filters.category === category ? "" : category,
+    });
+  };
 
   const handleBrandChange = (brand) => {
     onFilterChange({

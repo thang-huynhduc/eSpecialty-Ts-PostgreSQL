@@ -2,30 +2,43 @@ import ghnService from "../services/ghnService.js";
 
 const calculateShippingFee = async (req, res) => {
   try {
-    const { toDistrictId, toWardCode, weight, items } = req.body;
-    
+    const { toDistrictId, toWardCode, weight, items, serviceId, serviceTypeId } = req.body;
+
     if (!toDistrictId || !toWardCode) {
-      return res.json({
+      return res.status(400).json({
         success: false,
-        message: "District ID and Ward Code are required"
+        message: "District ID and Ward Code are required",
       });
     }
 
-    const totalWeight = weight || (items ? items.reduce((total, item) => 
-      total + (item.weight || 500) * item.quantity, 0) : 500);
+    let totalWeight;
+    if (weight) {
+      totalWeight = weight;
+    } else if (items && Array.isArray(items) && items.length > 0) {
+      totalWeight = items.reduce((total, item) => {
+        if (!item.quantity || typeof item.quantity !== 'number' || item.quantity <= 0) {
+          throw new Error('Invalid item quantity');
+        }
+        return total + (item.weight || 500) * item.quantity;
+      }, 0);
+    } else {
+      throw new Error('Weight or items must be provided');
+    }
 
     const result = await ghnService.calculateShippingFee({
       toDistrictId,
       toWardCode,
-      weight: totalWeight
+      weight: totalWeight,
+      serviceId,
+      serviceTypeId,
     });
 
-    res.json(result);
+    return res.status(200).json(result);
   } catch (error) {
     console.error('Calculate shipping fee error:', error);
-    res.json({
+    return res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };

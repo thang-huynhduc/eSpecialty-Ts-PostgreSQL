@@ -72,9 +72,29 @@ const userSchema = new mongoose.Schema(
         ref: "order",
       },
     ],
-    addresses: [AddressSchema],
+    addresses: [
+      {
+        label: { type: String}, // e.g., 'Home', 'Work', 'Billing'
+        street: { type: String},
+        ward: { type: String}, // Phường/Xã
+        district: { type: String}, // Quận/Huyện
+        city: { type: String}, // Tỉnh/Thành phố
+        provinceId: { type: Number, },
+        districtId: { type: Number, },
+        wardCode: {type: String,},
+        zipCode: { type: String},
+        country: { type: String, default: "Vietnam" },
+        phone: { type: String, default: "" },
+        isDefault: { type: Boolean, default: false },
+        _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+      },
+    ],
     isActive: { type: Boolean, default: true },
+    verified: { type: Boolean, default: false }, // Email verification status
+    failedLoginAttempts: { type: Number, default: 0 }, // Track failed logins
+    lockUntil: { type: Date }, // Account lock timestamp
     lastLogin: { type: Date },
+    lastPasswordChange: { type: Date, default: Date.now }, // Added for session invalidation
     avatar: { type: String, default: "" },
   },
   {
