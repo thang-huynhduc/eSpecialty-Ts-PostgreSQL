@@ -1,6 +1,8 @@
 import { Router } from "express";
 import ghnService from "../services/ghnService.js";
-
+import orderModel from "../models/orderModel.js";
+import userModel from "../models/userModel.js";
+import { sendOtpEmail } from "../services/emaiService.js";
 const router = Router();
 const routeValue = "/api/ghn/";
 
@@ -56,8 +58,6 @@ router.post(`${routeValue}webhook`, async (req, res) => {
   try {
     const { OrderCode, Status, ExpectedDeliveryTime } = req.body;
     
-    const orderModel = (await import("../models/orderModel.js")).default;
-    
     const order = await orderModel.findOne({ ghnOrderCode: OrderCode });
     if (order) {
       order.ghnStatus = Status;
@@ -94,6 +94,32 @@ router.post(`${routeValue}webhook`, async (req, res) => {
       }
       
       await order.save();
+
+      // Send email notification
+      const user = await userModel.findById(order.userId);
+      if (user) {
+        const emailSubject = `Cập nhật trạng thái đơn hàng #${order._id}`;
+        const emailSent = await sendOtpEmail(
+          user.email,
+          null,
+          emailSubject,
+          "order_status_update",
+          {
+            orderId: order._id,
+            status: order.status,
+            items: order.items,
+            amount: order.amount,
+            shippingFee: order.shippingFee,
+            address: order.address,
+            ghnOrderCode: order.ghnOrderCode,
+            ghnExpectedDeliveryTime: order.ghnExpectedDeliveryTime,
+          }
+        );
+
+        if (!emailSent) {
+          console.log("Failed to send status update email");
+        }
+      }
     }
     
     res.json({ success: true, message: "Webhook processed" });

@@ -92,6 +92,7 @@ const orderSchema = new mongoose.Schema({
     enum: ["pending", "confirmed", "shipped", "delivered", "cancelled"],
     default: "pending",
   },
+  emailSent: { type: Boolean, default: false },
   paymentMethod: {
     type: String,
     enum: ["cod", "stripe", "paypal", "vnpay"],

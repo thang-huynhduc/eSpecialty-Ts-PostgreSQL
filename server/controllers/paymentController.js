@@ -6,7 +6,7 @@ import paypalClient, { PAYPAL_WEBHOOK_CONFIG, SUPPORTED_PAYPAL_EVENTS } from "..
 import { convertVNDToUSD, isPayPalSupportedCurrency } from "../services/currencyService.js";
 import { createPayPalOrder as createPayPalOrderService, capturePayPalPayment as capturePayPalPaymentService, createVNPayPaymentUrl, verifyVNPayReturnOrIPN } from "../services/paymentService.js";
 import paymentDetailsModel from "../models/paymentDetailsModel.js";
-
+import { sendOtpEmail } from "../services/emaiService.js";
 
 
 // Create payment intent for Stripe
@@ -81,8 +81,27 @@ export const confirmPayment = async (req, res) => {
 
       order.paymentStatus = "paid";
       order.paymentMethod = "stripe";
-      order.status = "confirmed";
+      // order.status = "confirmed";
       await order.save();
+
+      // Send payment confirmation email
+      const user = await userModel.findById(order.userId);
+      if (user) {
+        const emailSubject = `Xác nhận thanh toán đơn hàng #${order._id}`;
+        await sendOtpEmail(
+          user.email,
+          null,
+          emailSubject,
+          "payment_confirmation",
+          {
+            orderId: order._id,
+            items: order.items,
+            amount: order.amount,
+            shippingFee: order.shippingFee,
+            address: order.address,
+          }
+        );
+      }
 
       res.json({
         success: true,
@@ -124,12 +143,30 @@ export const handleStripeWebhook = async (req, res) => {
       const orderId = paymentIntent.metadata.orderId;
 
       // Update order status
-      await orderModel.findByIdAndUpdate(orderId, {
-        paymentStatus: "paid",
-        status: "confirmed",
-      });
-      break;
-
+      const order = await orderModel.findById(orderId);
+        if (order && order.paymentStatus !== "paid") {
+          order.paymentStatus = "paid";
+          // order.status = "confirmed";
+          await order.save();
+          // Send payment confirmation email
+          const user = await userModel.findById(order.userId);
+          if (user) {
+            const emailSubject = `Xác nhận thanh toán đơn hàng #${order._id}`;
+            await sendOtpEmail(
+              user.email,
+              null,
+              emailSubject,
+              "payment_confirmation",
+              {
+                orderId: order._id,
+                items: order.items,
+                amount: order.amount,
+                shippingFee: order.shippingFee,
+                address: order.address,
+              }
+            );
+          }        }
+        break;
     case "payment_intent.payment_failed":
       const failedPayment = event.data.object;
       const failedOrderId = failedPayment.metadata.orderId;
@@ -274,6 +311,31 @@ export const capturePayPalPayment = async (req, res) => {
       });
     }
 
+    // Update order if not already paid
+    if (!result.alreadyCaptured && order.paymentStatus !== "paid") {
+      order.paymentStatus = "paid";
+      order.paymentMethod = "paypal";
+       // order.status = "confirmed";
+      await order.save();
+      // Send payment confirmation email
+      const user = await userModel.findById(order.userId);
+      if (user) {
+        const emailSubject = `Xác nhận thanh toán đơn hàng #${order._id}`;
+        await sendOtpEmail(
+          user.email,
+          null,
+          emailSubject,
+          "payment_confirmation",
+          {
+            orderId: order._id,
+            items: order.items,
+            amount: order.amount,
+            shippingFee: order.shippingFee,
+            address: order.address,
+          }
+        );
+      }
+    }
     res.json({
       success: true,
       message: result.message,
@@ -334,8 +396,41 @@ export const handlePayPalWebhook = async (req, res) => {
 
     switch (eventType) {
       case "PAYMENT.CAPTURE.COMPLETED":
-        await handlePaymentCaptureCompleted(webhookBody.resource);
-        break;
+        const resource = webhookBody.resource;
+          const paymentDetails = await paymentDetailsModel.findOne({
+            "paypal.captureId": resource.id,
+          });
+          if (paymentDetails) {
+            const order = await orderModel.findById(paymentDetails.orderId);
+            if (order && order.paymentStatus !== "paid") {
+              paymentDetails.gatewayStatus = "completed";
+              paymentDetails.gatewayResponse = resource;
+              await paymentDetails.save();
+
+              order.paymentStatus = "paid";
+             // order.status = "confirmed";
+              await order.save();
+              // Send payment confirmation email
+              const user = await userModel.findById(order.userId);
+              if (user) {
+                const emailSubject = `Xác nhận thanh toán đơn hàng #${order._id}`;
+                await sendOtpEmail(
+                  user.email,
+                  null,
+                  emailSubject,
+                  "payment_confirmation",
+                  {
+                    orderId: order._id,
+                    items: order.items,
+                    amount: order.amount,
+                    shippingFee: order.shippingFee,
+                    address: order.address,
+                  }
+                );
+              }
+            }
+          }
+          break;
 
       case "PAYMENT.CAPTURE.DENIED":
         await handlePaymentCaptureDenied(webhookBody.resource);
@@ -393,7 +488,7 @@ const handlePaymentCaptureCompleted = async (resource) => {
       const order = await orderModel.findById(paymentDetails.orderId);
       if (order) {
         order.paymentStatus = "paid";
-        order.status = "confirmed";
+       // order.status = "confirmed";
         await order.save();
         console.log(`Order ${order._id} payment confirmed via webhook`);
       }
@@ -488,7 +583,7 @@ const handleCheckoutOrderCompleted = async (resource) => {
       // This should already be handled by capture completed, but good to have as backup
       if (order.paymentStatus !== "paid") {
         order.paymentStatus = "paid";
-        order.status = "confirmed";
+        //order.status = "confirmed";
         await order.save();
         console.log(`Order ${order._id} completed via webhook`);
       }
@@ -685,8 +780,26 @@ export const vnpayReturnHandler = async (req, res) => {
     if (responseCode === "00") {
       order.paymentStatus = "paid";
       order.paymentMethod = "vnpay";
-      order.status = "confirmed";
+      //order.status = "confirmed";
       await order.save();
+      // Send payment confirmation email
+      const user = await userModel.findById(order.userId);
+      if (user) {
+        const emailSubject = `Xác nhận thanh toán đơn hàng #${order._id}`;
+        await sendOtpEmail(
+          user.email,
+          null,
+          emailSubject,
+          "payment_confirmation",
+          {
+            orderId: order._id,
+            items: order.items,
+            amount: order.amount,
+            shippingFee: order.shippingFee,
+            address: order.address,
+          }
+        );
+      }
     } else {
       order.paymentStatus = "failed";
       await order.save();
@@ -731,14 +844,33 @@ export const vnpayIpnHandler = async (req, res) => {
         await paymentDetails.save();
       }
 
-      if (responseCode === "00") {
+    if (responseCode === "00") {
         order.paymentStatus = "paid";
         order.paymentMethod = "vnpay";
-        order.status = "confirmed";
+        // order.status = "confirmed";
+        await order.save();
+        // Send payment confirmation email
+        const user = await userModel.findById(order.userId);
+        if (user) {
+          const emailSubject = `Xác nhận thanh toán đơn hàng #${order._id}`;
+          await sendOtpEmail(
+            user.email,
+            null,
+            emailSubject,
+            "payment_confirmation",
+            {
+              orderId: order._id,
+              items: order.items,
+              amount: order.amount,
+              shippingFee: order.shippingFee,
+              address: order.address,
+            }
+          );
+        }
       } else {
         order.paymentStatus = "failed";
+        await order.save();
       }
-      await order.save();
     }
 
     res.json({ RspCode: "00", Message: "Confirm Success" });
@@ -748,3 +880,32 @@ export const vnpayIpnHandler = async (req, res) => {
   }
 };
 
+// Helper function to send order confirmation email
+const sendOrderConfirmationEmail = async (order) => {
+  try {
+    const user = await userModel.findById(order.userId);
+    if (user && !order.emailSent) {
+      const emailSubject = `Xác nhận đơn hàng #${order._id}`;
+      await sendOtpEmail(
+        user.email,
+        null,
+        emailSubject,
+        "order_confirmation",
+        {
+          orderId: order._id,
+          status: order.status,
+          items: order.items,
+          amount: order.amount,
+          shippingFee: order.shippingFee,
+          address: order.address,
+          ghnOrderCode: order.ghnOrderCode || null,
+          ghnExpectedDeliveryTime: order.ghnExpectedDeliveryTime || null,
+        }
+      );
+      order.emailSent = true; // Mark as sent
+      await order.save();
+    }
+  } catch (error) {
+    console.error("Error sending order confirmation email:", error);
+  }
+};
