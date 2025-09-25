@@ -9,7 +9,8 @@
     "dev": "cross-env NODE_ENV=development nodemon index.mjs",
     "server": "NODE_ENV=development nodemon index.mjs",
     "prod": "NODE_ENV=production node index.mjs",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "migrate:encrypt-order-address": "cross-env NODE_ENV=production node scripts/migrate-encrypt-order-address.mjs"
   },
   "keywords": [],
   "author": "",

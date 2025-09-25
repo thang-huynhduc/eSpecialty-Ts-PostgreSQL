@@ -1,4 +1,63 @@
 import mongoose from "mongoose";
+import { encrypt, decrypt } from "../utils/crypto.js";
+
+// Transparentencrypt/decrypt string fields
+const encryptStringSetter = (value) => {
+  if (value === undefined || value === null) return value;
+  try {
+    // If value already a encrypted JSON string, keep it
+    if (typeof value === "string" && value.includes("\"iv\"") && value.includes("\"content\"") && value.includes("\"tag\"")) {
+      JSON.parse(value); 
+      return value;
+    }
+  } catch (_) {}
+  try {
+    const payload = encrypt(value);
+    return JSON.stringify(payload);
+  } catch (_) {
+    return value;
+  }
+};
+
+const decryptStringGetter = (value) => {
+  if (!value) return value;
+  try {
+    if (typeof value === "string") {
+      const obj = JSON.parse(value);
+      if (obj && obj.iv && obj.content && obj.tag) {
+        return decrypt(obj);
+      }
+    }
+  } catch (_) {}
+  return value;
+};
+
+
+
+
+const AddressSchema = new mongoose.Schema(
+  {
+    firstName: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
+    lastName: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
+    email: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
+    street: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
+    ward: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
+    district: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
+    city: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
+    zipcode: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
+    country: { type: String, required: true, default: "Vietnam", set: encryptStringSetter, get: decryptStringGetter },
+    phone: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
+    provinceId: { type: Number },
+    districtId: { type: Number },
+    wardCode: { type: String },
+  },
+  {
+    toJSON: { getters: true },
+    toObject: { getters: true },
+  }
+);
+
+
 
 const orderSchema = new mongoose.Schema({
   userId: {
@@ -35,58 +94,7 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  address: {
-    firstName: {
-      type: String,
-      required: true,
-    },
-    lastName: {
-      type: String,
-      required: true,
-    },
-    email: {
-      type: String,
-      required: true,
-    },
-    street: {
-      type: String,
-      required: true,
-    },
-    ward: {
-      type: String,
-      required: true,
-    },
-    district: {
-      type: String,
-      required: true,
-    },
-    city: {
-      type: String,
-      required: true,
-    },
-    zipcode: {
-      type: String,
-      required: true,
-    },
-    country: {
-      type: String,
-      required: true,
-      default: "Vietnam",
-    },
-    phone: {
-      type: String,
-      required: true,
-    },
-    provinceId: {
-      type: Number,
-    },
-    districtId: {
-      type: Number,
-    },
-    wardCode: {
-      type: String,
-    },
-  },
+  address: { type: AddressSchema, required: true },
   status: {
     type: String,
     enum: ["pending", "confirmed", "shipped", "delivered", "cancelled"],
