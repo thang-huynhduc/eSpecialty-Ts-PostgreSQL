@@ -1,66 +1,104 @@
 import React from 'react';
 import { Shield, Lock, Eye, Users, FileText, Mail, Clock, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const PrivacyPolicy = () => {
+  const { t } = useTranslation();
+
   const sections = [
     {
       id: 'collection',
-      title: 'Mục đích và phạm vi thu thập',
+      title: t('privacy.sections.collection.title'),
       icon: <FileText className="w-6 h-6" />,
-      content: [
-        'Khi bạn đăng ký/truy cập và/hoặc sử dụng Website của chúng tôi',
-        'Khi bạn gửi bất kỳ biểu mẫu nào, bao gồm đơn đăng ký hoặc các mẫu đơn khác',
-        'Khi bạn ký kết bất kỳ thỏa thuận nào hoặc cung cấp các tài liệu',
-        'Khi bạn tương tác với chúng tôi qua điện thoại, email, hoặc mạng xã hội',
-        'Khi bạn sử dụng các dịch vụ điện tử hoặc thực hiện giao dịch'
-      ]
+      content: t('privacy.sections.collection.items', { returnObjects: true })
     },
     {
-      id: 'data-types',
-      title: 'Dữ liệu cá nhân thu thập',
+      id: 'dataTypes',
+      title: t('privacy.sections.dataTypes.title'),
       icon: <Users className="w-6 h-6" />,
-      content: [
-        'Họ tên và giới tính',
-        'Ngày tháng năm sinh',
-        'Địa chỉ thanh toán và giao hàng',
-        'Thông tin tài khoản ngân hàng và thanh toán',
-        'Số điện thoại và địa chỉ email',
-        'Thông tin thiết bị và cách sử dụng dịch vụ'
-      ]
+      content: t('privacy.sections.dataTypes.items', { returnObjects: true })
     },
     {
       id: 'usage',
-      title: 'Phạm vi sử dụng thông tin',
+      title: t('privacy.sections.usage.title'),
       icon: <Eye className="w-6 h-6" />,
-      content: [
-        'Cung cấp các dịch vụ đến thành viên',
-        'Gửi thông báo về hoạt động trao đổi thông tin',
-        'Ngăn ngừa các hoạt động phá hủy tài khoản hoặc giả mạo',
-        'Liên lạc và giải quyết trong trường hợp đặc biệt',
-        'Xác nhận và liên hệ với các bên liên quan đến giao dịch',
-        'Tuân thủ yêu cầu của cơ quan pháp luật khi cần thiết'
-      ]
+      content: t('privacy.sections.usage.items', { returnObjects: true })
     },
     {
       id: 'storage',
-      title: 'Thời gian lưu trữ thông tin',
+      title: t('privacy.sections.storage.title'),
       icon: <Clock className="w-6 h-6" />,
-      content: [
-        'Dữ liệu cá nhân sẽ được lưu trữ cho đến khi có yêu cầu hủy bỏ từ thành viên',
-        'Thành viên có thể đăng nhập và thực hiện hủy bỏ tài khoản bất kỳ lúc nào',
-        'Dữ liệu được lưu trữ và bảo mật trên máy chủ của eSpecialty'
-      ]
+      content: t('privacy.sections.storage.items', { returnObjects: true })
     },
     {
       id: 'access',
-      title: 'Đối tượng được tiếp cận thông tin',
+      title: t('privacy.sections.access.title'),
       icon: <AlertTriangle className="w-6 h-6" />,
-      content: [
-        'Công Ty TNHH eSpecialty',
-        'Cơ quan nhà nước khi có yêu cầu phục vụ điều tra'
-      ]
+      content: t('privacy.sections.access.items', { returnObjects: true })
     }
   ];
+
+  const rights = [
+    {
+      id: 'access',
+      title: t('privacy.rights.access.title'),
+      content: t('privacy.rights.access.content'),
+      color: 'green'
+    },
+    {
+      id: 'recovery',
+      title: t('privacy.rights.recovery.title'),
+      content: t('privacy.rights.recovery.content'),
+      color: 'blue'
+    },
+    {
+      id: 'deletion',
+      title: t('privacy.rights.deletion.title'),
+      content: t('privacy.rights.deletion.content'),
+      color: 'red'
+    },
+    {
+      id: 'processing',
+      title: t('privacy.rights.processing.title'),
+      content: t('privacy.rights.processing.content'),
+      color: 'yellow'
+    }
+  ];
+
+  const getColorClasses = (color) => {
+    const colors = {
+      green: {
+        bg: 'bg-green-50',
+        border: 'border-green-200',
+        text: 'text-green-700',
+        title: 'text-green-800'
+      },
+      blue: {
+        bg: 'bg-blue-50',
+        border: 'border-blue-200',
+        text: 'text-blue-700',
+        title: 'text-blue-800'
+      },
+      red: {
+        bg: 'bg-red-50',
+        border: 'border-red-200',
+        text: 'text-red-700',
+        title: 'text-red-800'
+      },
+      yellow: {
+        bg: 'bg-yellow-50',
+        border: 'border-yellow-200',
+        text: 'text-yellow-700',
+        title: 'text-yellow-800'
+      }
+    };
+    return colors[color] || colors.green;
+  };
+
+  // Hàm để render HTML content an toàn
+  const renderHTML = (htmlString) => {
+    return { __html: htmlString };
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -74,11 +112,10 @@ const PrivacyPolicy = () => {
               </div>
             </div>
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Chính Sách Bảo Mật Thông Tin Cá Nhân
+              {t('privacy.title')}
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Chúng tôi cam kết bảo vệ quyền riêng tư và thông tin cá nhân của bạn. 
-              Tài liệu này giải thích cách chúng tôi thu thập, sử dụng và bảo vệ dữ liệu của bạn.
+              {t('privacy.subtitle')}
             </p>
           </div>
         </div>
@@ -92,13 +129,13 @@ const PrivacyPolicy = () => {
               <Lock className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Giới thiệu</h2>
-              <p className="text-gray-700 leading-relaxed">
-                Chúng tôi, <strong>Công Ty TNHH eSpecialty</strong>, mong muốn đem đến cho thành viên và tất cả 
-                người dùng truy cập vào trang thương mại điện tử <strong>eSpecialty.vn</strong> một trải nghiệm 
-                thoải mái và tốt nhất. Chính sách này tuân thủ đầy đủ các quy định của pháp luật Việt Nam 
-                về bảo vệ dữ liệu cá nhân.
-              </p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                {t('privacy.introduction.title')}
+              </h2>
+              <p 
+                className="text-gray-700 leading-relaxed"
+                dangerouslySetInnerHTML={renderHTML(t('privacy.introduction.content'))}
+              />
             </div>
           </div>
         </div>
@@ -117,7 +154,7 @@ const PrivacyPolicy = () => {
               </div>
               <div className="p-6">
                 <ul className="space-y-3">
-                  {section.content.map((item, itemIndex) => (
+                  {Array.isArray(section.content) && section.content.map((item, itemIndex) => (
                     <li key={itemIndex} className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                       <span className="text-gray-700 leading-relaxed">{item}</span>
@@ -136,41 +173,29 @@ const PrivacyPolicy = () => {
               <Users className="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Quyền của thành viên</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                {t('privacy.rights.title')}
+              </h3>
             </div>
           </div>
           
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-              <h4 className="font-semibold text-green-800 mb-3">Quyền truy cập và chỉnh sửa</h4>
-              <p className="text-green-700 text-sm">
-                Bạn có quyền tự kiểm tra, cập nhật, điều chỉnh thông tin cá nhân bằng cách 
-                đăng nhập vào tài khoản và chỉnh sửa thông tin.
-              </p>
-            </div>
-            
-            <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-blue-800 mb-3">Quyền khôi phục tài khoản</h4>
-              <p className="text-blue-700 text-sm">
-                Bạn có thể gửi yêu cầu khôi phục tài khoản do quên mật khẩu qua email 
-                cskh@especialty.vn.
-              </p>
-            </div>
-            
-            <div className="bg-red-50 p-6 rounded-lg border border-red-200">
-              <h4 className="font-semibold text-red-800 mb-3">Quyền xóa tài khoản</h4>
-              <p className="text-red-700 text-sm">
-                Bạn có quyền yêu cầu hủy bỏ thông tin cá nhân bằng nút "Yêu cầu xóa tài khoản" 
-                trong trang Tài khoản.
-              </p>
-            </div>
-            
-            <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
-              <h4 className="font-semibold text-yellow-800 mb-3">Xử lý yêu cầu</h4>
-              <p className="text-yellow-700 text-sm">
-                Ban quản trị sẽ liên hệ xác nhận và xử lý yêu cầu của bạn trong 24 giờ làm việc.
-              </p>
-            </div>
+            {rights.map((right) => {
+              const colorClasses = getColorClasses(right.color);
+              return (
+                <div 
+                  key={right.id}
+                  className={`${colorClasses.bg} p-6 rounded-lg border ${colorClasses.border}`}
+                >
+                  <h4 className={`font-semibold ${colorClasses.title} mb-3`}>
+                    {right.title}
+                  </h4>
+                  <p className={`${colorClasses.text} text-sm`}>
+                    {right.content}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -181,22 +206,28 @@ const PrivacyPolicy = () => {
               <Mail className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold mb-4">Thông tin liên hệ</h3>
+              <h3 className="text-2xl font-bold mb-4">
+                {t('privacy.contact.title')}
+              </h3>
             </div>
           </div>
           
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h4 className="font-semibold mb-3 text-blue-200">Công ty TNHH eSpecialty</h4>
+              <h4 className="font-semibold mb-3 text-blue-200">
+                {t('privacy.contact.company')}
+              </h4>
               <div className="space-y-2 text-gray-300">
-                <p><strong>GPDKKD:</strong> 0316713818</p>
-                <p><strong>Cấp bởi:</strong> Sở KH&ĐT TP.HCM</p>
-                <p><strong>Ngày cấp:</strong> 09/02/2021</p>
+                <p><strong>{t('privacy.contact.info.businessLicense')}:</strong> 0316713818</p>
+                <p><strong>{t('privacy.contact.info.issuedBy')}:</strong> Sở KH&ĐT TP.HCM</p>
+                <p><strong>{t('privacy.contact.info.issueDate')}:</strong> 09/02/2021</p>
               </div>
             </div>
             
             <div>
-              <h4 className="font-semibold mb-3 text-blue-200">Địa chỉ & Liên hệ</h4>
+              <h4 className="font-semibold mb-3 text-blue-200">
+                {t('privacy.contact.info.address')}
+              </h4>
               <div className="space-y-2 text-gray-300 text-sm">
                 <p>G-12A17, tầng 12, The Manor Officetel</p>
                 <p>Số 89 Nguyễn Hữu Cảnh, P.22, Q.Bình Thạnh</p>
@@ -213,16 +244,16 @@ const PrivacyPolicy = () => {
             <div className="bg-green-100 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
               <Shield className="w-8 h-8 text-green-600" />
             </div>
-            <h3 className="text-2xl font-bold text-green-800 mb-4">Cam kết bảo mật</h3>
+            <h3 className="text-2xl font-bold text-green-800 mb-4">
+              {t('privacy.commitment.title')}
+            </h3>
             <div className="max-w-3xl mx-auto">
-              <p className="text-green-700 leading-relaxed mb-4">
-                Thông tin cá nhân của bạn được <strong>cam kết bảo mật tuyệt đối</strong>. 
-                Chúng tôi không sử dụng, chuyển giao hay tiết lộ thông tin cho bên thứ ba 
-                khi không có sự đồng ý từ bạn.
-              </p>
+              <p 
+                className="text-green-700 leading-relaxed mb-4"
+                dangerouslySetInnerHTML={renderHTML(t('privacy.commitment.content'))}
+              />
               <p className="text-green-700 leading-relaxed">
-                Mọi thông tin giao dịch trực tuyến được bảo mật tại khu vực dữ liệu trung tâm 
-                an toàn cấp 1 của eSpecialty.
+                {t('privacy.commitment.additional')}
               </p>
             </div>
           </div>
