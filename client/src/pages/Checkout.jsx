@@ -19,6 +19,7 @@ import {
   FaArrowLeft,
   FaPaypal,
   FaCreditCard,
+  FaTruck
 } from "react-icons/fa";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -251,6 +252,21 @@ const Checkout = () => {
                     {new Date(order.date).toLocaleDateString()}
                   </span>
                 </div>
+                {order.ghnOrderCode && (
+                  <div className="flex items-center space-x-2">
+                    <FaTruck className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      GHN Status:
+                    </span>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                        order.ghnStatus
+                      )}`}
+                    >
+                      {order.ghnStatus} (Dự kiến giao: {order.ghnExpectedDeliveryTime ? new Date(order.ghnExpectedDeliveryTime).toLocaleDateString('vi-VN') : 'N/A'})
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -124,54 +124,96 @@ class GHNService {
     }
   }
 
-
   async createOrder(orderData) {
-    try {
-      const response = await ghn.createOrder(orderData);
-      return {
-        success: true,
-        data: response || {}
-      };
-    } catch (error) {
-      console.error('GHN createOrder error:', error);
-      return {
-        success: false,
-        message: error.message,
-        data: {}
-      };
+      try {
+        const response = await axios.post(
+          `${GHN_API_URL}/shipping-order/create`,
+          {
+            ...orderData,
+            shop_id: parseInt(SHOP_ID),
+            from_district_id: FROM_DISTRICT_ID,
+            payment_type_id: orderData.payment_type_id || 1, // Default: Shop thanh toán
+            required_note: orderData.required_note || "KHONGCHOXEMHANG",
+            return_phone: orderData.return_phone || "0909999999", // Số điện thoại shop, config trong .env nếu cần
+            return_address: orderData.return_address || "Default Shop Address", // Địa chỉ shop, config trong .env nếu cần
+            client_order_code: orderData.note || "", // Mã đơn hàng nội bộ
+          },
+          {
+            headers: {
+              Token: TOKEN,
+              "Content-Type": "application/json",
+              ShopId: SHOP_ID,
+            },
+          }
+        );
+
+        return {
+          success: true,
+          data: response.data.data, // { order_code, expected_delivery_time, total_fee, ... }
+        };
+      } catch (error) {
+        console.error("GHN createOrder error:", error.response?.data || error.message);
+        return {
+          success: false,
+          message: error.response?.data?.message || error.message || "GHN API error",
+          data: {},
+        };
+      }
     }
-  }
 
   async getOrderInfo(orderCode) {
     try {
-      const response = await ghn.getOrderInfo(orderCode);
+      const response = await axios.get(
+        `${GHN_API_URL}/shipping-order/detail`,
+        {
+          params: { order_code: orderCode },
+          headers: {
+            Token: TOKEN,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
       return {
         success: true,
-        data: response || {}
+        data: response.data.data,
       };
     } catch (error) {
-      console.error('GHN getOrderInfo error:', error);
+      console.error("GHN getOrderInfo error:", error.response?.data || error.message);
       return {
         success: false,
-        message: error.message,
-        data: {}
+        message: error.response?.data?.message || error.message || "GHN API error",
+        data: {},
       };
     }
   }
 
   async cancelOrder(orderCodes) {
     try {
-      const response = await ghn.cancelOrder(orderCodes);
+      const response = await axios.post(
+        `${GHN_API_URL}/switch-status/cancel`,
+        {
+          order_codes: orderCodes, // Array of order codes, e.g., ["GHN12345"]
+        },
+        {
+          headers: {
+            Token: TOKEN,
+            "Content-Type": "application/json",
+            ShopId: SHOP_ID,
+          },
+        }
+      );
+
       return {
         success: true,
-        data: response || {}
+        data: response.data.data,
       };
     } catch (error) {
-      console.error('GHN cancelOrder error:', error);
+      console.error("GHN cancelOrder error:", error.response?.data || error.message);
       return {
         success: false,
-        message: error.message,
-        data: {}
+        message: error.response?.data?.message || error.message || "GHN API error",
+        data: {},
       };
     }
   }
