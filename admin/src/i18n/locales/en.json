@@ -272,7 +272,60 @@
     "active": "Active",
     "inactive": "Inactive",
     "blocked": "Blocked",
-    "user_management": "User management"
+    "user_management": "User management",
+    "title": "Users Management",
+    "subtitle": "Manage system users and their permissions",
+    "searchPlaceholder": "Search users by name or email...",
+    "allRoles": "All Roles",
+    "admins": "Admins",
+    "users": "Users",
+    "showingUsers": "Showing {{count}} users",
+    "pageOf": "Page {{current}} of {{total}}",
+    "refresh": "Refresh",
+    "addUser": "Add User",
+    "noUsers": {
+      "title": "No users found",
+      "noMatch": "No users match your search",
+      "description": "Try adjusting your search criteria or filters",
+      "startCreating": "Start by creating your first user account",
+      "noUsersAvailable": "No users available to display"
+    },
+    "table": {
+      "user": "User",
+      "roleStatus": "Role & Status",
+      "activity": "Activity",
+      "location": "Location",
+      "memberSince": "Member Since",
+      "actions": "Actions"
+    },
+    "roles": {
+      "admin": "Admin",
+      "user": "User"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "activity": {
+      "orders": "{{count}} orders",
+      "cartItems": "{{count}} cart items"
+    },
+    "location": {
+      "noAddresses": "No addresses",
+      "moreAddresses": "+{{count}} more address"
+    },
+    "buttons": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "view": "View",
+      "viewDetails": "View Details"
+    },
+    "confirmation": {
+      "removeUser": "Are you sure you want to remove this user?"
+    },
+    "messages": {
+      "userRemoved": "User removed successfully"
+    }
   },
   "notifications": {
     "notifications": "Notifications",
@@ -469,7 +522,49 @@
     }
   },
   "invoice": {
-    "generate_manage_invoices": "Generate & manage invoices"
+    "generate_manage_invoices": "Generate & manage invoices",
+    "title": "Invoice Management",
+    "subtitle": "Generate invoices from customer orders",
+    "refresh": "Refresh",
+    "generate_invoice": "Generate Invoice",
+    "total_orders": "Total Orders",
+    "total_revenue": "Total Revenue",
+    "selected": "Selected",
+    "selected_amount": "Selected Amount",
+    "search_placeholder": "Search by Order ID, customer name, email...",
+    "filter": {
+      "all_status": "All Status",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "all_time": "All Time",
+      "today": "Today",
+      "week": "This Week",
+      "month": "This Month",
+      "clear": "Clear Filter"
+    },
+    "table": {
+      "order_id": "Order ID",
+      "customer": "Customer",
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status",
+      "items": "Items"
+    },
+    "empty": {
+      "title": "No orders found",
+      "desc": "Try adjusting your search or filter criteria"
+    },
+    "popup": {
+      "invoice": "Invoice",
+      "created": "Created",
+      "download_pdf": "Download PDF",
+      "print": "Print",
+      "share": "Share",
+      "close": "Close"
+    }
   },
   "api": {
     "api_documentation": "API documentation"

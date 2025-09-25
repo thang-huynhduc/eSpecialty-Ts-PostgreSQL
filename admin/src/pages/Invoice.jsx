@@ -6,8 +6,9 @@ import autoTable from "jspdf-autotable";
 import SkeletonLoader from '../components/SkeletonLoader';
 import SmallLoader from '../components/SmallLoader';
 import { serverUrl } from "../../config";
-
+import {useTranslation} from "react-i18next";
 const Invoice = () => {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [selectedOrders, setSelectedOrders] = useState([]);
@@ -416,10 +417,10 @@ const Invoice = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Invoice Management
+              {t("invoice.title")}
             </h1>
             <p className="text-gray-600">
-              Generate invoices from customer orders
+              {t("invoice.subtitle")}
             </p>
           </div>
           <div className="flex gap-3">
@@ -429,7 +430,7 @@ const Invoice = () => {
               className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
               <FaSync  size={14} className={loading ? 'animate-spin' : ''} />
-              Refresh
+              {t("invoice.refresh")}
             </button>
             <button 
               onClick={generateInvoice}
@@ -437,7 +438,7 @@ const Invoice = () => {
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               <FaFileInvoice size={14} />
-              Generate Invoice ({selectedOrders.length})
+              {t("invoice.generate_invoice")} ({selectedOrders.length})
             </button>
           </div>
         </div>
@@ -446,19 +447,19 @@ const Invoice = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-lg p-4 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Total Orders</h3>
+          <h3 className="text-sm font-medium text-gray-600 mb-1">{t("invoice.total_orders")}</h3>
           <p className="text-2xl font-bold text-gray-900">{filteredOrders.length}</p>
         </div>
         <div className="bg-white rounded-lg p-4 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Total Revenue</h3>
+          <h3 className="text-sm font-medium text-gray-600 mb-1">{t("invoice.total_revenue")}</h3>
           <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
         </div>
         <div className="bg-white rounded-lg p-4 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Selected</h3>
+          <h3 className="text-sm font-medium text-gray-600 mb-1">{t("invoice.selected")}</h3>
           <p className="text-2xl font-bold text-blue-600">{selectedOrders.length}</p>
         </div>
         <div className="bg-white rounded-lg p-4 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Selected Amount</h3>
+          <h3 className="text-sm font-medium text-gray-600 mb-1">{t("invoice.selected_amount")}</h3>
           <p className="text-2xl font-bold text-blue-600">{formatCurrency(selectedRevenue)}</p>
         </div>
       </div>
@@ -469,7 +470,7 @@ const Invoice = () => {
           <div className="flex-1">
             <input
               type="text"
-              placeholder="Tìm kiếm theo Order ID, tên khách hàng, email..."
+              placeholder={t("invoice.search_placeholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -481,28 +482,28 @@ const Invoice = () => {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="all">{t("invoice.filter.all_status")}</option>
+              <option value="pending">{t("invoice.filter.pending")}</option>
+              <option value="confirmed">{t("invoice.filter.confirmed")}</option>
+              <option value="shipped">{t("invoice.filter.shipped")}</option>
+              <option value="delivered">{t("invoice.filter.delivered")}</option>
+              <option value="cancelled">{t("invoice.filter.cancelled")}</option>
             </select>
             <select
               value={timeFilter}
               onChange={(e) => setTimeFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
+              <option value="all">{t("invoice.filter.all_time")}</option>
+              <option value="today">{t("invoice.filter.today")}</option>
+              <option value="week">{t("invoice.filter.week")}</option>
+              <option value="month">{t("invoice.filter.month")}</option>
             </select>
             <button
               onClick={clearFilters}
               className="px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              Clear Filter
+              {t("invoice.filter.clear")}
             </button>
           </div>
         </div>
@@ -522,12 +523,12 @@ const Invoice = () => {
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                 </th>
-                <th className="text-left p-4 font-semibold text-gray-900">Order ID</th>
-                <th className="text-left p-4 font-semibold text-gray-900">Customer</th>
-                <th className="text-left p-4 font-semibold text-gray-900">Date</th>
-                <th className="text-left p-4 font-semibold text-gray-900">Amount</th>
-                <th className="text-left p-4 font-semibold text-gray-900">Status</th>
-                <th className="text-left p-4 font-semibold text-gray-900">Items</th>
+                <th className="text-left p-4 font-semibold text-gray-900">{t("invoice.table.order_id")}</th>
+                <th className="text-left p-4 font-semibold text-gray-900">{t("invoice.table.customer")}</th>
+                <th className="text-left p-4 font-semibold text-gray-900">{t("invoice.table.date")}</th>
+                <th className="text-left p-4 font-semibold text-gray-900">{t("invoice.table.amount")}</th>
+                <th className="text-left p-4 font-semibold text-gray-900">{t("invoice.table.status")}</th>
+                <th className="text-left p-4 font-semibold text-gray-900">{t("invoice.table.items")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -592,28 +593,28 @@ const Invoice = () => {
                   onClick={generatePDF}
                   disabled={generatingPdf}
                   className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                  title="Download PDF"
+                  title={t("invoice:popup.download_pdf")}
                 >
                   {generatingPdf ? <SmallLoader /> : <FaDownload size={16} />}
                 </button>
                 <button
                   onClick={handlePrint}
                   className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Print"
+                  title={t("invoice:popup.print")}
                 >
                   <FaPrint size={16} />
                 </button>
                 <button
                   onClick={handleShare}
                   className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Share"
+                  title={t("invoice:popup.share")}
                 >
                   <FaShare size={16} />
                 </button>
                 <button
                   onClick={() => setShowInvoicePopup(false)}
                   className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Close"
+                 title={t("invoice:popup.close")}
                 >
                   <FaTimes size={16} />
                 </button>
