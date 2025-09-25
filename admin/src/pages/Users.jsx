@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { serverUrl } from "../../config";
 import { IoMdAdd, IoMdTime, IoMdSearch } from "react-icons/io";
+import { useTranslation } from "react-i18next";
+
 import {
   FaEdit,
   FaTrash,
@@ -21,6 +23,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { setUser } from "../redux/authSlice";
 
 const Users = ({ token }) => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { user: currentUser } = useSelector((state) => state.auth);
   const [usersList, setUsersList] = useState([]);
@@ -87,7 +90,7 @@ const Users = ({ token }) => {
         setFilteredUsers(data?.users);
         setTotalPages(data.totalPages);
       } else {
-        toast.error(data?.message || "Failed to fetch users");
+        toast.error(data?.message || t("users.messages.fetchFailed"));
         console.log("❌ API Error:", data);
       }
     } catch (error) {
@@ -98,12 +101,12 @@ const Users = ({ token }) => {
       toast.error(
         error?.response?.data?.message ||
           error?.message ||
-          "Failed to connect to server"
+          t("users.messages.connectionError")
       );
     } finally {
       setLoading(false);
     }
-  }, [token, currentPage, roleFilter]);
+  }, [token, currentPage, roleFilter, t]);
 
   useEffect(() => {
     getUsersList();
@@ -125,7 +128,7 @@ const Users = ({ token }) => {
 
   const handleRemoveUser = async (_id) => {
     const confirmRemoval = window.confirm(
-      "Are you sure you want to remove this user?"
+      t("users.confirmation.removeUser")
     );
     if (confirmRemoval) {
       try {
@@ -137,7 +140,7 @@ const Users = ({ token }) => {
         );
         const data = response?.data;
         if (data?.success) {
-          toast.success(data?.message);
+          toast.success(t("users.messages.userRemoved"));
           await getUsersList();
         } else {
           toast.error(data?.message);
@@ -211,6 +214,11 @@ const Users = ({ token }) => {
     }
   };
 
+  // Helper function để format số nhiều
+  const pluralize = (key, count) => {
+    return t(key, { count });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6">
       <div className="max-w-7xl mx-auto">
@@ -218,20 +226,20 @@ const Users = ({ token }) => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <Title className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                Users Management
+                {t("users.title")}
               </Title>
               <p className="text-gray-600">
-                Manage system users and their permissions
+                {t("users.subtitle")}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={getUsersList}
                 className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                title="Refresh Users"
+                title={t("users.refresh")}
               >
                 <FaSync className="text-sm" />
-                Refresh
+                {t("users.refresh")}
               </button>
               {isAdmin && (
                 <button
@@ -242,7 +250,7 @@ const Users = ({ token }) => {
                   className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors font-medium"
                 >
                   <IoMdAdd className="text-lg" />
-                  Add User
+                  {t("users.addUser")}
                 </button>
               )}
             </div>
@@ -256,7 +264,7 @@ const Users = ({ token }) => {
                 <IoMdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search users by name or email..."
+                  placeholder={t("users.searchPlaceholder")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
@@ -269,16 +277,16 @@ const Users = ({ token }) => {
                 onChange={(e) => setRoleFilter(e.target.value)}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
               >
-                <option value="all">All Roles</option>
-                <option value="admin">Admins</option>
-                <option value="user">Users</option>
+                <option value="all">{t("users.allRoles")}</option>
+                <option value="admin">{t("users.admins")}</option>
+                <option value="user">{t("users.users")}</option>
               </select>
             </div>
           </div>
 
           <div className="mt-4 flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              Showing {filteredUsers.length} users
+              {t("users.showingUsers", { count: filteredUsers.length })}
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -289,7 +297,7 @@ const Users = ({ token }) => {
                 <FaChevronLeft />
               </button>
               <span className="text-sm text-gray-600">
-                Page {currentPage} of {totalPages}
+                {t("users.pageOf", { current: currentPage, total: totalPages })}
               </span>
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
@@ -312,22 +320,22 @@ const Users = ({ token }) => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
+                        {t("users.table.user")}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Role & Status
+                        {t("users.table.roleStatus")}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Activity
+                        {t("users.table.activity")}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Location
+                        {t("users.table.location")}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Member Since
+                        {t("users.table.memberSince")}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        {t("users.table.actions")}
                       </th>
                     </tr>
                   </thead>
@@ -385,8 +393,7 @@ const Users = ({ token }) => {
                               ) : (
                                 <FaUser className="text-xs" />
                               )}
-                              {user.role.charAt(0).toUpperCase() +
-                                user.role.slice(1)}
+                              {t(`users.roles.${user.role}`)}
                             </span>
                             <span
                               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -395,7 +402,7 @@ const Users = ({ token }) => {
                                   : "bg-red-100 text-red-800"
                               }`}
                             >
-                              {user.isActive ? "Active" : "Inactive"}
+                              {t(`users.status.${user.isActive ? 'active' : 'inactive'}`)}
                             </span>
                           </div>
                         </td>
@@ -410,13 +417,13 @@ const Users = ({ token }) => {
                             <div className="flex gap-2">
                               {user.orders && user.orders.length > 0 && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-800">
-                                  {user.orders.length} orders
+                                  {pluralize("users.activity.orders", user.orders.length)}
                                 </span>
                               )}
                               {user.userCart &&
                                 Object.keys(user.userCart).length > 0 && (
                                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-50 text-orange-800">
-                                    {Object.keys(user.userCart).length} cart
+                                    {pluralize("users.activity.cartItems", Object.keys(user.userCart).length)}
                                   </span>
                                 )}
                             </div>
@@ -446,13 +453,12 @@ const Users = ({ token }) => {
                                 ))}
                               {user.addresses.length > 1 && (
                                 <div className="text-xs text-blue-600 mt-1">
-                                  +{user.addresses.length - 1} more address
-                                  {user.addresses.length > 2 ? "es" : ""}
+                                  {pluralize("users.location.moreAddresses", user.addresses.length - 1)}
                                 </div>
                               )}
                             </div>
                           ) : (
-                            <span className="text-gray-400">No addresses</span>
+                            <span className="text-gray-400">{t("users.location.noAddresses")}</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -470,7 +476,7 @@ const Users = ({ token }) => {
                                   className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
                                 >
                                   <FaEdit />
-                                  Edit
+                                  {t("users.buttons.edit")}
                                 </button>
                                 <button
                                   onClick={(e) => {
@@ -480,7 +486,7 @@ const Users = ({ token }) => {
                                   className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
                                 >
                                   <FaTrash />
-                                  Delete
+                                  {t("users.buttons.delete")}
                                 </button>
                               </>
                             ) : (
@@ -492,7 +498,7 @@ const Users = ({ token }) => {
                                 className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-50 text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
                               >
                                 <FaEye />
-                                View
+                                {t("users.buttons.view")}
                               </button>
                             )}
                           </div>
@@ -554,8 +560,7 @@ const Users = ({ token }) => {
                             ) : (
                               <FaUser className="text-xs" />
                             )}
-                            {user.role.charAt(0).toUpperCase() +
-                              user.role.slice(1)}
+                            {t(`users.roles.${user.role}`)}
                           </span>
                         </div>
                       </div>
@@ -563,7 +568,7 @@ const Users = ({ token }) => {
 
                     <div className="space-y-3 mb-4">
                       <div className="hidden sm:flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Role:</span>
+                        <span className="text-sm text-gray-500">{t("users.table.roleStatus")}:</span>
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                             user.role === "admin"
@@ -576,13 +581,12 @@ const Users = ({ token }) => {
                           ) : (
                             <FaUser className="text-xs" />
                           )}
-                          {user.role.charAt(0).toUpperCase() +
-                            user.role.slice(1)}
+                          {t(`users.roles.${user.role}`)}
                         </span>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Status:</span>
+                        <span className="text-sm text-gray-500">{t("users.table.roleStatus")}:</span>
                         <span
                           className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             user.isActive
@@ -590,14 +594,14 @@ const Users = ({ token }) => {
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {user.isActive ? "Active" : "Inactive"}
+                          {t(`users.status.${user.isActive ? 'active' : 'inactive'}`)}
                         </span>
                       </div>
 
                       {user.lastLogin && (
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-500">
-                            Last Login:
+                            {t("users.table.activity")}:
                           </span>
                           <span className="text-xs text-gray-600 flex items-center gap-1">
                             <IoMdTime />
@@ -608,9 +612,9 @@ const Users = ({ token }) => {
 
                       {user.orders && user.orders.length > 0 && (
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-500">Orders:</span>
+                          <span className="text-sm text-gray-500">{t("users.activity.orders", { count: 0 })}:</span>
                           <span className="text-sm font-medium text-gray-900 bg-blue-50 px-2 py-1 rounded-full">
-                            {user.orders.length}
+                            {pluralize("users.activity.orders", user.orders.length)}
                           </span>
                         </div>
                       )}
@@ -619,10 +623,10 @@ const Users = ({ token }) => {
                         Object.keys(user.userCart).length > 0 && (
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-gray-500">
-                              Cart Items:
+                              {t("users.activity.cartItems", { count: 0 })}:
                             </span>
                             <span className="text-sm font-medium text-gray-900 bg-orange-50 px-2 py-1 rounded-full">
-                              {Object.keys(user.userCart).length}
+                              {pluralize("users.activity.cartItems", Object.keys(user.userCart).length)}
                             </span>
                           </div>
                         )}
@@ -630,7 +634,7 @@ const Users = ({ token }) => {
                       {user.addresses && user.addresses.length > 0 && (
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-500">
-                            Location:
+                            {t("users.table.location")}:
                           </span>
                           <div className="text-xs text-gray-600 truncate max-w-32">
                             {user.addresses
@@ -649,7 +653,7 @@ const Users = ({ token }) => {
                                 .join(", ")}
                             {user.addresses.length > 1 && (
                               <div className="text-blue-600">
-                                +{user.addresses.length - 1} more
+                                {pluralize("users.location.moreAddresses", user.addresses.length - 1)}
                               </div>
                             )}
                           </div>
@@ -673,7 +677,7 @@ const Users = ({ token }) => {
 
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500">
-                          Member Since:
+                          {t("users.table.memberSince")}:
                         </span>
                         <span className="text-xs text-gray-600">
                           {new Date(user.createdAt).toLocaleDateString()}
@@ -692,7 +696,7 @@ const Users = ({ token }) => {
                             className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium"
                           >
                             <FaEdit />
-                            Edit
+                            {t("users.buttons.edit")}
                           </button>
                           <button
                             onClick={(e) => {
@@ -702,7 +706,7 @@ const Users = ({ token }) => {
                             className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium"
                           >
                             <FaTrash />
-                            Delete
+                            {t("users.buttons.delete")}
                           </button>
                         </>
                       ) : (
@@ -714,7 +718,7 @@ const Users = ({ token }) => {
                           className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors font-medium"
                         >
                           <FaEye />
-                          View Details
+                          {t("users.buttons.viewDetails")}
                         </button>
                       )}
                     </div>
@@ -730,22 +734,22 @@ const Users = ({ token }) => {
             </div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">
               {searchTerm || roleFilter !== "all"
-                ? "No users match your search"
-                : "No users found"}
+                ? t("users.noUsers.noMatch")
+                : t("users.noUsers.title")}
             </h3>
             <p className="text-gray-500 mb-6">
               {searchTerm || roleFilter !== "all"
-                ? "Try adjusting your search criteria or filters"
+                ? t("users.noUsers.description")
                 : isAdmin
-                ? "Start by creating your first user account"
-                : "No users available to display"}
+                ? t("users.noUsers.startCreating")
+                : t("users.noUsers.noUsersAvailable")}
             </p>
             {isAdmin && (
               <button
                 onClick={() => setIsOpen(true)}
                 className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium"
               >
-                Add User
+                {t("users.addUser")}
               </button>
             )}
           </div>
