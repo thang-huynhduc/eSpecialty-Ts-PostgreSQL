@@ -208,7 +208,7 @@ const ContactClient = () => {
               </svg>
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Email</h3>
-            <p className="text-sm text-gray-600">info@especialty.vn<br />support@especialty.vn</p>
+            <p className="text-sm text-gray-600">info@especialty.vn<br />thang.huynhduc.25@gmail.com</p>
           </div>
           <div className="bg-white rounded-lg shadow-sm p-6 text-center">
             <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-4">
