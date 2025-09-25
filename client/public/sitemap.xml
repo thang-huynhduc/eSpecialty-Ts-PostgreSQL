@@ -2,90 +2,90 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Homepage -->
   <url>
-    <loc>https://especialty.vercel.app/</loc>
+    <loc>https://especialty.kyotran.dev/</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <!-- Shop Page -->
   <url>
-    <loc>https://especialty.vercel.app/shop</loc>
+    <loc>https://especialty.kyotran.dev/shop</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <!-- About Page -->
   <url>
-    <loc>https://especialty.vercel.app/about</loc>
+    <loc>https://especialty.kyotran.dev/about</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <!-- Contact Page -->
   <url>
-    <loc>https://especialty.vercel.app/contact</loc>
+    <loc>https://especialty.kyotran.dev/contact</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <!-- Offers Page -->
   <url>
-    <loc>https://especialty.vercel.app/offers</loc>
+    <loc>https://especialty.kyotran.dev/offers</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <!-- Orders Page -->
   <url>
-    <loc>https://especialty.vercel.app/orders</loc>
+    <loc>https://especialty.kyotran.dev/orders</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <!-- Cart Page -->
   <url>
-    <loc>https://especialty.vercel.app/cart</loc>
+    <loc>https://especialty.kyotran.dev/cart</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <!-- Product Page (Static Example) -->
   <url>
-    <loc>https://especialty.vercel.app/product</loc>
+    <loc>https://especialty.kyotran.dev/product</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <!-- Signup Page -->
   <url>
-    <loc>https://especialty.vercel.app/signup</loc>
+    <loc>https://especialty.kyotran.dev/signup</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <!-- Signin Page -->
   <url>
-    <loc>https://especialty.vercel.app/signin</loc>
+    <loc>https://especialty.kyotran.dev/signin</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <!-- Profile Page -->
   <url>
-    <loc>https://especialty.vercel.app/profile</loc>
+    <loc>https://especialty.kyotran.dev/profile</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <!-- Example Product Pages (Dynamic) -->
   <url>
-    <loc>https://especialty.vercel.app/product/123</loc>
+    <loc>https://especialty.kyotran.dev/product/123</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://especialty.vercel.app/product/456</loc>
+    <loc>https://especialty.kyotran.dev/product/456</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
