@@ -90,7 +90,7 @@ const paymentDetailsSchema = new mongoose.Schema({
     enum: ["pending", "completed", "failed", "cancelled", "refunded"],
     default: "pending",
   },
-  // Raw response from payment gateway (for debugging and audit)
+
   gatewayResponse: {
     type: mongoose.Schema.Types.Mixed,
     default: null,
@@ -137,7 +137,7 @@ const paymentDetailsSchema = new mongoose.Schema({
     },
   },
   
-  // VNPay specific fields (for future implementation)
+  // VNPay specific fields 
   vnpay: {
     txnRef: {
       type: String,

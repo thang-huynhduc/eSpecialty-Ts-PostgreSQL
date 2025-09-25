@@ -21,7 +21,7 @@ async function getAccessToken() {
     if (!token) throw new Error("No access token retrieved");
     return token;
   } catch (error) {
-    console.error("❌ Error getting access token:", error);
+    console.error("Error getting access token:", error);
     throw error;
   }
 }
@@ -242,10 +242,10 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
   try {
     const transporter = await createTransporter();
     const result = await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent:", result);
+    console.log("Email sent:", result);
     return true;
   } catch (error) {
-    console.error("❌ Error sending email:", {
+    console.error("Error sending email:", {
       message: error.message,
       code: error.code,
       response: error.response,
