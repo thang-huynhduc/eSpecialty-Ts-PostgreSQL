@@ -18,12 +18,78 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
     order_confirmation: "order confirmation",
     order_status_update: "order status update",
     order_cancelled: "order cancellation",
+    payment_confirmation: "payment confirmation",  // NEW: Type for payment success
   };
   const actionText = actionMap[type] || "your action";
 
   let htmlContent;
 
-  if (type.startsWith("order_")) {
+  if (type === "payment_confirmation") {  // NEW: Template for payment confirmation
+    const { orderId, items, amount, shippingFee, address } = orderData || {};
+    htmlContent = `
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <style>
+            body { font-family: Arial, Helvetica, sans-serif; background: #f4f4f7; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+            .header { text-align: center; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+            .header h1 { color: #2a2a2a; }
+            .content { font-size: 15px; color: #333; line-height: 1.6; padding: 20px 0; }
+            .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .table th, .table td { border: 1px solid #eee; padding: 10px; text-align: left; }
+            .footer { text-align: center; font-size: 13px; color: #777; border-top: 1px solid #eee; padding-top: 15px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header"><h1>eSpecialty Shopping</h1></div>
+            <div class="content">
+              <p>Xin chào bạn,</p>
+              <p>Thanh toán cho đơn hàng của bạn <strong>#${orderId}</strong> đã thành công.</p>
+              
+              <h3>Thông tin địa chỉ giao hàng:</h3>
+              <ul>
+                <li><strong>Họ tên:</strong> ${address?.firstName && address?.lastName ? `${address.firstName} ${address.lastName}` : address?.name || "N/A"}</li>
+                <li><strong>Địa chỉ:</strong> ${address?.street}, ${address?.ward}, ${address?.district}, ${address?.city}, ${address?.country}</li>
+                <li><strong>Mã bưu điện:</strong> ${address?.zipcode}</li>
+                <li><strong>Số điện thoại:</strong> ${address?.phone}</li>
+                <li><strong>Email:</strong> ${address?.email}</li>
+              </ul>
+              
+              <h3>Chi tiết đơn hàng:</h3>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Giá</th>
+                    <th>Tổng</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${items?.map(item => `
+                    <tr>
+                      <td>${item.name}</td>
+                      <td>${item.quantity}</td>
+                      <td>${item.price.toLocaleString('vi-VN')} VND</td>
+                      <td>${(item.price * item.quantity).toLocaleString('vi-VN')} VND</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+              
+              <p><strong>Phí ship:</strong> ${shippingFee?.toLocaleString('vi-VN')} VND</p>
+              <p><strong>Tổng tiền:</strong> ${amount?.toLocaleString('vi-VN')} VND</p>
+              
+              <p>Đơn hàng sẽ được xác nhận và gửi đi sớm. Cảm ơn bạn!</p>
+            </div>
+            <div class="footer">&copy; ${new Date().getFullYear()} eSpecialty Shopping. Trân trọng!</div>
+          </div>
+        </body>
+      </html>
+    `;
+  } else if (type.startsWith("order_")) {  // Existing block for order-related, keeps GHN conditional
     const { orderId, status, items, amount, shippingFee, address, ghnOrderCode, ghnExpectedDeliveryTime } = orderData || {};
     htmlContent = `
       <html>

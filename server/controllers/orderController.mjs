@@ -35,32 +35,24 @@ const createOrder = async (req, res) => {
     }
     // Validate address required fields with flexible field mapping
     const getAddressValue = (field) => {
-      switch (field) {
-        case "firstName":
-          return (
-            address.firstName ||
-            address.first_name ||
-            address.name?.split(" ")[0] ||
-            ""
-          );
-        case "lastName":
-          return (
-            address.lastName ||
-            address.last_name ||
-            address.name?.split(" ").slice(1).join(" ") ||
-            ""
-          );
-        case "zipcode":
-          return (
-            address.zipcode ||
-            address.zipCode ||
-            address.zip_code ||
-            address.postal_code ||
-            ""
-          );
-        default:
-          return address[field] || "";
+      if (field === "firstName" || field === "lastName") {
+        const name = (address.name || "").trim();
+        const parts = name.split(/\s+/);
+        if (field === "firstName") return address.firstName || address.first_name || parts[0] || "";
+        if (field === "lastName") return address.lastName || address.last_name || parts.slice(1).join(" ") || "";
       }
+
+      if (field === "zipcode") {
+        return (
+          address.zipcode ||
+          address.zipCode ||
+          address.zip_code ||
+          address.postal_code ||
+          ""
+        );
+      }
+
+      return address[field] || "";
     };
 
     const requiredAddressFields = [
@@ -516,7 +508,8 @@ const updateOrderStatus = async (req, res) => {
           width: 20,
           height: 10,
           service_type_id: 2,  // Chuẩn GHN, có thể lấy từ shippingService nếu có
-          payment_type_id: 1,  // 1: Shop thanh toán
+          payment_type_id: order.paymentMethod === "cod" ? 2 : 1,  // 2 for COD (buyer pays shipping), 1 for paid orders (shop pays)
+          cod_amount: order.paymentMethod === "cod" ? order.amount : 0, // Add COD amount
           note: `Đơn hàng #${order._id}`,
           required_note: "KHONGCHOXEMHANG",
           items: order.items.map(item => ({
@@ -538,18 +531,18 @@ const updateOrderStatus = async (req, res) => {
         }
       }
 
-      // Gửi email xác nhận
+      // Gửi email xác nhận với GHN
       const user = await userModel.findById(order.userId);
       if (user) {
-        const emailSubject = `Xác nhận đơn hàng #${order._id}`;
+        const emailSubject = `Đơn hàng #${order._id} đã được xác nhận`;
         await sendOtpEmail(
           user.email,
           null,
           emailSubject,
-          "order_confirmation",
+          "order_status_update",
           {
             orderId: order._id,
-            status: order.status,
+            status: "confirmed",  // Will show in email as "cập nhật trạng thái: confirmed"
             items: order.items,
             amount: order.amount,
             shippingFee: order.shippingFee,

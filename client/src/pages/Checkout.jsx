@@ -226,11 +226,11 @@ const Checkout = () => {
                     {t("checkout_order.order_status")}:
                   </span>
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPaymentStatusColor(
-                      order.paymentStatus
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                      order.status
                     )}`}
                   >
-                    {t(`checkout_order.${order.paymentStatus}`)} {/* i18n */}
+                    {t(`checkout_order.${order.status}`)} {/* i18n */}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -374,12 +374,12 @@ const Checkout = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">{t("checkout_order.shipping")}</span>
-                  <span className="font-medium text-green-600">{t("checkout_order.free")}</span>
+                  <span className="font-medium text-green-600">{order.shippingFee}</span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold">
                   <span className="text-gray-900">{t("checkout_order.total")}</span>
                   <span className="text-gray-900">
-                    <PriceFormat amount={order.amount} />
+                    <PriceFormat amount={order.amount + order.shippingFee} />
                   </span>
                 </div>
               </div>
