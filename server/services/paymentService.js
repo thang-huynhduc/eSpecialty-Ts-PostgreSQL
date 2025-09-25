@@ -113,7 +113,7 @@ export const capturePayPalPayment = async (paypalOrderId, orderId) => {
     // Update order status
     await orderModel.findByIdAndUpdate(orderId, {
       paymentStatus: "paid",
-      status: "confirmed",
+      status: "pending",
     });
 
     return {

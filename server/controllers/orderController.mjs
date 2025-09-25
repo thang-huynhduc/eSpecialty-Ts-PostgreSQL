@@ -2,6 +2,7 @@ import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import productModel from "../models/productModel.js";
 import ghnService from "../services/ghnService.js";
+import { sendOtpEmail } from "../services/emaiService.js";
 
 // Create a new order
 const createOrder = async (req, res) => {
@@ -34,32 +35,24 @@ const createOrder = async (req, res) => {
     }
     // Validate address required fields with flexible field mapping
     const getAddressValue = (field) => {
-      switch (field) {
-        case "firstName":
-          return (
-            address.firstName ||
-            address.first_name ||
-            address.name?.split(" ")[0] ||
-            ""
-          );
-        case "lastName":
-          return (
-            address.lastName ||
-            address.last_name ||
-            address.name?.split(" ").slice(1).join(" ") ||
-            ""
-          );
-        case "zipcode":
-          return (
-            address.zipcode ||
-            address.zipCode ||
-            address.zip_code ||
-            address.postal_code ||
-            ""
-          );
-        default:
-          return address[field] || "";
+      if (field === "firstName" || field === "lastName") {
+        const name = (address.name || "").trim();
+        const parts = name.split(/\s+/);
+        if (field === "firstName") return address.firstName || address.first_name || parts[0] || "";
+        if (field === "lastName") return address.lastName || address.last_name || parts.slice(1).join(" ") || "";
       }
+
+      if (field === "zipcode") {
+        return (
+          address.zipcode ||
+          address.zipCode ||
+          address.zip_code ||
+          address.postal_code ||
+          ""
+        );
+      }
+
+      return address[field] || "";
     };
 
     const requiredAddressFields = [
@@ -74,7 +67,6 @@ const createOrder = async (req, res) => {
       "country",
       "phone",
     ];
-
 
     const missingFields = requiredAddressFields.filter((field) => {
       const value = getAddressValue(field);
@@ -167,39 +159,39 @@ const createOrder = async (req, res) => {
     await newOrder.save();
 
     // Create GHN order if payment method is not COD and address has GHN data
-    if (newOrder.paymentMethod !== "cod" && address.districtId && address.wardCode) {
-      try {
-        const ghnOrderData = {
-          to_name: `${newOrder.address.firstName} ${newOrder.address.lastName}`,
-          to_phone: newOrder.address.phone,
-          to_address: newOrder.address.street,
-          to_ward_code: newOrder.address.wardCode,
-          to_district_id: newOrder.address.districtId,
-          weight: items.reduce((total, item) => total + (item.weight || 500) * item.quantity, 0),
-          length: 20,
-          width: 20,
-          height: 10,
-          service_type_id: 2,
-          payment_type_id: 1,
-          note: `Đơn hàng #${newOrder._id}`,
-          required_note: "KHONGCHOXEMHANG",
-          items: items.map(item => ({
-            name: item.name,
-            quantity: item.quantity,
-            weight: item.weight || 500
-          }))
-        };
+    // if (newOrder.paymentMethod !== "cod" && address.districtId && address.wardCode) {
+    //   try {
+    //     const ghnOrderData = {
+    //       to_name: `${newOrder.address.firstName} ${newOrder.address.lastName}`,
+    //       to_phone: newOrder.address.phone,
+    //       to_address: newOrder.address.street,
+    //       to_ward_code: newOrder.address.wardCode,
+    //       to_district_id: newOrder.address.districtId,
+    //       weight: items.reduce((total, item) => total + (item.weight || 500) * item.quantity, 0),
+    //       length: 20,
+    //       width: 20,
+    //       height: 10,
+    //       service_type_id: 2,
+    //       payment_type_id: 1,
+    //       note: `Đơn hàng #${newOrder._id}`,
+    //       required_note: "KHONGCHOXEMHANG",
+    //       items: items.map(item => ({
+    //         name: item.name,
+    //         quantity: item.quantity,
+    //         weight: item.weight || 500
+    //       }))
+    //     };
 
-        const ghnResult = await ghnService.createOrder(ghnOrderData);
-        if (ghnResult.success) {
-          newOrder.ghnOrderCode = ghnResult.data.order_code;
-          newOrder.ghnExpectedDeliveryTime = new Date(ghnResult.data.expected_delivery_time);
-          await newOrder.save();
-        }
-      } catch (ghnError) {
-        console.log("GHN Order Creation Error:", ghnError);
-      }
-    }
+    //     const ghnResult = await ghnService.createOrder(ghnOrderData);
+    //     if (ghnResult.success) {
+    //       newOrder.ghnOrderCode = ghnResult.data.order_code;
+    //       newOrder.ghnExpectedDeliveryTime = new Date(ghnResult.data.expected_delivery_time);
+    //       await newOrder.save();
+    //     }
+    //   } catch (ghnError) {
+    //     console.log("GHN Order Creation Error:", ghnError);
+    //   }
+    // }
 
     // Add order to user's orders array
     await userModel.findByIdAndUpdate(userId, {
@@ -361,6 +353,42 @@ const cancelOrder = async (req, res) => {
     order.status = "cancelled";
     order.updatedAt = Date.now();
     
+    // Cancel GHN nếu có
+    if (order.ghnOrderCode) {
+      const cancelResult = await ghnService.cancelOrder([order.ghnOrderCode]);
+      if (cancelResult.success) {
+        order.ghnOrderCode = null;  // Xóa code sau khi cancel
+        order.ghnStatus = "cancelled";
+        order.ghnExpectedDeliveryTime = null;
+        await order.save();
+      } else {
+        console.error("GHN cancel failed:", cancelResult.message);
+        // Có thể throw error nếu muốn rollback, nhưng ở đây continue
+      }
+    }
+
+    // Gửi email hủy
+    const user = await userModel.findById(order.userId);
+    if (user) {
+      const emailSubject = `Hủy đơn hàng #${order._id}`;
+      await sendOtpEmail(
+        user.email,
+        null,
+        emailSubject,
+        "order_cancelled",
+        {
+          orderId: order._id,
+          status: order.status,
+          items: order.items,
+          amount: order.amount,
+          shippingFee: order.shippingFee,
+          address: order.address,
+          ghnOrderCode: order.ghnOrderCode,
+          ghnExpectedDeliveryTime: order.ghnExpectedDeliveryTime,
+        }
+      );
+    }
+
     // If payment was made, mark for refund
     if (order.paymentStatus === "paid") {
       order.paymentStatus = "refunded";
@@ -462,6 +490,67 @@ const updateOrderStatus = async (req, res) => {
         });
         product.isAvailable = true; // Khôi phục availability nếu cần
         await product.save();
+      }
+    }
+
+    // Khi confirm từ pending
+    if (status === "confirmed" && oldStatus === "pending") {
+      // Tạo GHN order nếu chưa có và có dữ liệu address GHN
+      if (!order.ghnOrderCode && order.address.districtId && order.address.wardCode) {
+        const ghnOrderData = {
+          to_name: `${order.address.firstName} ${order.address.lastName}`,
+          to_phone: order.address.phone,
+          to_address: order.address.street,
+          to_ward_code: order.address.wardCode,
+          to_district_id: order.address.districtId,
+          weight: order.items.reduce((total, item) => total + (item.weight || 500) * item.quantity, 0),
+          length: 20,  // Có thể config động
+          width: 20,
+          height: 10,
+          service_type_id: 2,  // Chuẩn GHN, có thể lấy từ shippingService nếu có
+          payment_type_id: order.paymentMethod === "cod" ? 2 : 1,  // 2 for COD (buyer pays shipping), 1 for paid orders (shop pays)
+          cod_amount: order.paymentMethod === "cod" ? order.amount : 0, // Add COD amount
+          note: `Đơn hàng #${order._id}`,
+          required_note: "KHONGCHOXEMHANG",
+          items: order.items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            weight: item.weight || 500
+          }))
+        };
+
+        const ghnResult = await ghnService.createOrder(ghnOrderData);
+        if (ghnResult.success) {
+          console.log("GHN Create Successfull", ghnResult.data)
+          order.ghnOrderCode = ghnResult.data.order_code;
+          order.ghnExpectedDeliveryTime = new Date(ghnResult.data.expected_delivery_time);
+          await order.save();
+        } else {
+          // Handle error, nhưng vẫn confirm order
+          console.error("GHN creation failed:", ghnResult.message);
+        }
+      }
+
+      // Gửi email xác nhận với GHN
+      const user = await userModel.findById(order.userId);
+      if (user) {
+        const emailSubject = `Đơn hàng #${order._id} đã được xác nhận`;
+        await sendOtpEmail(
+          user.email,
+          null,
+          emailSubject,
+          "order_status_update",
+          {
+            orderId: order._id,
+            status: "confirmed",  // Will show in email as "cập nhật trạng thái: confirmed"
+            items: order.items,
+            amount: order.amount,
+            shippingFee: order.shippingFee,
+            address: order.address,
+            ghnOrderCode: order.ghnOrderCode,
+            ghnExpectedDeliveryTime: order.ghnExpectedDeliveryTime,
+          }
+        );
       }
     }
 
