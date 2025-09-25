@@ -1,13 +1,53 @@
 import nodemailer from "nodemailer";
+import { google } from "googleapis";
 
-// Khởi tạo transporter với SMTP configuration
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.SMTP_EMAIL,
-    pass: process.env.SMTP_PASSWORD,
-  },
+// Initialize OAuth2 client
+const oAuth2Client = new google.auth.OAuth2(
+  process.env.GMAIL_CLIENT_ID,
+  process.env.GMAIL_CLIENT_SECRET,
+  "https://developers.google.com/oauthplayground" // Redirect URI used to obtain refresh token
+);
+
+// Set OAuth2 credentials
+oAuth2Client.setCredentials({
+  refresh_token: process.env.GMAIL_REFRESH_TOKEN,
 });
+
+// Function to get access token
+async function getAccessToken() {
+  try {
+    const accessTokenResponse = await oAuth2Client.getAccessToken();
+    const token = accessTokenResponse?.token || accessTokenResponse;
+    if (!token) throw new Error("No access token retrieved");
+    return token;
+  } catch (error) {
+    console.error("❌ Error getting access token:", error);
+    throw error;
+  }
+}
+
+// Initialize Nodemailer transporter with OAuth2
+async function createTransporter() {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    throw new Error("Failed to retrieve access token.");
+  }
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: process.env.GMAIL_EMAIL,
+      clientId: process.env.GMAIL_CLIENT_ID,
+      clientSecret: process.env.GMAIL_CLIENT_SECRET,
+      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+      accessToken,
+    },
+    // Explicitly disable TLS/SSL fallbacks if needed
+    tls: {
+      rejectUnauthorized: true,
+    },
+  });
+}
 
 // Hàm gửi email OTP hoặc thông báo đơn hàng
 export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = null) => {
@@ -18,13 +58,13 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
     order_confirmation: "order confirmation",
     order_status_update: "order status update",
     order_cancelled: "order cancellation",
-    payment_confirmation: "payment confirmation",  // NEW: Type for payment success
+    payment_confirmation: "payment confirmation",
   };
   const actionText = actionMap[type] || "your action";
 
   let htmlContent;
 
-  if (type === "payment_confirmation") {  // NEW: Template for payment confirmation
+  if (type === "payment_confirmation") {
     const { orderId, items, amount, shippingFee, address } = orderData || {};
     htmlContent = `
       <html>
@@ -89,7 +129,7 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
         </body>
       </html>
     `;
-  } else if (type.startsWith("order_")) {  // Existing block for order-related, keeps GHN conditional
+  } else if (type.startsWith("order_")) {
     const { orderId, status, items, amount, shippingFee, address, ghnOrderCode, ghnExpectedDeliveryTime } = orderData || {};
     htmlContent = `
       <html>
@@ -193,13 +233,14 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
   }
 
   const mailOptions = {
-    from: `"E-Specialty" <${process.env.SMTP_EMAIL}>`,
+    from: `"E-Specialty" <${process.env.GMAIL_EMAIL}>`,
     to: toEmail,
     subject,
     html: htmlContent,
   };
 
   try {
+    const transporter = await createTransporter();
     const result = await transporter.sendMail(mailOptions);
     console.log("✅ Email sent:", result);
     return true;
