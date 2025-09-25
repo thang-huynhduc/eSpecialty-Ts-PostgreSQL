@@ -605,6 +605,7 @@
     "total": "Tổng cộng",
     "choose_payment": "Chọn phương thức thanh toán",
     "pay_with_paypal": "Thanh toán bằng PayPal",
+    "pay_with_vnpay": "Thanh toán bằng VNPay",
     "pay_with_cod": "Thanh toán khi giao hàng",
     "order_not_found": "Không tìm thấy đơn hàng",
     "loading_order": "Đang tải chi tiết đơn hàng...",
@@ -682,6 +683,7 @@
     "paragraph2": "Chúng tôi cam kết mang đến cho bạn những sản phẩm chất lượng cao, được chọn lọc kỹ lưỡng từ các nhà sản xuất uy tín, cùng mức giá hợp lý."
   },
   "categories": {
+    "Bia & Rượu Thủ Công": "Bia & Rượu Thủ Công",
     "Bộ Quà Tặng Thực Phẩm": "Bộ Quà Tặng Thực Phẩm",
     "Gia Vị và Nguyên Liệu Nấu Ăn": "Gia Vị và Nguyên Liệu Nấu Ăn",
     "Mật Ong": "Mật Ong",

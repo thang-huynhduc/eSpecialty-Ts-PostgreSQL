@@ -22,6 +22,7 @@ const Banner = () => {
   const { t } = useTranslation();
   const bannerData = [
     {
+      productId: "product/68caaed0e3752565089154a0",
       title: t("banner_1.title"),
       subtitle: t("banner_1.subtitle"),
       description: t("banner_1.description"),
@@ -30,8 +31,10 @@ const Banner = () => {
       sale: t("banner_1.sale"),
       image: bannerImgOne,
       buttonText: t("banner_1.buttonText"),
+    
     },
     {
+      productId: "product/68caa986e375256508915382",
       title: t("banner_2.title"),
       subtitle: t("banner_2.subtitle"),
       description: t("banner_2.description"),
@@ -42,6 +45,7 @@ const Banner = () => {
       buttonText: t("banner_2.buttonText"),
     },
     {
+      productId: "product/68c4dc483ba8fc090f23ac2a",
       title: t("banner_3.title"),
       subtitle: t("banner_3.subtitle"),
       description: t("banner_3.description"),
@@ -211,7 +215,7 @@ const Banner = () => {
                       className="pt-1 md:pt-2 lg:pt-4 flex justify-center lg:justify-start"
                     >
                       <button
-                        onClick={() => navigate("/shop")}
+                        onClick={() => navigate("/" + item?.productId)}
                         className="group relative inline-flex items-center gap-2 md:gap-3 lg:gap-4 px-6 py-3 md:px-8 md:py-4 lg:px-10 lg:py-5 bg-black text-white text-xs md:text-sm lg:text-base font-bold uppercase tracking-wider overflow-hidden transition-all duration-300 transform hover:scale-105 hover:shadow-2xl rounded"
                       >
                         <span className="absolute inset-0 bg-gradient-to-r from-gray-800 to-black transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
