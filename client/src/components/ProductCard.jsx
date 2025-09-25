@@ -107,7 +107,7 @@ const ProductCard = ({ item, viewMode = "grid", className = "" }) => {
   // Grid view (default)
   return (
     <div
-      className={`w-full relative group bg-white border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300 ease-out ${className}`}
+      className={`w-full relative group bg-white border border-gray-100 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 ease-out rounded-xl overflow-hidden ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -118,7 +118,7 @@ const ProductCard = ({ item, viewMode = "grid", className = "" }) => {
           className="w-full aspect-[4/5] overflow-hidden cursor-pointer bg-white"
         >
           <img
-            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
             src={item?.images?.[0] || item?.image}
             alt={item?.name}
           />
@@ -128,11 +128,11 @@ const ProductCard = ({ item, viewMode = "grid", className = "" }) => {
         {item?.offer && (
           <div className="absolute top-3 left-3">
             {item?.discountedPercentage > 0 ? (
-              <span className="bg-black text-white text-xs font-medium px-2 py-1 uppercase tracking-wide">
+              <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
                 -{item.discountedPercentage}%
               </span>
             ) : (
-              <span className="bg-red-600 text-white text-xs font-medium px-2 py-1 uppercase tracking-wide">
+              <span className="bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
                 Sale
               </span>
             )}
@@ -142,7 +142,7 @@ const ProductCard = ({ item, viewMode = "grid", className = "" }) => {
         {/* Badge for new items */}
         {item?.badge && (
           <div className="absolute top-3 right-3">
-            <span className="bg-green-600 text-white text-xs font-medium px-2 py-1 uppercase tracking-wide">
+            <span className="bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
               New
             </span>
           </div>
@@ -150,41 +150,39 @@ const ProductCard = ({ item, viewMode = "grid", className = "" }) => {
 
         {/* Hover Overlay */}
         <div
-          className={`absolute inset-0 bg-black bg-opacity-20 transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"
+          className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${isHovered ? "bg-black/40 opacity-100" : "opacity-0"
             }`}
         >
-          <div className="absolute inset-0 flex items-center justify-center">
-            <button
-              onClick={handleProductDetails}
-              className="bg-white text-black px-6 py-2 text-sm font-medium uppercase tracking-wide hover:bg-gray-100 transition-colors duration-200"
-            >
-              Quick Look
-            </button>
-          </div>
+          <button
+            onClick={handleProductDetails}
+            className="bg-white text-black px-5 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-gray-100 shadow-md transform transition-transform duration-300 hover:scale-105"
+          >
+            Quick Look
+          </button>
         </div>
       </div>
 
       {/* Product Info */}
-      <div className="pt-4 pb-4 px-4 text-center">
+      <div className="pt-4 pb-5 px-4 text-center">
         <h3
-          className="text-sm font-medium text-gray-900 uppercase tracking-wide mb-2 cursor-pointer hover:text-gray-600 transition-colors duration-200 line-clamp-1"
+          className="text-base font-semibold text-gray-900 uppercase tracking-wide mb-2 cursor-pointer hover:text-gray-600 transition-colors duration-200 line-clamp-1"
           onClick={handleProductDetails}
         >
           {item?.name}
         </h3>
 
-
         {/* Price */}
-        <div className="mb-3">
+        <div className="mb-4">
           <PriceContainer item={item} />
         </div>
 
         {/* Add to Cart Button */}
         <div className="opacity-100 group-hover:opacity-100 transition-opacity duration-300">
-          <AddToCartButton item={item} />
+          <AddToCartButton item={item} className="w-full py-2 rounded-md font-medium bg-black text-white hover:bg-gray-800 transition" />
         </div>
       </div>
     </div>
+
   );
 };
 

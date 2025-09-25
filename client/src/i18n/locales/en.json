@@ -616,6 +616,7 @@
     "cancelled": "Cancelled",
     "choose_payment": "Choose Payment Method",
     "pay_with_paypal": "Pay with PayPal",
+    "pay_with_vnpay": "Pay with VNPay",
     "pay_with_cod": "Cash on Delivery",
     "order_not_found": "Order not found",
     "loading_order": "Loading order details...",
@@ -693,6 +694,7 @@
     "paragraph2": "We are committed to delivering high-quality products carefully selected from reputable producers, at reasonable prices."
   },
   "categories": {
+    "Bia & Rượu Thủ Công": "Craft Beer & Spirits",
     "Bộ Quà Tặng Thực Phẩm": "Gift Sets",
     "Gia Vị và Nguyên Liệu Nấu Ăn": "Spices & Cooking Ingredients",
     "Mật Ong": "Honey",

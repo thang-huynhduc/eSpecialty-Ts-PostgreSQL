@@ -291,12 +291,12 @@ const Home = () => {
                 >
                   <div>
                     <p className="font-semibold text-gray-800">
-                      {t("order.order_number")} #{order._id?.slice(-8) || "N/A"}
+                      {t("orders.order_id")} #{order._id?.slice(-8) || "N/A"}
                     </p>
                     <p className="text-sm text-gray-600">
                       {order.userId?.name ||
                         order.address?.firstName ||
-                        t("order.customer")}
+                        t("orders.customer")}
                     </p>
                     <p className="text-xs text-gray-500">
                       {formatDate(order.date)}
@@ -319,14 +319,14 @@ const Home = () => {
                                 : "bg-yellow-100 text-yellow-800"
                         }`}
                     >
-                      {t(`orders.${order.status}`) || t("orders.pending")}
+                      {t(`orders.${order.status}`) || t("orders.status.pending")}
                     </span>
                   </div>
                 </div>
               ))
             ) : (
               <p className="text-gray-500 text-center py-8">
-                {t("order.no_orders_yet")}
+                {t("orders.messages.noOrdersYet")}
               </p>
             )}
           </div>

@@ -7,6 +7,7 @@ import PriceFormat from "../components/PriceFormat";
 import PayPalPayment from "../components/PayPalPayment";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import PaymentLogo from "../components/PaymentLogo";
 
 import {
   FaCheckCircle,
@@ -413,7 +414,7 @@ const Checkout = () => {
                             onClick={handlePayOnline}
                             className="w-full flex items-center justify-center gap-3 bg-yellow-500 text-white py-3 px-4 rounded-lg hover:bg-yellow-600 transition-colors font-medium"
                           >
-                            <FaPaypal className="w-5 h-5" />
+                            <PaymentLogo method="paypal" className="w-5 h-5" />
                             {t("checkout_order.pay_with_paypal")} {/* i18n */}
                           </button>
 
@@ -421,8 +422,8 @@ const Checkout = () => {
                             onClick={handleVNPay}
                             className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                           >
-                            <FaCreditCard className="w-5 h-5" />
-                            Pay with VNPay
+                            <PaymentLogo method="vnpay" className="w-5 h-5" />
+                            {t("checkout_order.pay_with_vnpay")} {/* i18n */}
                           </button>
                         </div>
                       ) : (
@@ -431,7 +432,7 @@ const Checkout = () => {
                             onClick={() => handlePayment("paypal")}
                             className="w-full flex items-center justify-center gap-3 bg-yellow-500 text-white py-3 px-4 rounded-lg hover:bg-yellow-600 transition-colors font-medium"
                           >
-                            <FaPaypal className="w-5 h-5" />
+                            <PaymentLogo method="paypal" className="w-5 h-5" />
                             {t("checkout_order.pay_with_paypal")} {/* i18n */}
                           </button>
 
@@ -443,8 +444,8 @@ const Checkout = () => {
                             onClick={handleVNPay}
                             className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                           >
-                            <FaCreditCard className="w-5 h-5" />
-                            Pay with VNPay
+                            <PaymentLogo method="vnpay" className="w-5 h-5" />
+                            {t("checkout_order.pay_with_vnpay")} {/* i18n */}
                           </button>
 
                           <button
