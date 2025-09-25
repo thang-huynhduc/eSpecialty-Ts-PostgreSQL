@@ -14,13 +14,13 @@
     "menu": "Menu"
   },
   "footer": {
-    "brand_description": "Trải nghiệm mua sắm thương mại điện tử",
+    "brand_description": "Cửa hàng đặc sản Việt Nam chính hãng - Nơi hội tụ tinh hoa ẩm thực từ khắp mọi vùng miền",
     "quick_links": "Liên kết nhanh",
     "about_us": "Về chúng tôi",
     "shop": "Cửa hàng",
     "contact": "Liên hệ",
     "blog": "Blog",
-    "faq": "FAQ",
+    "faq": "Câu hỏi thường gặp",
     "categories": "Danh mục",
     "electronics": "Điện tử",
     "fashion": "Thời trang",
@@ -545,12 +545,12 @@
     },
     "story": {
       "title": "Câu chuyện của chúng tôi",
-      "p1": "Được thành lập vào năm 2025, eSpecialty bắt đầu với một sứ mệnh đơn giản: mang sản phẩm chất lượng đến với mọi người, ở mọi nơi. Từ một cửa hàng nhỏ trực tuyến, chúng tôi đã phát triển thành một thị trường uy tín phục vụ khách hàng trên toàn thế giới.",
-      "p2": "Chúng tôi tin rằng mua sắm không chỉ là một giao dịch – mà còn là một trải nghiệm đầy cảm hứng. Vì vậy, chúng tôi lựa chọn kỹ lưỡng sản phẩm, hợp tác với nhà cung cấp uy tín và đầu tư vào công nghệ tiên tiến để mang lại sự tiện lợi tối đa.",
-      "p3": "Ngày nay, chúng tôi tự hào phục vụ hơn 50,000 khách hàng hài lòng trên toàn cầu, cung cấp từ xu hướng thời trang mới nhất đến các sản phẩm công nghệ hiện đại, tất cả đều dựa trên cam kết về chất lượng, giá cả hợp lý và dịch vụ xuất sắc.",
+      "p1": "Được thành lập vào năm 2025, eSpecialty bắt đầu với một sứ mệnh đặc biệt: bảo tồn và lan tỏa tinh hoa đặc sản Việt Nam đến với mọi người, ở mọi nơi. Từ một cửa hàng nhỏ chuyên về đặc sản địa phương, chúng tôi đã phát triển thành nền tảng thương mại điện tử hàng đầu về đặc sản Việt Nam.",
+      "p2": "Chúng tôi tin rằng mỗi đặc sản đều mang trong mình câu chuyện văn hóa và truyền thống của từng vùng miền. Vì vậy, chúng tôi hợp tác trực tiếp với các nhà sản xuất địa phương, đảm bảo chất lượng nguyên bản và hỗ trợ cộng đồng phát triển bền vững.",
+      "p3": "Ngày nay, chúng tôi tự hào là cầu nối đưa các đặc sản Việt Nam đến với hàng ngàn khách hàng trong và ngoài nước, từ nước mắm Phú Quốc đậm đà đến mật ong Tây Nguyên nguyên chất, tất cả đều được chọn lọc kỹ lưỡng và đảm bảo chất lượng cao nhất.",
       "highlight": {
-        "title": "Chất lượng hàng đầu",
-        "subtitle": "Mỗi sản phẩm đều được chọn lọc kỹ lưỡng"
+        "title": "Đặc sản chính hãng",
+        "subtitle": "Mỗi sản phẩm đều được chọn lọc từ nguồn gốc uy tín"
       }
     },
     "values": {
@@ -689,9 +689,7 @@
     "Mật Ong": "Mật Ong",
     "Đồ Ăn Vặt": "Đồ Ăn Vặt",
     "Thực Phẩm Bổ Dưỡng": "Thực Phẩm Bổ Dưỡng",
-    "Gạo, Mì, Nui": "Gạo, Mì, Nui",
-    "Socola": "Socola",
-    "Mứt, hạt": "Mứt, hạt"
+    "Quà Tặng Đặc Sản": "Quà Tặng Đặc Sản"
   },
   "product of the year": {
     "Product of the Year": "Sản phẩm của Năm",
@@ -699,29 +697,29 @@
     "shop_now": "Mua Ngay"
   },
   "banner_1": {
-    "sale": "Sản phẩm bán chạy",
-    "title": "Nước Mắm",
-    "subtitle": "Trải nghiệm vị ngon nguyên chất, tinh túy từ biển cả, phù hợp cho mọi bữa ăn gia đình",
-    "description": "Nước mắm đặc sản, hương vị đậm đà, tinh túy từ biển cả. Tăng cường hương vị cho mọi món ăn của bạn.",
+    "sale": "Đặc sản bán chạy",
+    "title": "Nước Mắm Phú Quốc",
+    "subtitle": "Tinh túy từ biển cả, hương vị đậm đà truyền thống từ đảo ngọc Phú Quốc",
+    "description": "Nước mắm Phú Quốc chính hãng, được ủ từ cá cơm tươi ngon trong thùng gỗ bạch đàn. Hương vị đậm đà, mặn mà tự nhiên, làm tăng thêm hương vị cho mọi món ăn Việt Nam.",
     "discount": "Giảm đến 20%",
     "from": 120000,
     "buttonText": "Mua Ngay"
   },
   "banner_2": {
     "sale": "Ưu đãi đặc biệt",
-    "title": "Mật Ong Nguyên Chất",
-    "subtitle": "Tốt cho sức khỏe",
-    "description": "100% mật ong tự nhiên, bổ dưỡng, tăng cường sức đề kháng",
+    "title": "Mật Ong Tây Nguyên",
+    "subtitle": "Nguyên chất từ rừng núi, tốt cho sức khỏe",
+    "description": "Mật ong Tây Nguyên nguyên chất, thu hoạch từ các vườn hoa cà phê và hoa rừng tự nhiên. Giàu dinh dưỡng, tăng cường sức đề kháng và có hương vị đặc trưng của vùng đất cao nguyên.",
     "discount": "Giảm 50.000đ",
     "from": 250000,
     "buttonText": "Khám Phá Ngay"
   },
   "banner_3": {
-    "sale": "Sản phẩm bán chạy",
-    "title": "Bánh Trung Thu",
-    "subtitle": "Tinh hoa ẩm thực mùa trăng",
-    "description": "Bánh Trung Thu thơm ngon, đa dạng hương vị, quà tặng ý nghĩa",
-    "discount": "Free Ship",
+    "sale": "Đặc sản theo mùa",
+    "title": "Bánh Trung Thu Truyền Thống",
+    "subtitle": "Tinh hoa ẩm thực mùa trăng, hương vị cổ truyền",
+    "description": "Bánh Trung Thu truyền thống với nhân đậu xanh, hạt sen, thập cẩm... Được làm thủ công theo công thức gia truyền, hương vị đậm đà và ý nghĩa sâu sắc trong dịp Tết Trung Thu.",
+    "discount": "Miễn phí vận chuyển",
     "from": 350000,
     "buttonText": "Đặt bánh trung thu"
   },
@@ -729,21 +727,21 @@
     "from": "Từ"
   },
   "marquee": {
-    "shipping": "FREESHIP - 30K THÀNH VIÊN MỚI",
-    "discount": "🎁 GIẢM 10% CHO ĐƠN HÀNG ĐẦU TIÊN",
-    "promo": "🛒 MUA 2 TẶNG 1 NHIỀU SẢN PHẨM HOT"
+    "shipping": "MIỄN PHÍ VẬN CHUYỂN - ĐƠN HÀNG TỪ 500K",
+    "discount": "🎁 GIẢM 15% CHO ĐƠN HÀNG ĐẦU TIÊN",
+    "promo": "🛒 MUA 2 TẶNG 1 - ĐẶC SẢN THEO MÙA"
   },
   "services": {
     "free_delivery": {
       "title": "Giao hàng miễn phí",
-      "subtitle": "Miễn phí vận chuyển cho đơn hàng trên 1.000.000đ",
-      "description": "Miễn phí vận chuyển tiêu chuẩn cho tất cả đơn hàng trên 1.000.000đ. Chúng tôi hợp tác với các dịch vụ chuyển phát uy tín để đảm bảo sản phẩm đến tay bạn an toàn và đúng hẹn.",
+      "subtitle": "Miễn phí vận chuyển cho đơn hàng từ 500.000đ",
+      "description": "Miễn phí vận chuyển cho tất cả đơn hàng từ 500.000đ. Chúng tôi đóng gói cẩn thận để đảm bảo đặc sản đến tay bạn nguyên vẹn và tươi ngon nhất.",
       "features": [
-        "Miễn phí vận chuyển đơn hàng 1.000.000đ+",
-        "Giao hàng tiêu chuẩn: 3-5 ngày làm việc",
-        "Có hỗ trợ giao hàng nhanh",
+        "Miễn phí vận chuyển đơn hàng từ 500.000đ",
+        "Giao hàng tiêu chuẩn: 2-3 ngày làm việc",
+        "Đóng gói đặc biệt cho thực phẩm",
         "Theo dõi đơn hàng theo thời gian thực",
-        "Đóng gói an toàn"
+        "Đảm bảo chất lượng sản phẩm"
       ]
     },
     "easy_returns": {

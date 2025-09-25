@@ -24,25 +24,25 @@
   },
   "dashboard": {
     "dashboard_overview": "Tổng quan bảng điều khiển",
-    "welcome_message": "Chào mừng trở lại! Đây là những gì đang diễn ra với cửa hàng của bạn hôm nay.",
-    "total_products": "Tổng sản phẩm",
+    "welcome_message": "Chào mừng trở lại! Đây là những gì đang diễn ra với cửa hàng đặc sản của bạn hôm nay.",
+    "total_products": "Tổng đặc sản",
     "total_orders": "Tổng đơn hàng",
-    "total_users": "Tổng người dùng",
+    "total_users": "Tổng khách hàng",
     "total_revenue": "Tổng doanh thu",
     "recent_orders": "Đơn hàng gần đây",
-    "popular_products": "Sản phẩm phổ biến",
+    "popular_products": "Đặc sản phổ biến",
     "view_all": "Xem tất cả",
     "no_recent_orders": "Không có đơn hàng gần đây",
-    "no_products_available": "Không có sản phẩm nào",
+    "no_products_available": "Không có đặc sản nào",
     "quick_actions": "Hành động nhanh",
-    "add_new_product": "Thêm sản phẩm mới",
+    "add_new_product": "Thêm đặc sản mới",
     "view_orders": "Xem đơn hàng",
-    "manage_users": "Quản lý người dùng",
+    "manage_users": "Quản lý khách hàng",
     "unable_load_data": "Không thể tải dữ liệu bảng điều khiển",
     "try_again": "Thử lại",
     "order": "Đơn hàng",
     "customer": "Khách hàng",
-    "product_name": "Tên sản phẩm",
+    "product_name": "Tên đặc sản",
     "stock": "Tồn kho"
   },
   "auth": {
@@ -57,52 +57,52 @@
     "enter_credentials": "Nhập thông tin đăng nhập của bạn"
   },
   "products": {
-    "product": "Sản phẩm",
-    "add_product": "Thêm sản phẩm",
-    "edit_product": "Chỉnh sửa sản phẩm",
-    "product_name": "Tên sản phẩm",
-    "product_description": "Mô tả sản phẩm",
-    "product_price": "Giá sản phẩm",
-    "product_category": "Danh mục sản phẩm",
-    "product_brand": "Thương hiệu sản phẩm",
-    "product_image": "Hình ảnh sản phẩm",
+    "product": "Đặc sản",
+    "add_product": "Thêm đặc sản",
+    "edit_product": "Chỉnh sửa đặc sản",
+    "product_name": "Tên đặc sản",
+    "product_description": "Mô tả đặc sản",
+    "product_price": "Giá đặc sản",
+    "product_category": "Danh mục đặc sản",
+    "product_brand": "Thương hiệu đặc sản",
+    "product_image": "Hình ảnh đặc sản",
     "stock_quantity": "Số lượng tồn kho",
     "in_stock": "Còn hàng",
     "out_of_stock": "Hết hàng",
     "low_stock": "Sắp hết hàng",
-    "manage_products": "Quản lý sản phẩm",
-    "product_details": "Chi tiết sản phẩm",
-    "add_new_products": "Thêm sản phẩm mới",
+    "manage_products": "Quản lý đặc sản",
+    "product_details": "Chi tiết đặc sản",
+    "add_new_products": "Thêm đặc sản mới",
     "stock_management": "Quản lý tồn kho",
     "manage_categories": "Quản lý danh mục",
     "manage_brands": "Quản lý thương hiệu"
   },
   "add_product": {
     "addProduct": {
-      "title": "Thêm Sản Phẩm Mới",
-      "subtitle": "Tạo sản phẩm mới cho cửa hàng của bạn",
+      "title": "Thêm Đặc Sản Mới",
+      "subtitle": "Tạo đặc sản mới cho cửa hàng của bạn",
       "images": {
-        "title": "Hình ảnh Sản phẩm",
+        "title": "Hình ảnh Đặc sản",
         "change": "Thay đổi",
         "upload": "Tải lên Ảnh {{number}}",
-        "hint": "Tải lên tối đa 4 hình ảnh. Hình ảnh đầu tiên sẽ là hình ảnh sản phẩm chính."
+        "hint": "Tải lên tối đa 4 hình ảnh. Hình ảnh đầu tiên sẽ là hình ảnh đặc sản chính."
       },
       "basicInfo": {
         "title": "Thông tin Cơ bản",
-        "name": "Tên Sản phẩm *",
-        "namePlaceholder": "Nhập tên sản phẩm",
+        "name": "Tên Đặc sản *",
+        "namePlaceholder": "Nhập tên đặc sản",
         "description": "Mô tả *",
-        "descriptionPlaceholder": "Nhập mô tả sản phẩm",
+        "descriptionPlaceholder": "Nhập mô tả đặc sản",
         "brand": "Thương hiệu",
         "brandPlaceholder": "Chọn thương hiệu",
         "loadingBrands": "Đang tải thương hiệu...",
-        "type": "Loại Sản phẩm",
+        "type": "Loại Đặc sản",
         "typePlaceholder": "Chọn loại",
         "typeOptions": {
-          "new_arrivals": "Hàng mới về",
+          "new_arrivals": "Đặc sản mới",
           "best_sellers": "Bán chạy nhất",
           "special_offers": "Ưu đãi đặc biệt",
-          "promotions": "Khuyến mãi"
+          "seasonal": "Theo mùa"
         }
       },
       "pricing": {
@@ -137,15 +137,16 @@
       },
       "tags": {
         "title": "Thẻ",
-        "fashion": "Thời trang",
-        "electronics": "Điện tử",
-        "sports": "Thể thao",
-        "accessories": "Phụ kiện",
+        "traditional": "Truyền thống",
+        "premium": "Cao cấp",
+        "organic": "Hữu cơ",
+        "seasonal": "Theo mùa",
+        "gift": "Quà tặng",
         "others": "Khác"
       },
       "submit": {
-        "adding": "Đang thêm Sản phẩm...",
-        "add": "Thêm Sản phẩm"
+        "adding": "Đang thêm Đặc sản...",
+        "add": "Thêm Đặc sản"
       },
       "validation": {
         "requiredFields": "Vui lòng điền đầy đủ các trường bắt buộc",
@@ -169,7 +170,7 @@
     "cancelled": "Đã hủy",
     "processing": "Đang xử lý",
     "manage_customer_orders": "Quản lý đơn hàng khách hàng",
-    "title": "Quản lý Đơn hàng",
+    "title": "Quản lý Đơn Hàng Đặc Sản",
     "refresh": "Làm mới",
     "stats": {
       "totalOrders": "Tổng đơn hàng",
@@ -192,7 +193,7 @@
       "orderId": "Mã đơn hàng",
       "customer": "Khách hàng",
       "date": "Ngày",
-      "items": "Sản phẩm",
+      "items": "Đặc sản",
       "amount": "Số tiền",
       "status": "Trạng thái",
       "payment": "Thanh toán",
@@ -227,7 +228,7 @@
       "customerInfo": "Khách hàng",
       "paymentInfo": "Thông tin thanh toán",
       "shippingAddress": "Địa chỉ giao hàng",
-      "orderItems": "Sản phẩm đặt hàng",
+      "orderItems": "Đặc sản đặt hàng",
       "orderTotal": "Tổng đơn hàng"
     },
     "details": {
@@ -246,41 +247,41 @@
       "price": "Giá",
       "quantity": "Số lượng",
       "total": "Tổng",
-      "productId": "Mã sản phẩm",
+      "productId": "Mã đặc sản",
       "lastUpdated": "Cập nhật lần cuối"
     },
     "messages": {
       "noOrders": "Không tìm thấy đơn hàng",
       "tryAdjusting": "Hãy thử điều chỉnh bộ lọc",
-      "noOrdersYet": "Chưa có đơn hàng nào",
+      "noOrdersYet": "Chưa có đơn hàng đặc sản nào",
       "confirmDelete": "Bạn có chắc muốn xóa đơn hàng này?",
       "updateSuccess": "Cập nhật đơn hàng thành công",
       "deleteSuccess": "Xóa đơn hàng thành công",
       "updateError": "Cập nhật đơn hàng thất bại",
       "deleteError": "Xóa đơn hàng thất bại",
-      "fetchError": "Tải đơn hàng thất bại"
+      "fetchError": "Tải đơn hàng đặc sản thất bại"
     }
   },
   "users": {
-    "user": "Người dùng",
-    "user_name": "Tên người dùng",
-    "user_email": "Email người dùng",
-    "user_role": "Vai trò người dùng",
-    "user_status": "Trạng thái người dùng",
-    "manage_users": "Quản lý người dùng",
-    "user_details": "Chi tiết người dùng",
+    "user": "Khách hàng",
+    "user_name": "Tên khách hàng",
+    "user_email": "Email khách hàng",
+    "user_role": "Vai trò khách hàng",
+    "user_status": "Trạng thái khách hàng",
+    "manage_users": "Quản lý khách hàng",
+    "user_details": "Chi tiết khách hàng",
     "active": "Hoạt động",
     "inactive": "Không hoạt động",
     "blocked": "Bị chặn",
-    "user_management": "Quản lý người dùng"
+    "user_management": "Quản lý khách hàng"
   },
   "notifications": {
     "notifications": "Thông báo",
     "new_notifications": "thông báo mới",
     "view_all_notifications": "Xem tất cả thông báo",
-    "new_order_received": "Nhận đơn hàng mới",
-    "low_stock_alert": "Cảnh báo tồn kho thấp",
-    "user_registration": "Đăng ký người dùng",
+    "new_order_received": "Nhận đơn hàng đặc sản mới",
+    "low_stock_alert": "Cảnh báo tồn kho đặc sản thấp",
+    "user_registration": "Đăng ký khách hàng mới",
     "min_ago": "phút trước",
     "hour_ago": "giờ trước",
     "hours_ago": "giờ trước"
@@ -343,7 +344,7 @@
     "change_language": "Thay đổi ngôn ngữ"
   },
   "contacts": {
-    "customer_messages": "Tin nhắn khách hàng & hỗ trợ",
+    "customer_messages": "Tin nhắn khách hàng & hỗ trợ đặc sản",
     "message": "Tin nhắn",
     "reply": "Trả lời",
     "customer": "Khách hàng",
@@ -354,12 +355,12 @@
     "view_analytics": "Xem phân tích & thông tin chi tiết",
     "insights": "Thông tin chi tiết",
     "dashboard": "Bảng điều khiển phân tích",
-    "subtitle": "Theo dõi hiệu suất kinh doanh realtime",
+    "subtitle": "Theo dõi hiệu suất kinh doanh đặc sản realtime",
     "stats": {
       "total_revenue": "Tổng Doanh Thu",
       "total_orders": "Tổng Đơn Hàng",
-      "total_users": "Tổng Người Dùng",
-      "total_products": "Tổng Sản Phẩm"
+      "total_users": "Tổng Khách Hàng",
+      "total_products": "Tổng Đặc Sản"
     },
     "quick_stats": {
       "todays_sales": "Doanh Thu Hôm Nay",
@@ -368,17 +369,17 @@
     "charts": {
       "revenue_orders": "Biểu Đồ Doanh Thu Hàng Tháng",
       "order_status": "Trạng Thái Đơn Hàng",
-      "user_registrations": "Biểu Đồ Đăng Ký Người Dùng"
+      "user_registrations": "Biểu Đồ Đăng Ký Khách Hàng"
     },
     "sections": {
       "recent_orders": "Đơn Hàng Gần Đây",
-      "top_products": "Sản Phẩm Hàng Đầu",
-      "recent_users": "Người Dùng Gần Đây"
+      "top_products": "Đặc Sản Hàng Đầu",
+      "recent_users": "Khách Hàng Gần Đây"
     },
     "labels": {
       "revenue": "Doanh thu",
       "orders": "Đơn hàng",
-      "users": "Số người dùng đăng ký",
+      "users": "Số khách hàng đăng ký",
       "date": "Ngày",
       "percent": "Tỷ lệ",
       "order_count": "Số đơn"
@@ -386,8 +387,8 @@
   },
   "inventory": {
     "stock_management": "Quản lý tồn kho",
-    "title": "Quản lý kho hàng",
-    "subtitle": "Theo dõi và quản lý kho hàng của bạn với thông tin theo thời gian thực",
+    "title": "Quản lý kho đặc sản",
+    "subtitle": "Theo dõi và quản lý kho đặc sản của bạn với thông tin theo thời gian thực",
     "tabs": {
       "overview": "Tổng quan",
       "low-stock": "Hàng tồn thấp",
@@ -396,12 +397,12 @@
       "valuation": "Định giá kho"
     },
     "stats": {
-      "totalProducts": "Tổng sản phẩm",
-      "lowStockProducts": "Sản phẩm tồn thấp",
+      "totalProducts": "Tổng đặc sản",
+      "lowStockProducts": "Đặc sản tồn thấp",
       "outOfStockProducts": "Hết hàng",
       "inStockProducts": "Còn hàng",
       "inventoryValue": "Giá trị kho",
-      "totalInventoryValue": "Tổng giá trị kho hàng",
+      "totalInventoryValue": "Tổng giá trị kho đặc sản",
       "totalSold": "Tổng đã bán",
       "totalUnitsSold": "Số lượng đơn vị đã bán"
     },
@@ -415,16 +416,16 @@
     "lowStock": {
       "title": "Cảnh báo tồn thấp",
       "threshold": "Ngưỡng cảnh báo:",
-      "search": "Tìm kiếm sản phẩm...",
-      "noItems": "Không tìm thấy sản phẩm tồn thấp!",
+      "search": "Tìm kiếm đặc sản...",
+      "noItems": "Không tìm thấy đặc sản tồn thấp!",
       "saveChanges": "Lưu thay đổi",
       "itemsCount": "Cảnh báo tồn thấp"
     },
     "outOfStock": {
-      "title": "Sản phẩm hết hàng",
-      "search": "Tìm kiếm sản phẩm...",
-      "noItems": "Không có sản phẩm hết hàng!",
-      "itemsCount": "Sản phẩm hết hàng"
+      "title": "Đặc sản hết hàng",
+      "search": "Tìm kiếm đặc sản...",
+      "noItems": "Không có đặc sản hết hàng!",
+      "itemsCount": "Đặc sản hết hàng"
     },
     "movements": {
       "title": "Lịch sử kho gần đây",
@@ -436,13 +437,13 @@
       "totalValuation": "Tổng định giá",
       "inventoryValue": "Giá trị kho:",
       "salesValue": "Giá trị bán hàng:",
-      "totalProducts": "Tổng sản phẩm:",
+      "totalProducts": "Tổng đặc sản:",
       "topCategories": "Danh mục hàng đầu",
-      "products": "sản phẩm",
+      "products": "đặc sản",
       "units": "đơn vị",
       "categoryAnalysis": "Phân tích danh mục",
       "category": "Danh mục",
-      "productsCount": "Sản phẩm",
+      "productsCount": "Đặc sản",
       "totalStock": "Tổng tồn",
       "inventoryValueCol": "Giá trị kho",
       "salesValueCol": "Giá trị bán"
@@ -463,28 +464,28 @@
       "restock": "Restock"
     },
     "messages": {
-      "updatingStock": "Đang cập nhật kho...",
-      "stockUpdated": "Cập nhật kho thành công!",
-      "errorUpdating": "Lỗi khi cập nhật kho"
+      "updatingStock": "Đang cập nhật kho đặc sản...",
+      "stockUpdated": "Cập nhật kho đặc sản thành công!",
+      "errorUpdating": "Lỗi khi cập nhật kho đặc sản"
     }
   },
   "invoice": {
-    "generate_manage_invoices": "Tạo & quản lý hóa đơn"
+    "generate_manage_invoices": "Tạo & quản lý hóa đơn đặc sản"
   },
   "api": {
     "api_documentation": "Tài liệu API"
   },
   "categories": {
-    "Bộ Quà Tặng Thực Phẩm": "Bộ Quà Tặng Thực Phẩm",
-    "Gia Vị và Nguyên Liệu Nấu Ăn": "Gia Vị và Nguyên Liệu Nấu Ăn",
-    "Mật Ong": "Mật Ong",
+    "Nước Mắm & Gia Vị": "Nước Mắm & Gia Vị",
+    "Mật Ong & Sản Phẩm Ong": "Mật Ong & Sản Phẩm Ong",
+    "Bánh Kẹo Truyền Thống": "Bánh Kẹo Truyền Thống",
+    "Trà & Cà Phê": "Trà & Cà Phê",
+    "Thực Phẩm Khô": "Thực Phẩm Khô",
     "Đồ Ăn Vặt": "Đồ Ăn Vặt",
     "Thực Phẩm Bổ Dưỡng": "Thực Phẩm Bổ Dưỡng",
-    "Gạo, Mì, Nui": "Gạo, Mì, Nui",
-    "Socola": "Socola",
-    "Mứt, hạt": "Mứt, hạt",
+    "Quà Tặng Đặc Sản": "Quà Tặng Đặc Sản",
     "title": "Danh mục",
-    "subtitle": "Quản lý danh mục sản phẩm",
+    "subtitle": "Quản lý danh mục đặc sản",
     "actions": {
       "refresh": "Làm mới",
       "addCategory": "Thêm Danh mục",
@@ -516,29 +517,29 @@
       "imageLabel": "Hình ảnh Danh mục *"
     },
     "messages": {
-      "noCategories": "Chưa có danh mục nào",
+      "noCategories": "Chưa có danh mục đặc sản nào",
       "noCategoriesFound": "Không tìm thấy danh mục",
       "tryAdjustingSearch": "Thử điều chỉnh từ khóa tìm kiếm",
-      "startCreating": "Bắt đầu bằng cách tạo danh mục đầu tiên",
+      "startCreating": "Bắt đầu bằng cách tạo danh mục đặc sản đầu tiên",
       "createFirstCategory": "Tạo Danh mục",
       "nameRequired": "Tên danh mục là bắt buộc",
       "imageRequired": "Hình ảnh danh mục là bắt buộc",
-      "createSuccess": "Tạo danh mục thành công",
-      "updateSuccess": "Cập nhật danh mục thành công",
-      "deleteSuccess": "Xóa danh mục thành công",
-      "deleteConfirm": "Bạn có chắc chắn muốn xóa danh mục này?",
-      "fetchError": "Lỗi khi tải danh mục",
-      "saveError": "Lỗi khi lưu danh mục",
-      "deleteError": "Lỗi khi xóa danh mục"
+      "createSuccess": "Tạo danh mục đặc sản thành công",
+      "updateSuccess": "Cập nhật danh mục đặc sản thành công",
+      "deleteSuccess": "Xóa danh mục đặc sản thành công",
+      "deleteConfirm": "Bạn có chắc chắn muốn xóa danh mục đặc sản này?",
+      "fetchError": "Lỗi khi tải danh mục đặc sản",
+      "saveError": "Lỗi khi lưu danh mục đặc sản",
+      "deleteError": "Lỗi khi xóa danh mục đặc sản"
     },
     "validation": {
-      "nameRequired": "Tên danh mục là bắt buộc",
-      "imageRequired": "Hình ảnh danh mục là bắt buộc"
+      "nameRequired": "Tên danh mục đặc sản là bắt buộc",
+      "imageRequired": "Hình ảnh danh mục đặc sản là bắt buộc"
     }
   },
   "brands": {
     "title": "Thương hiệu",
-    "subtitle": "Quản lý thương hiệu sản phẩm",
+    "subtitle": "Quản lý thương hiệu đặc sản",
     "refresh": "Làm mới",
     "addBrand": "Thêm thương hiệu",
     "searchPlaceholder": "Tìm kiếm thương hiệu...",
@@ -553,28 +554,28 @@
     "visitWebsite": "Truy cập Website",
     "edit": "Sửa",
     "delete": "Xóa",
-    "noBrandsYet": "Chưa có thương hiệu nào",
+    "noBrandsYet": "Chưa có thương hiệu đặc sản nào",
     "noBrandsFound": "Không tìm thấy thương hiệu",
     "adjustSearchTerms": "Thử điều chỉnh từ khóa tìm kiếm",
-    "createFirstBrand": "Bắt đầu bằng cách tạo thương hiệu đầu tiên",
+    "createFirstBrand": "Bắt đầu bằng cách tạo thương hiệu đặc sản đầu tiên",
     "createBrand": "Tạo thương hiệu",
     "editBrand": "Chỉnh sửa thương hiệu",
-    "nameRequired": "Tên thương hiệu là bắt buộc",
-    "imageRequired": "Logo thương hiệu là bắt buộc",
-    "namePlaceholder": "Nhập tên thương hiệu",
-    "descriptionPlaceholder": "Nhập mô tả thương hiệu",
+    "nameRequired": "Tên thương hiệu đặc sản là bắt buộc",
+    "imageRequired": "Logo thương hiệu đặc sản là bắt buộc",
+    "namePlaceholder": "Nhập tên thương hiệu đặc sản",
+    "descriptionPlaceholder": "Nhập mô tả thương hiệu đặc sản",
     "websiteUrl": "URL Website",
-    "brandLogo": "Logo thương hiệu",
+    "brandLogo": "Logo thương hiệu đặc sản",
     "cancel": "Hủy",
     "saving": "Đang lưu...",
     "update": "Cập nhật",
     "create": "Tạo",
-    "deleteConfirm": "Bạn có chắc chắn muốn xóa thương hiệu này?",
-    "fetchError": "Lỗi khi tải danh sách thương hiệu",
-    "saveError": "Lỗi khi lưu thương hiệu",
-    "deleteError": "Lỗi khi xóa thương hiệu",
-    "createSuccess": "Tạo thương hiệu thành công",
-    "updateSuccess": "Cập nhật thương hiệu thành công",
-    "deleteSuccess": "Xóa thương hiệu thành công"
+    "deleteConfirm": "Bạn có chắc chắn muốn xóa thương hiệu đặc sản này?",
+    "fetchError": "Lỗi khi tải danh sách thương hiệu đặc sản",
+    "saveError": "Lỗi khi lưu thương hiệu đặc sản",
+    "deleteError": "Lỗi khi xóa thương hiệu đặc sản",
+    "createSuccess": "Tạo thương hiệu đặc sản thành công",
+    "updateSuccess": "Cập nhật thương hiệu đặc sản thành công",
+    "deleteSuccess": "Xóa thương hiệu đặc sản thành công"
   }
 }

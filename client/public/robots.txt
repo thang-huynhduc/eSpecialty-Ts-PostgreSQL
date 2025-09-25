@@ -4,4 +4,4 @@ Disallow: /orders
 Disallow: /signin
 Disallow: /signup
 Disallow: /profile
-Sitemap: https://especialty.vercel.app/sitemap.xml
+Sitemap: https://especialty.kyotran.dev/sitemap.xml
