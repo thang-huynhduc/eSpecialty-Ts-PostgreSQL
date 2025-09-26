@@ -189,7 +189,7 @@ const SignIn = () => {
       hasError = true;
     }
 
-    console.log("Check email:", email, "=>", validateInputForMaliciousContent(email));
+    console.log("Validate email tránh SQL injection", validateInputForMaliciousContent(email));
     // Check for SQL injection patterns and block request
     if (!validateInputForMaliciousContent(email)) {
       setErrEmail(t("auth.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
@@ -203,7 +203,7 @@ const SignIn = () => {
       });
       hasError = true;
     }
-  console.log("Check password:", password, "=>", validateInputForMaliciousContent(password));
+  console.log("Valiate password tránh SQL injection", "=>", validateInputForMaliciousContent(password));
 
     if (!validateInputForMaliciousContent(password)) {
       setErrPassword(t("auth.suspected_injection") || "Tính hack hay gì  🫵");

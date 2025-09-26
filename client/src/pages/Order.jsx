@@ -126,7 +126,7 @@ const Order = () => {
       setCancelling(true);
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:8000/api/order/cancel`,
+        `${API_URL}/api/order/cancel`,
         {
           method: "POST",
           headers: {
