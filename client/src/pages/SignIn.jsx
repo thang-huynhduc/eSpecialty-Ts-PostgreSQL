@@ -40,6 +40,7 @@ const SignIn = () => {
   const [showOtpStep, setShowOtpStep] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
+  const [hasMaliciousInput, setHasMaliciousInput] = useState(false);
 
   // Rate limiting constants
   const MAX_ATTEMPTS = 5;
@@ -72,65 +73,96 @@ const SignIn = () => {
     }
   }, [navigate, t]);
 
-  const sanitizeInput = (input) => {
-    // Remove potentially dangerous characters
-    return input.replace(/[<>{};'"`]/g, "").trim();
-  };
-
   const validateEmail = (email) => {
-    // Stricter email regex
     return String(email)
       .toLowerCase()
       .match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i);
   };
 
-  const validateInputForMaliciousContent = (input) => {
+  const validateInputForMaliciousContent = (input, isEmail = false) => {
     const maliciousPatterns = [
-      /or\s+1\s*=\s*1/i,
-      /--/,
-      /;/,
-      /union\s+.*select/i,
-      /drop\s+.*table/i,
-      /insert\s+into/i,
-      /exec\s*\(/i,
-      /alter\s+table/i,
-      /delete\s+from/i,
-      /update\s+.*set/i,
-      /script\s*>/i,
-      /eval\s*\(/i,
-      /select\s*.*\s*from/i,   
+      /or\s+.*=.*\s*1/i, // SQL injection: OR 1=1
+      /--/, // SQL comment
+      /;/, // SQL statement terminator
+      /union\s+.*select/i, // SQL UNION SELECT
+      /drop\s+.*table/i, // SQL DROP TABLE
+      /insert\s+into/i, // SQL INSERT
+      /exec\s*\(/i, // SQL EXEC
+      /alter\s+table/i, // SQL ALTER
+      /delete\s+from/i, // SQL DELETE
+      /update\s+.*set/i, // SQL UPDATE
+      /<script\s*>/i, // XSS: script tags
+      /on\w+\s*=/i, // XSS: event handlers
+      /javascript:/i, // XSS: javascript protocol
+      /eval\s*\(/i, // XSS: eval function
+      /alert\s*\(/i, // XSS: alert function
+      /document\./i, // XSS: document object
+      /window\./i, // XSS: window object
+      /select\s+.*from/i, // SQL SELECT
+      /<[^>]+>/, // HTML tags
+      isEmail ? /[`~!#$%^&*()_=[\]{}\\|;:'",<>?]/ : /[`~!#%^&*()_=+[\]{}\\|;:'",.<>?]/,
     ];
     return !maliciousPatterns.some((pattern) => pattern.test(input));
   };
 
   const handleEmail = (e) => {
-    const sanitizedEmail = sanitizeInput(e.target.value);
-    setEmail(sanitizedEmail);
-    setErrEmail("");
+    const value = e.target.value;
+    setEmail(value);
+    if (!validateInputForMaliciousContent(value, true)) {
+      setErrEmail(t("auth.suspected_injection") || "Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm.");
+      setHasMaliciousInput(true);
+    } else {
+      setErrEmail("");
+      setHasMaliciousInput(false);
+    }
   };
 
   const handlePassword = (e) => {
-    const sanitizedPassword = sanitizeInput(e.target.value);
-    setPassword(sanitizedPassword);
-    setErrPassword("");
+    const value = e.target.value;
+    setPassword(value);
+    if (!validateInputForMaliciousContent(value)) {
+      setErrPassword(t("auth.suspected_injection") || "Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm.");
+      setHasMaliciousInput(true);
+    } else {
+      setErrPassword("");
+      setHasMaliciousInput(false);
+    }
   };
 
   const handleResetEmail = (e) => {
-    const sanitizedEmail = sanitizeInput(e.target.value);
-    setResetEmail(sanitizedEmail);
-    setErrResetEmail("");
+    const value = e.target.value;
+    setResetEmail(value);
+    if (!validateInputForMaliciousContent(value, true)) {
+      setErrResetEmail(t("auth.suspected_injection") || "Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm.");
+      setHasMaliciousInput(true);
+    } else {
+      setErrResetEmail("");
+      setHasMaliciousInput(false);
+    }
   };
 
   const handleOtp = (e) => {
-    const sanitizedOtp = sanitizeInput(e.target.value);
-    setOtp(sanitizedOtp);
-    setErrOtp("");
+    const value = e.target.value;
+    setOtp(value);
+    if (!validateInputForMaliciousContent(value)) {
+      setErrOtp(t("auth.suspected_injection") || "Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm.");
+      setHasMaliciousInput(true);
+    } else {
+      setErrOtp("");
+      setHasMaliciousInput(false);
+    }
   };
 
   const handleNewPassword = (e) => {
-    const sanitizedPassword = sanitizeInput(e.target.value);
-    setNewPassword(sanitizedPassword);
-    setErrNewPassword("");
+    const value = e.target.value;
+    setNewPassword(value);
+    if (!validateInputForMaliciousContent(value)) {
+      setErrNewPassword(t("auth.suspected_injection") || "Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm.");
+      setHasMaliciousInput(true);
+    } else {
+      setErrNewPassword("");
+      setHasMaliciousInput(false);
+    }
   };
 
   const checkLoginAttempts = () => {
@@ -158,7 +190,6 @@ const SignIn = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-
       const data = await response.json();
       if (data.success) {
         dispatch(setOrderCount(data.orders.length));
@@ -177,7 +208,7 @@ const SignIn = () => {
     let hasError = false;
 
     if (!email) {
-      setErrEmail(t("auth.enter_email"));
+      setErrEmail(t("auth.enter_email") || "Vui lòng nhập email");
       hasError = true;
     } else if (!validateEmail(email)) {
       setErrEmail(t("auth.valid_email") || "Vui lòng nhập địa chỉ email hợp lệ");
@@ -185,36 +216,11 @@ const SignIn = () => {
     }
 
     if (!password) {
-      setErrPassword(t("auth.enter_password"));
+      setErrPassword(t("auth.enter_password") || "Vui lòng nhập mật khẩu");
       hasError = true;
     }
 
-    console.log("Check email:", email, "=>", validateInputForMaliciousContent(email));
-    // Check for SQL injection patterns and block request
-    if (!validateInputForMaliciousContent(email)) {
-      setErrEmail(t("auth.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
-      setLoginAttempts((prev) => {
-        const newAttempts = prev + 1;
-        localStorage.setItem(
-          "loginLockout",
-          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
-        );
-        return newAttempts;
-      });
-      hasError = true;
-    }
-  console.log("Check password:", password, "=>", validateInputForMaliciousContent(password));
-
-    if (!validateInputForMaliciousContent(password)) {
-      setErrPassword(t("auth.suspected_injection") || "Tính hack hay gì  🫵");
-      setLoginAttempts((prev) => {
-        const newAttempts = prev + 1;
-        localStorage.setItem(
-          "loginLockout",
-          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
-        );
-        return newAttempts;
-      });
+    if (hasMaliciousInput) {
       hasError = true;
     }
 
@@ -256,7 +262,7 @@ const SignIn = () => {
         );
         return newAttempts;
       });
-      console.log("Lỗi đăng nhập người dùng", error);
+      console.error("Lỗi đăng nhập người dùng", error);
       toast.error(error?.response?.data?.message || t("auth.signin_failed") || "Đăng nhập thất bại");
     } finally {
       setIsLoading(false);
@@ -270,23 +276,14 @@ const SignIn = () => {
 
     let hasError = false;
     if (!resetEmail) {
-      setErrResetEmail(t("auth.enter_email"));
+      setErrResetEmail(t("auth.enter_email") || "Vui lòng nhập email");
       hasError = true;
     } else if (!validateEmail(resetEmail)) {
       setErrResetEmail(t("auth.valid_email") || "Vui lòng nhập địa chỉ email hợp lệ");
       hasError = true;
     }
 
-    if (!validateInputForMaliciousContent(resetEmail)) {
-      setErrResetEmail(t("auth.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
-      setLoginAttempts((prev) => {
-        const newAttempts = prev + 1;
-        localStorage.setItem(
-          "loginLockout",
-          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
-        );
-        return newAttempts;
-      });
+    if (hasMaliciousInput) {
       hasError = true;
     }
 
@@ -331,29 +328,7 @@ const SignIn = () => {
       hasError = true;
     }
 
-    if (!validateInputForMaliciousContent(otp)) {
-      setErrOtp(t("auth.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
-      setLoginAttempts((prev) => {
-        const newAttempts = prev + 1;
-        localStorage.setItem(
-          "loginLockout",
-          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
-        );
-        return newAttempts;
-      });
-      hasError = true;
-    }
-
-    if (!validateInputForMaliciousContent(newPassword)) {
-      setErrNewPassword(t("auth.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
-      setLoginAttempts((prev) => {
-        const newAttempts = prev + 1;
-        localStorage.setItem(
-          "loginLockout",
-          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
-        );
-        return newAttempts;
-      });
+    if (hasMaliciousInput) {
       hasError = true;
     }
 
@@ -405,9 +380,9 @@ const SignIn = () => {
                     <FaUserCircle className="text-2xl text-white" />
                   </motion.div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    {t("auth.welcome_back")}
+                    {t("auth.welcome_back") || "Chào mừng trở lại"}
                   </h1>
-                  <p className="text-gray-600">{t("auth.signin_subtitle")}</p>
+                  <p className="text-gray-600">{t("auth.signin_subtitle") || "Đăng nhập để tiếp tục mua sắm"}</p>
                 </div>
 
                 <form onSubmit={handleSignIn} className="space-y-6">
@@ -416,7 +391,7 @@ const SignIn = () => {
                       htmlFor="email"
                       className="block text-sm font-medium text-gray-700 mb-2"
                     >
-                      {t("auth.email_address")}
+                      {t("auth.email_address") || "Địa chỉ email"}
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -431,7 +406,7 @@ const SignIn = () => {
                         className={`block w-full pl-10 pr-3 py-3 border ${
                           errEmail ? "border-red-300" : "border-gray-300"
                         } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
-                        placeholder={t("auth.email_placeholder")}
+                        placeholder={t("auth.email_placeholder") || "Nhập email của bạn"}
                         disabled={isLocked}
                       />
                     </div>
@@ -452,7 +427,7 @@ const SignIn = () => {
                       htmlFor="password"
                       className="block text-sm font-medium text-gray-700 mb-2"
                     >
-                      {t("auth.password")}
+                      {t("auth.password") || "Mật khẩu"}
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -467,7 +442,7 @@ const SignIn = () => {
                         className={`block w-full pl-10 pr-12 py-3 border ${
                           errPassword ? "border-red-300" : "border-gray-300"
                         } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
-                        placeholder={t("auth.password_placeholder")}
+                        placeholder={t("auth.password_placeholder") || "Nhập mật khẩu của bạn"}
                         disabled={isLocked}
                       />
                       <button
@@ -502,25 +477,29 @@ const SignIn = () => {
                       className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
                       disabled={isLocked}
                     >
-                      {t("auth.forgot_password")}
+                      {t("auth.forgot_password") || "Quên mật khẩu?"}
                     </button>
                   </div>
 
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: !hasMaliciousInput && !isLocked ? 1.02 : 1 }}
+                    whileTap={{ scale: !hasMaliciousInput && !isLocked ? 0.98 : 1 }}
                     type="submit"
-                    disabled={isLoading || isLocked}
-                    className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    disabled={isLoading || isLocked || hasMaliciousInput}
+                    className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white transition-all duration-200 ${
+                      !hasMaliciousInput && !isLocked
+                        ? "bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                        : "bg-gray-400 cursor-not-allowed"
+                    } disabled:opacity-50`}
                   >
                     {isLoading ? (
                       <div className="flex items-center gap-2">
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        {t("auth.signing_in")}
+                        {t("auth.signing_in") || "Đang đăng nhập..."}
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        {t("auth.signin")}
+                        {t("auth.signin") || "Đăng nhập"}
                         <FaArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </div>
                     )}
@@ -545,7 +524,7 @@ const SignIn = () => {
                         htmlFor="resetEmail"
                         className="block text-sm font-medium text-gray-700 mb-2"
                       >
-                        {t("auth.email_address")}
+                        {t("auth.email_address") || "Địa chỉ email"}
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -559,7 +538,7 @@ const SignIn = () => {
                           className={`block w-full pl-10 pr-3 py-3 border ${
                             errResetEmail ? "border-red-300" : "border-gray-300"
                           } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
-                          placeholder={t("auth.email_placeholder")}
+                          placeholder={t("auth.email_placeholder") || "Nhập email của bạn"}
                         />
                       </div>
                       {errResetEmail && (
@@ -575,11 +554,15 @@ const SignIn = () => {
                     </div>
 
                     <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: !hasMaliciousInput ? 1.02 : 1 }}
+                      whileTap={{ scale: !hasMaliciousInput ? 0.98 : 1 }}
                       type="submit"
-                      disabled={isLoading}
-                      className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 transition-all duration-200"
+                      disabled={isLoading || hasMaliciousInput}
+                      className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white transition-all duration-200 ${
+                        !hasMaliciousInput
+                          ? "bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                          : "bg-gray-400 cursor-not-allowed"
+                      } disabled:opacity-50`}
                     >
                       {isLoading ? (
                         <div className="flex items-center gap-2">
@@ -686,11 +669,15 @@ const SignIn = () => {
                     </div>
 
                     <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: !hasMaliciousInput ? 1.02 : 1 }}
+                      whileTap={{ scale: !hasMaliciousInput ? 0.98 : 1 }}
                       type="submit"
-                      disabled={isLoading}
-                      className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 transition-all duration-200"
+                      disabled={isLoading || hasMaliciousInput}
+                      className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white transition-all duration-200 ${
+                        !hasMaliciousInput
+                          ? "bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                          : "bg-gray-400 cursor-not-allowed"
+                      } disabled:opacity-50`}
                     >
                       {isLoading ? (
                         <div className="flex items-center gap-2">
@@ -731,20 +718,19 @@ const SignIn = () => {
                     </div>
                     <div className="relative flex justify-center text-sm">
                       <span className="px-2 bg-white text-gray-500">
-                        {t("auth.no_account")}
+                        {t("auth.no_account") || "Chưa có tài khoản?"}
                       </span>
                     </div>
                   </div>
-                </div>
-
-                <div className="mt-6 text-center">
-                  <Link
-                    to="/signup"
-                    className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                  >
-                    {t("auth.create_account")}
-                    <FaArrowRight className="w-4 h-4" />
-                  </Link>
+                  <div className="mt-6 text-center">
+                    <Link
+                      to="/signup"
+                      className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                    >
+                      {t("auth.create_account") || "Tạo tài khoản"}
+                      <FaArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
                 </div>
               </>
             )}
