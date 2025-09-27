@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 import { google } from "googleapis";
 
 // Initialize OAuth2 client
@@ -13,6 +12,9 @@ oAuth2Client.setCredentials({
   refresh_token: process.env.GMAIL_REFRESH_TOKEN,
 });
 
+// Initialize Gmail API
+const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
+
 // Function to get access token
 async function getAccessToken() {
   try {
@@ -21,32 +23,62 @@ async function getAccessToken() {
     if (!token) throw new Error("No access token retrieved");
     return token;
   } catch (error) {
-    console.error("❌ Error getting access token:", error);
+    console.error("Error getting access token:", error);
     throw error;
   }
 }
 
-// Initialize Nodemailer transporter with OAuth2
-async function createTransporter() {
-  const accessToken = await getAccessToken();
-  if (!accessToken) {
-    throw new Error("Failed to retrieve access token.");
+
+
+// Function to create email message in RFC 2822 format
+function createEmailMessage(from, to, subject, htmlContent) {
+  const boundary = '----=_Part_' + Math.random().toString(36).substr(2, 9);
+  
+  // Encode subject for UTF-8 support
+  const encodedSubject = `=?UTF-8?B?${Buffer.from(subject, 'utf8').toString('base64')}?=`;
+  
+  const message = [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: ${encodedSubject}`,
+    `MIME-Version: 1.0`,
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    ``,
+    `--${boundary}`,
+    `Content-Type: text/html; charset=UTF-8`,
+    `Content-Transfer-Encoding: 7bit`,
+    ``,
+    htmlContent,
+    ``,
+    `--${boundary}--`
+  ].join('\n');
+  
+  return Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// Function to send email using Gmail API
+async function sendEmailViaGmailAPI(toEmail, subject, htmlContent) {
+  try {
+    const from = `"E-Specialty" <${process.env.GMAIL_EMAIL}>`;
+    const raw = createEmailMessage(from, toEmail, subject, htmlContent);
+    
+    const result = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: raw
+      }
+    });
+    
+    console.log("Email sent via Gmail API:", result.data);
+    return true;
+  } catch (error) {
+    console.error("Error sending email via Gmail API:", {
+      message: error.message,
+      code: error.code,
+      response: error.response,
+    });
+    return false;
   }
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      type: "OAuth2",
-      user: process.env.GMAIL_EMAIL,
-      clientId: process.env.GMAIL_CLIENT_ID,
-      clientSecret: process.env.GMAIL_CLIENT_SECRET,
-      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-      accessToken,
-    },
-    // Explicitly disable TLS/SSL fallbacks if needed
-    tls: {
-      rejectUnauthorized: true,
-    },
-  });
 }
 
 // Hàm gửi email OTP hoặc thông báo đơn hàng
@@ -232,20 +264,11 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
     `;
   }
 
-  const mailOptions = {
-    from: `"E-Specialty" <${process.env.GMAIL_EMAIL}>`,
-    to: toEmail,
-    subject,
-    html: htmlContent,
-  };
-
   try {
-    const transporter = await createTransporter();
-    const result = await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent:", result);
-    return true;
+    const result = await sendEmailViaGmailAPI(toEmail, subject, htmlContent);
+    return result;
   } catch (error) {
-    console.error("❌ Error sending email:", {
+    console.error("Error sending email:", {
       message: error.message,
       code: error.code,
       response: error.response,

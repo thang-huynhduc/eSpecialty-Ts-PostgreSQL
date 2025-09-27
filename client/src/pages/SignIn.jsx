@@ -109,7 +109,7 @@ const SignIn = () => {
     const value = e.target.value;
     setEmail(value);
     if (!validateInputForMaliciousContent(value, true)) {
-      setErrEmail(t("auth.suspected_injection") || "Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm.");
+      setErrEmail("Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm như ` [] {}.");
       setHasMaliciousInput(true);
     } else {
       setErrEmail("");
@@ -121,7 +121,7 @@ const SignIn = () => {
     const value = e.target.value;
     setPassword(value);
     if (!validateInputForMaliciousContent(value)) {
-      setErrPassword(t("auth.suspected_injection") || "Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm.");
+      setErrPassword(t("auth.suspected_injection") || "Mật khẩu bao gồm ít nhất 8 ký tự: 1 in hoa và chữ cái đặc biệt, không bao gồm ` {} [] ");
       setHasMaliciousInput(true);
     } else {
       setErrPassword("");
@@ -133,7 +133,7 @@ const SignIn = () => {
     const value = e.target.value;
     setResetEmail(value);
     if (!validateInputForMaliciousContent(value, true)) {
-      setErrResetEmail(t("auth.suspected_injection") || "Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm.");
+      setErrResetEmail("Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm như ` [] {}.");
       setHasMaliciousInput(true);
     } else {
       setErrResetEmail("");
@@ -157,7 +157,7 @@ const SignIn = () => {
     const value = e.target.value;
     setNewPassword(value);
     if (!validateInputForMaliciousContent(value)) {
-      setErrNewPassword(t("auth.suspected_injection") || "Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm.");
+      setErrNewPassword(t("auth.suspected_injection") || "Mật khẩu bao gồm ít nhất 8 ký tự: 1 in hoa và chữ cái đặc biệt, không bao gồm ` {} [] ");
       setHasMaliciousInput(true);
     } else {
       setErrNewPassword("");

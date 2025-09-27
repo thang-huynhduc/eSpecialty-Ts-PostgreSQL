@@ -75,7 +75,7 @@
     "resetting_password": "Đang đặt lại...",
     "request_reset_failed": "Yêu cầu đặt lại mật khẩu thất bại",
     "reset_password_failed": "Đặt lại mật khẩu thất bại",
-    "suspected_injection": "Đầu vào chứa nội dung không an toàn"
+    "suspected_injection": "Mật khẩu bao gồm ít nhất 8 ký tự: 1 in hoa và chữ cái đặc biệt, không bao gồm ` {} [] "
   },
   "signup": {
     "create_account_title": "Tạo tài khoản",
@@ -114,7 +114,7 @@
     "too_many_attempts": "Quá nhiều lần thử đăng ký. Vui lòng thử lại sau {{minutes}} phút.",
     "lockout_message": "Tài khoản bị tạm khóa. Vui lòng thử lại sau {{minutes}} phút.",
     "invalid_name": "Tên chứa ký tự không hợp lệ",
-    "suspected_injection": "Đầu vào chứa nội dung không an toàn"
+    "suspected_injection": "Mật khẩu bao gồm ít nhất 8 ký tự: 1 in hoa và chữ cái đặc biệt, không bao gồm ` {} [] "
   },
   "product": {
     "new_arrivals": "Sản phẩm mới",
@@ -689,7 +689,11 @@
     "Mật Ong": "Mật Ong",
     "Đồ Ăn Vặt": "Đồ Ăn Vặt",
     "Thực Phẩm Bổ Dưỡng": "Thực Phẩm Bổ Dưỡng",
-    "Quà Tặng Đặc Sản": "Quà Tặng Đặc Sản"
+    "Gạo, Mì, Nui": "Gạo, Mì, Nui",
+    "Quà Tặng Đặc Sản": "Quà Tặng Đặc Sản",
+     "Socola": "Socola",
+    "Mứt, hạt": "Mứt, hạt"
+
   },
   "product of the year": {
     "Product of the Year": "Sản phẩm của Năm",
@@ -779,6 +783,97 @@
         "Tuân thủ PCI DSS",
         "Quy trình thanh toán an toàn"
       ]
+    }
+  },
+"privacy": {
+    "title": "Chính Sách Bảo Mật Thông Tin Cá Nhân",
+    "subtitle": "Chúng tôi cam kết bảo vệ quyền riêng tư và thông tin cá nhân của bạn. Tài liệu này giải thích cách chúng tôi thu thập, sử dụng và bảo vệ dữ liệu của bạn.",
+    "introduction": {
+      "title": "Giới thiệu",
+      "content": "Chúng tôi, <strong>Công Ty TNHH eSpecialty</strong>, mong muốn đem đến cho thành viên và tất cả người dùng truy cập vào trang thương mại điện tử <strong>eSpecialty.vn</strong> một trải nghiệm thoải mái và tốt nhất. Chính sách này tuân thủ đầy đủ các quy định của pháp luật Việt Nam về bảo vệ dữ liệu cá nhân."
+    },
+    "sections": {
+      "collection": {
+        "title": "Mục đích và phạm vi thu thập",
+        "items": [
+          "Khi bạn đăng ký/truy cập và/hoặc sử dụng Website của chúng tôi",
+          "Khi bạn gửi bất kỳ biểu mẫu nào, bao gồm đơn đăng ký hoặc các mẫu đơn khác",
+          "Khi bạn ký kết bất kỳ thỏa thuận nào hoặc cung cấp các tài liệu",
+          "Khi bạn tương tác với chúng tôi qua điện thoại, email, hoặc mạng xã hội",
+          "Khi bạn sử dụng các dịch vụ điện tử hoặc thực hiện giao dịch"
+        ]
+      },
+      "dataTypes": {
+        "title": "Dữ liệu cá nhân thu thập",
+        "items": [
+          "Họ tên và giới tính",
+          "Ngày tháng năm sinh",
+          "Địa chỉ thanh toán và giao hàng",
+          "Thông tin tài khoản ngân hàng và thanh toán",
+          "Số điện thoại và địa chỉ email",
+          "Thông tin thiết bị và cách sử dụng dịch vụ"
+        ]
+      },
+      "usage": {
+        "title": "Phạm vi sử dụng thông tin",
+        "items": [
+          "Cung cấp các dịch vụ đến thành viên",
+          "Gửi thông báo về hoạt động trao đổi thông tin",
+          "Ngăn ngừa các hoạt động phá hủy tài khoản hoặc giả mạo",
+          "Liên lạc và giải quyết trong trường hợp đặc biệt",
+          "Xác nhận và liên hệ với các bên liên quan đến giao dịch",
+          "Tuân thủ yêu cầu của cơ quan pháp luật khi cần thiết"
+        ]
+      },
+      "storage": {
+        "title": "Thời gian lưu trữ thông tin",
+        "items": [
+          "Dữ liệu cá nhân sẽ được lưu trữ cho đến khi có yêu cầu hủy bỏ từ thành viên",
+          "Thành viên có thể đăng nhập và thực hiện hủy bỏ tài khoản bất kỳ lúc nào",
+          "Dữ liệu được lưu trữ và bảo mật trên máy chủ của eSpecialty"
+        ]
+      },
+      "access": {
+        "title": "Đối tượng được tiếp cận thông tin",
+        "items": [
+          "Công Ty TNHH eSpecialty",
+          "Cơ quan nhà nước khi có yêu cầu phục vụ điều tra"
+        ]
+      }
+    },
+    "rights": {
+      "title": "Quyền của thành viên",
+      "access": {
+        "title": "Quyền truy cập và chỉnh sửa",
+        "content": "Bạn có quyền tự kiểm tra, cập nhật, điều chỉnh thông tin cá nhân bằng cách đăng nhập vào tài khoản và chỉnh sửa thông tin."
+      },
+      "recovery": {
+        "title": "Quyền khôi phục tài khoản",
+        "content": "Bạn có thể gửi yêu cầu khôi phục tài khoản do quên mật khẩu qua email cskh@especialty.vn."
+      },
+      "deletion": {
+        "title": "Quyền xóa tài khoản",
+        "content": "Bạn có quyền yêu cầu hủy bỏ thông tin cá nhân bằng nút \"Yêu cầu xóa tài khoản\" trong trang Tài khoản."
+      },
+      "processing": {
+        "title": "Xử lý yêu cầu",
+        "content": "Ban quản trị sẽ liên hệ xác nhận và xử lý yêu cầu của bạn trong 24 giờ làm việc."
+      }
+    },
+    "contact": {
+      "title": "Thông tin liên hệ",
+      "company": "Công ty TNHH eSpecialty",
+      "info": {
+        "businessLicense": "GPDKKD",
+        "issuedBy": "Cấp bởi",
+        "issueDate": "Ngày cấp",
+        "address": "Địa chỉ & Liên hệ"
+      }
+    },
+    "commitment": {
+      "title": "Cam kết bảo mật",
+      "content": "Thông tin cá nhân của bạn được <strong>cam kết bảo mật tuyệt đối</strong>. Chúng tôi không sử dụng, chuyển giao hay tiết lộ thông tin cho bên thứ ba khi không có sự đồng ý từ bạn.",
+      "additional": "Mọi thông tin giao dịch trực tuyến được bảo mật tại khu vực dữ liệu trung tâm an toàn cấp 1 của eSpecialty."
     }
   }
 }

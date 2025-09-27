@@ -795,5 +795,96 @@
         ]
       }
     }
+  },
+  "privacy": {
+    "title": "Personal Information Privacy Policy",
+    "subtitle": "We are committed to protecting your privacy and personal information. This document explains how we collect, use, and protect your data.",
+    "introduction": {
+      "title": "Introduction",
+      "content": "We, <strong>eSpecialty Company Limited</strong>, aim to provide members and all users accessing the e-commerce website <strong>eSpecialty.vn</strong> with the most comfortable and best experience. This policy fully complies with Vietnamese legal regulations on personal data protection."
+    },
+    "sections": {
+      "collection": {
+        "title": "Purpose and Scope of Collection",
+        "items": [
+          "When you register/access and/or use our Website",
+          "When you submit any forms, including registration forms or other forms",
+          "When you sign any agreements or provide documents",
+          "When you interact with us via phone, email, or social media",
+          "When you use electronic services or conduct transactions"
+        ]
+      },
+      "dataTypes": {
+        "title": "Personal Data Collected",
+        "items": [
+          "Full name and gender",
+          "Date of birth",
+          "Billing and shipping address",
+          "Bank account and payment information",
+          "Phone number and email address",
+          "Device information and service usage"
+        ]
+      },
+      "usage": {
+        "title": "Scope of Information Usage",
+        "items": [
+          "Providing services to members",
+          "Sending notifications about information exchange activities",
+          "Preventing account destruction or impersonation activities",
+          "Contacting and resolving in special cases",
+          "Verifying and contacting parties related to transactions",
+          "Complying with legal authority requirements when necessary"
+        ]
+      },
+      "storage": {
+        "title": "Information Storage Period",
+        "items": [
+          "Personal data will be stored until cancellation request from member",
+          "Members can log in and cancel their account at any time",
+          "Data is stored and secured on eSpecialty's servers"
+        ]
+      },
+      "access": {
+        "title": "Parties with Information Access",
+        "items": [
+          "eSpecialty Company Limited",
+          "Government authorities when required for investigation purposes"
+        ]
+      }
+    },
+    "rights": {
+      "title": "Member Rights",
+      "access": {
+        "title": "Access and Editing Rights",
+        "content": "You have the right to check, update, adjust personal information by logging into your account and editing information."
+      },
+      "recovery": {
+        "title": "Account Recovery Rights",
+        "content": "You can send account recovery requests for forgotten passwords via email cskh@especialty.vn."
+      },
+      "deletion": {
+        "title": "Account Deletion Rights",
+        "content": "You have the right to request cancellation of personal information using the \"Request Account Deletion\" button in the Account page."
+      },
+      "processing": {
+        "title": "Request Processing",
+        "content": "The administration team will contact for confirmation and process your request within 24 working hours."
+      }
+    },
+    "contact": {
+      "title": "Contact Information",
+      "company": "eSpecialty Company Limited",
+      "info": {
+        "businessLicense": "Business License",
+        "issuedBy": "Issued by",
+        "issueDate": "Issue Date",
+        "address": "Address & Contact"
+      }
+    },
+    "commitment": {
+      "title": "Security Commitment",
+      "content": "Your personal information is <strong>absolutely committed to security</strong>. We do not use, transfer, or disclose information to third parties without your consent.",
+      "additional": "All online transaction information is secured in eSpecialty's Tier 1 secure data center."
+    }
   }
 }

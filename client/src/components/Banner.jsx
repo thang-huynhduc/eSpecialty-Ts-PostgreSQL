@@ -179,7 +179,7 @@ const Banner = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.6, delay: 0.5 }}
-                      className="text-sm sm:text-base md:text-lg text-gray-500 leading-relaxed max-w-2xl mx-auto lg:mx-0 line-clamp-1 md:line-clamp-none"
+                      className="text-sm sm:text-base md:text-lg text-gray-500 leading-relaxed max-w-2xl mx-auto lg:mx-0 line-clamp-1 md:line-clamp-1"
                     >
                       {item?.description}
                     </motion.p>
