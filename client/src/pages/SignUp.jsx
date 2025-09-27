@@ -21,33 +21,6 @@ const SignUp = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("token");
-  useEffect(() => {
-    if (token) {
-      navigate("/");
-    }
-
-    // Check for lockout status
-    const lockoutData = JSON.parse(localStorage.getItem("signupLockout") || "{}");
-    const now = Date.now();
-    if (lockoutData?.lockedUntil && now < lockoutData.lockedUntil) {
-      setIsLocked(true);
-      setSignupAttempts(lockoutData.attempts || 0);
-      toast.error(
-        t("signup.lockout_message", {
-          minutes: Math.ceil((lockoutData.lockedUntil - now) / 1000 / 60),
-        }) || `Tài khoản bị tạm khóa. Vui lòng thử lại sau ${Math.ceil(
-          (lockoutData.lockedUntil - now) / 1000 / 60
-        )} phút.`
-      );
-    } else if (lockoutData?.lockedUntil) {
-      // Clear lockout if time has passed
-      localStorage.removeItem("signupLockout");
-      setIsLocked(false);
-      setSignupAttempts(0);
-    }
-  }, [navigate, t]);
-
   const [clientName, setClientName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,6 +34,7 @@ const SignUp = () => {
   const [userId, setUserId] = useState("");
   const [signupAttempts, setSignupAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
+  const [hasMaliciousInput, setHasMaliciousInput] = useState(false);
   const role = "user";
 
   const [errClientName, setErrClientName] = useState("");
@@ -73,65 +47,121 @@ const SignUp = () => {
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-  const sanitizeInput = (input) => {
-    // Remove potentially dangerous characters
-    return input.replace(/[<>{};'"`]/g, "").trim();
-  };
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/");
+    }
+
+    const lockoutData = JSON.parse(localStorage.getItem("signupLockout") || "{}");
+    const now = Date.now();
+    if (lockoutData?.lockedUntil && now < lockoutData.lockedUntil) {
+      setIsLocked(true);
+      setSignupAttempts(lockoutData.attempts || 0);
+      toast.error(
+        t("signup.lockout_message", {
+          minutes: Math.ceil((lockoutData.lockedUntil - now) / 1000 / 60),
+        }) || `Tài khoản bị tạm khóa. Vui lòng thử lại sau ${Math.ceil(
+          (lockoutData.lockedUntil - now) / 1000 / 60
+        )} phút.`
+      );
+    } else if (lockoutData?.lockedUntil) {
+      localStorage.removeItem("signupLockout");
+      setIsLocked(false);
+      setSignupAttempts(0);
+    }
+  }, [navigate, t]);
 
   const validateEmail = (email) => {
-    // Stricter email regex
     return String(email)
       .toLowerCase()
       .match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i);
   };
 
-  const validateInputForMaliciousContent = (input) => {
+  const validateInputForMaliciousContent = (input, isEmail = false) => {
     const maliciousPatterns = [
-      /or\s+1\s*=\s*1/i,
-      /--/,
-      /;/,
-      /union\s+.*select/i,
-      /drop\s+.*table/i,
-      /insert\s+into/i,
-      /exec\s*\(/i,
-      /alter\s+table/i,
-      /delete\s+from/i,
-      /update\s+.*set/i,
-      /script\s*>/i,
-      /eval\s*\(/i,
-      /select\s*.*\s*from/i,   
+      /or\s+.*=.*\s*1/i, // SQL injection: OR 1=1
+      /--/, // SQL comment
+      /;/, // SQL statement terminator
+      /union\s+.*select/i, // SQL UNION SELECT
+      /drop\s+.*table/i, // SQL DROP TABLE
+      /insert\s+into/i, // SQL INSERT
+      /exec\s*\(/i, // SQL EXEC
+      /alter\s+table/i, // SQL ALTER
+      /delete\s+from/i, // SQL DELETE
+      /update\s+.*set/i, // SQL UPDATE
+      /<script\s*>/i, // XSS: script tags
+      /on\w+\s*=/i, // XSS: event handlers
+      /javascript:/i, // XSS: javascript protocol
+      /eval\s*\(/i, // XSS: eval function
+      /alert\s*\(/i, // XSS: alert function
+      /document\./i, // XSS: document object
+      /window\./i, // XSS: window object
+      /select\s+.*from/i, // SQL SELECT
+      /<[^>]+>/, // HTML tags
+      isEmail ? /[`~!#$%^&*()_=[\]{}\\|;:'",<>?]/ : /[`~!#%^&*()_=+[\]{}\\|;:'",.<>?]/,
     ];
     return !maliciousPatterns.some((pattern) => pattern.test(input));
   };
 
   const handleName = (e) => {
-    const sanitizedName = sanitizeInput(e.target.value);
-    setClientName(sanitizedName);
-    setErrClientName("");
+    const value = e.target.value;
+    setClientName(value);
+    if (!validateInputForMaliciousContent(value)) {
+      setErrClientName("Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm như ` [] {}.");
+      setHasMaliciousInput(true);
+    } else {
+      setErrClientName("");
+      setHasMaliciousInput(false);
+    }
   };
 
   const handleEmail = (e) => {
-    const sanitizedEmail = sanitizeInput(e.target.value);
-    setEmail(sanitizedEmail);
-    setErrEmail("");
+    const value = e.target.value;
+    setEmail(value);
+    if (!validateInputForMaliciousContent(value, true)) {
+      setErrEmail("Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm` [] {}.");
+      setHasMaliciousInput(true);
+    } else {
+      setErrEmail("");
+      setHasMaliciousInput(false);
+    }
   };
 
   const handlePassword = (e) => {
-    const sanitizedPassword = sanitizeInput(e.target.value);
-    setPassword(sanitizedPassword);
-    setErrPassword("");
+    const value = e.target.value;
+    setPassword(value);
+    if (!validateInputForMaliciousContent(value)) {
+      setErrPassword(t("signup.suspected_injection") || "Mật khẩu bao gồm ít nhất 8 ký tự: 1 in hoa và chữ cái đặc biệt, không bao gồm ` {} [] ");
+      setHasMaliciousInput(true);
+    } else {
+      setErrPassword("");
+      setHasMaliciousInput(false);
+    }
   };
 
   const handleConfirmPassword = (e) => {
-    const sanitizedConfirmPassword = sanitizeInput(e.target.value);
-    setConfirmPassword(sanitizedConfirmPassword);
-    setErrConfirmPassword("");
+    const value = e.target.value;
+    setConfirmPassword(value);
+    if (!validateInputForMaliciousContent(value)) {
+      setErrConfirmPassword(t("signup.suspected_injection") || "Mật khẩu bao gồm ít nhất 8 ký tự: 1 in hoa và chữ cái đặc biệt, không bao gồm ` {} [] ");
+      setHasMaliciousInput(true);
+    } else {
+      setErrConfirmPassword("");
+      setHasMaliciousInput(false);
+    }
   };
 
   const handleOtp = (e) => {
-    const sanitizedOtp = sanitizeInput(e.target.value);
-    setOtp(sanitizedOtp);
-    setErrOtp("");
+    const value = e.target.value;
+    setOtp(value);
+    if (!validateInputForMaliciousContent(value)) {
+      setErrOtp(t("signup.suspected_injection") || "Ký tự không hợp lệ, vui lòng tránh các ký tự đặc biệt nguy hiểm.");
+      setHasMaliciousInput(true);
+    } else {
+      setErrOtp("");
+      setHasMaliciousInput(false);
+    }
   };
 
   const checkSignupAttempts = () => {
@@ -174,7 +204,7 @@ const SignUp = () => {
     }
 
     if (!email) {
-      setErrEmail(t("auth.enter_email"));
+      setErrEmail(t("auth.enter_email") || "Vui lòng nhập email");
       hasError = true;
     } else if (!validateEmail(email)) {
       setErrEmail(t("signup.valid_email") || "Vui lòng nhập địa chỉ email hợp lệ");
@@ -182,7 +212,7 @@ const SignUp = () => {
     }
 
     if (!password) {
-      setErrPassword(t("auth.enter_password"));
+      setErrPassword(t("auth.enter_password") || "Vui lòng nhập mật khẩu");
       hasError = true;
     } else if (password.length < 8) {
       setErrPassword(t("signup.password_min_length") || "Mật khẩu phải có ít nhất 8 ký tự");
@@ -197,56 +227,7 @@ const SignUp = () => {
       hasError = true;
     }
 
-    // Check for SQL injection patterns and block request
-    if (!validateInputForMaliciousContent(clientName)) {
-      setErrClientName(t("signup.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
-      setSignupAttempts((prev) => {
-        const newAttempts = prev + 1;
-        localStorage.setItem(
-          "signupLockout",
-          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
-        );
-        return newAttempts;
-      });
-      hasError = true;
-    }
-
-    if (!validateInputForMaliciousContent(email)) {
-      setErrEmail(t("signup.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
-      setSignupAttempts((prev) => {
-        const newAttempts = prev + 1;
-        localStorage.setItem(
-          "signupLockout",
-          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
-        );
-        return newAttempts;
-      });
-      hasError = true;
-    }
-
-    if (!validateInputForMaliciousContent(password)) {
-      setErrPassword(t("signup.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
-      setSignupAttempts((prev) => {
-        const newAttempts = prev + 1;
-        localStorage.setItem(
-          "signupLockout",
-          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
-        );
-        return newAttempts;
-      });
-      hasError = true;
-    }
-
-    if (!validateInputForMaliciousContent(confirmPassword)) {
-      setErrConfirmPassword(t("signup.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
-      setSignupAttempts((prev) => {
-        const newAttempts = prev + 1;
-        localStorage.setItem(
-          "signupLockout",
-          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
-        );
-        return newAttempts;
-      });
+    if (hasMaliciousInput) {
       hasError = true;
     }
 
@@ -289,7 +270,7 @@ const SignUp = () => {
         );
         return newAttempts;
       });
-      console.log("Lỗi đăng ký người dùng", error);
+      console.error("Lỗi đăng ký người dùng", error);
       toast.error(error?.response?.data?.message || t("signup.registration_failed") || "Đăng ký thất bại");
     } finally {
       setIsLoading(false);
@@ -307,16 +288,7 @@ const SignUp = () => {
       hasError = true;
     }
 
-    if (!validateInputForMaliciousContent(otp)) {
-      setErrOtp(t("signup.suspected_injection") || "Đầu vào chứa nội dung không an toàn");
-      setSignupAttempts((prev) => {
-        const newAttempts = prev + 1;
-        localStorage.setItem(
-          "signupLockout",
-          JSON.stringify({ attempts: newAttempts, lockedUntil: 0 })
-        );
-        return newAttempts;
-      });
+    if (hasMaliciousInput) {
       hasError = true;
     }
 
@@ -340,7 +312,7 @@ const SignUp = () => {
         toast.error(data?.message);
       }
     } catch (error) {
-      console.log("Lỗi xác minh OTP", error);
+      console.error("Lỗi xác minh OTP", error);
       toast.error(error?.response?.data?.message || t("signup.otp_verification_failed") || "Xác minh OTP thất bại");
     } finally {
       setIsLoading(false);
@@ -367,16 +339,14 @@ const SignUp = () => {
                 <FaUserPlus className="text-2xl text-white" />
               </motion.div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {showOtpForm 
-                  ? t("signup.verify_otp_title") || "Xác minh OTP" 
-                  : t("signup.create_account_title") || "Tạo tài khoản"
-                }
+                {showOtpForm
+                  ? t("signup.verify_otp_title") || "Xác minh OTP"
+                  : t("signup.create_account_title") || "Tạo tài khoản"}
               </h1>
               <p className="text-gray-600">
                 {showOtpForm
                   ? t("signup.verify_otp_subtitle") || "Nhập mã OTP đã được gửi đến email của bạn"
-                  : t("signup.create_account_subtitle") || "Tham gia eSpecialty Shopping và bắt đầu hành trình của bạn"
-                }
+                  : t("signup.create_account_subtitle") || "Tham gia eSpecialty Shopping và bắt đầu hành trình của bạn"}
               </p>
             </div>
 
@@ -423,7 +393,7 @@ const SignUp = () => {
                     htmlFor="email"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    {t("auth.email_address")}
+                    {t("auth.email_address") || "Địa chỉ email"}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -438,7 +408,7 @@ const SignUp = () => {
                       className={`block w-full pl-10 pr-3 py-3 border ${
                         errEmail ? "border-red-300" : "border-gray-300"
                       } rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-colors`}
-                      placeholder={t("auth.email_placeholder")}
+                      placeholder={t("auth.email_placeholder") || "Nhập email của bạn"}
                       disabled={isLocked}
                     />
                   </div>
@@ -459,7 +429,7 @@ const SignUp = () => {
                     htmlFor="password"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    {t("auth.password")}
+                    {t("auth.password") || "Mật khẩu"}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -583,12 +553,12 @@ const SignUp = () => {
                 </div>
 
                 <motion.button
-                  whileHover={{ scale: checked && !isLocked ? 1.02 : 1 }}
-                  whileTap={{ scale: checked && !isLocked ? 0.98 : 1 }}
+                  whileHover={{ scale: checked && !isLocked && !hasMaliciousInput ? 1.02 : 1 }}
+                  whileTap={{ scale: checked && !isLocked && !hasMaliciousInput ? 0.98 : 1 }}
                   type="submit"
-                  disabled={!checked || isLoading || isLocked}
+                  disabled={!checked || isLoading || isLocked || hasMaliciousInput}
                   className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white transition-all duration-200 ${
-                    checked && !isLocked
+                    checked && !isLocked && !hasMaliciousInput
                       ? "bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                       : "bg-gray-400 cursor-not-allowed"
                   } disabled:opacity-50`}
@@ -644,11 +614,15 @@ const SignUp = () => {
                 </div>
 
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: !hasMaliciousInput ? 1.02 : 1 }}
+                  whileTap={{ scale: !hasMaliciousInput ? 0.98 : 1 }}
                   type="submit"
-                  disabled={isLoading}
-                  className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 transition-all duration-200"
+                  disabled={isLoading || hasMaliciousInput}
+                  className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white transition-all duration-200 ${
+                    !hasMaliciousInput
+                      ? "bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                      : "bg-gray-400 cursor-not-allowed"
+                  } disabled:opacity-50`}
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
@@ -676,16 +650,15 @@ const SignUp = () => {
                   </span>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-6 text-center">
-              <Link
-                to="/signin"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
-              >
-                {t("auth.signin") || "Đăng nhập vào tài khoản của bạn"}
-                <FaArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="mt-6 text-center">
+                <Link
+                  to="/signin"
+                  className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                >
+                  {t("auth.signin") || "Đăng nhập vào tài khoản của bạn"}
+                  <FaArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
           </motion.div>
         </div>

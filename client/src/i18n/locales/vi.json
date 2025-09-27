@@ -75,7 +75,7 @@
     "resetting_password": "Đang đặt lại...",
     "request_reset_failed": "Yêu cầu đặt lại mật khẩu thất bại",
     "reset_password_failed": "Đặt lại mật khẩu thất bại",
-    "suspected_injection": "Đầu vào chứa nội dung không an toàn"
+    "suspected_injection": "Mật khẩu bao gồm ít nhất 8 ký tự: 1 in hoa và chữ cái đặc biệt, không bao gồm ` {} [] "
   },
   "signup": {
     "create_account_title": "Tạo tài khoản",
@@ -114,7 +114,7 @@
     "too_many_attempts": "Quá nhiều lần thử đăng ký. Vui lòng thử lại sau {{minutes}} phút.",
     "lockout_message": "Tài khoản bị tạm khóa. Vui lòng thử lại sau {{minutes}} phút.",
     "invalid_name": "Tên chứa ký tự không hợp lệ",
-    "suspected_injection": "Đầu vào chứa nội dung không an toàn"
+    "suspected_injection": "Mật khẩu bao gồm ít nhất 8 ký tự: 1 in hoa và chữ cái đặc biệt, không bao gồm ` {} [] "
   },
   "product": {
     "new_arrivals": "Sản phẩm mới",
