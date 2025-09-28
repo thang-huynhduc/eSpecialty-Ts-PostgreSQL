@@ -7,6 +7,8 @@ import {
   createPayPalOrder,
   capturePayPalPayment,
   handlePayPalWebhook,
+  refundPayPalPayment,
+  getRefundDetails,
   createVNPayPayment,
   vnpayReturnHandler,
   vnpayIpnHandler,
@@ -52,6 +54,19 @@ router.post(
   `${routeValue}paypal/webhook`,
   express.raw({ type: "application/json" }),
   handlePayPalWebhook
+);
+
+// PayPal refund routes
+router.post(
+  `${routeValue}paypal/refund`,
+  userAuth,
+  refundPayPalPayment
+);
+
+router.get(
+  `${routeValue}paypal/refund-details/:orderId`,
+  userAuth,
+  getRefundDetails
 );
 
 // VNPay routes

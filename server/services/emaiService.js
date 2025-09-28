@@ -91,6 +91,7 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
     order_status_update: "order status update",
     order_cancelled: "order cancellation",
     payment_confirmation: "payment confirmation",
+    refund_notification: "refund notification",
   };
   const actionText = actionMap[type] || "your action";
 
@@ -226,6 +227,52 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
               ` : ''}
               
               <p>Cảm ơn bạn đã mua hàng tại eSpecialty Shopping!</p>
+            </div>
+            <div class="footer">&copy; ${new Date().getFullYear()} eSpecialty Shopping. Trân trọng!</div>
+          </div>
+        </body>
+      </html>
+    `;
+  } else if (type === "refund_notification") {
+    const { orderId, refundId, refundAmount, exchangeRate, reason, refundedBy } = orderData || {};
+    htmlContent = `
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <style>
+            body { font-family: Arial, Helvetica, sans-serif; background: #f4f4f7; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+            .header { text-align: center; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+            .header h1 { color: #2a2a2a; }
+            .content { padding: 20px 0; line-height: 1.6; }
+            .refund-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 15px; margin: 15px 0; }
+            .refund-amount { font-size: 18px; font-weight: bold; color: #28a745; }
+            .footer { text-align: center; color: #666; font-size: 12px; border-top: 1px solid #eee; padding-top: 15px; }
+            .highlight { background: #fff3cd; padding: 10px; border-radius: 4px; margin: 10px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header"><h1>eSpecialty Shopping</h1></div>
+            <div class="content">
+              <p>Xin chào bạn,</p>
+              <p>Chúng tôi xin thông báo rằng đơn hàng <strong>#${orderId}</strong> đã được hoàn tiền thành công.</p>
+              
+              <div class="refund-box">
+                <h3>Thông tin hoàn tiền:</h3>
+                <p><strong>Mã hoàn tiền:</strong> ${refundId}</p>
+                <p><strong>Số tiền hoàn:</strong> <span class="refund-amount">${refundAmount?.vnd?.toLocaleString('vi-VN')} VND</span></p>
+                ${refundAmount?.usd ? `<p><strong>Số tiền PayPal:</strong> $${refundAmount.usd.toFixed(2)} USD</p>` : ''}
+                <p><strong>Lý do hoàn tiền:</strong> ${reason}</p>
+                <p><strong>Người thực hiện:</strong> ${refundedBy === 'admin' ? 'Quản trị viên' : 'Khách hàng'}</p>
+              </div>
+              
+              <div class="highlight">
+                <p><strong>Lưu ý:</strong> Số tiền sẽ được hoàn về tài khoản PayPal của bạn trong vòng 3-5 ngày làm việc.</p>
+              </div>
+              
+              <p>Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ với chúng tôi.</p>
+              <p>Trân trọng,<br>Đội ngũ eSpecialty Shopping</p>
             </div>
             <div class="footer">&copy; ${new Date().getFullYear()} eSpecialty Shopping. Trân trọng!</div>
           </div>
