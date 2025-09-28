@@ -63,6 +63,7 @@ const Inventory = ({ token }) => {
     isAvailable: true,
     badge: false,
     tags: [],
+    weight: 500 // Thêm trường weight với giá trị mặc định 500g
   });
 
   const [imageFiles, setImageFiles] = useState({
@@ -287,6 +288,7 @@ const Inventory = ({ token }) => {
       isAvailable: product.isAvailable !== false,
       badge: product.badge || false,
       tags: product.tags || [],
+      weight: product.weight || 500 // Thêm weight vào formData
     });
     setImageFiles({
       image1: null,
@@ -314,6 +316,7 @@ const Inventory = ({ token }) => {
       isAvailable: true,
       badge: false,
       tags: [],
+      weight: 500 // Reset weight
     });
     setImageFiles({
       image1: null,
@@ -348,7 +351,8 @@ const Inventory = ({ token }) => {
     } else if (
       name === "price" ||
       name === "discountedPercentage" ||
-      name === "stock"
+      name === "stock" ||
+      name === "weight"
     ) {
       setFormData({
         ...formData,
@@ -378,8 +382,7 @@ const Inventory = ({ token }) => {
     setImageFiles((prev) => ({
       ...prev,
       [imageKey]: null,
-    }));
-  }, []);
+    }))}, []);
 
   // Handle product update
   const handleUpdateProduct = useCallback(async (e) => {
@@ -389,9 +392,10 @@ const Inventory = ({ token }) => {
       !formData.name ||
       !formData.description ||
       !formData.price ||
-      !formData.category
+      !formData.category ||
+      !formData.weight
     ) {
-      toast.error("Missing required fields: name, price, category, and description are mandatory");
+      toast.error("Missing required fields: name, price, category, description, and weight are mandatory");
       return;
     }
 
@@ -412,6 +416,7 @@ const Inventory = ({ token }) => {
       data.append("isAvailable", formData.isAvailable);
       data.append("badge", formData.badge);
       data.append("tags", JSON.stringify(formData.tags));
+      data.append("weight", formData.weight); // Thêm weight vào FormData
 
       // Append image files only if new images are selected
       Object.keys(imageFiles).forEach((key) => {
@@ -1058,6 +1063,7 @@ const Inventory = ({ token }) => {
                     <p><strong>Price:</strong> {selectedProduct.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</p>
                     <p><strong>Discount:</strong> {selectedProduct.discountedPercentage}%</p>
                     <p><strong>Stock:</strong> {selectedProduct.stock}</p>
+                    <p><strong>Weight:</strong> {selectedProduct.weight || 500}g</p>
                     <p><strong>Sold:</strong> {selectedProduct.soldQuantity}</p>
                     <p><strong>Available:</strong> {selectedProduct.isAvailable ? 'Yes' : 'No'}</p>
                     <p><strong>Special Offer:</strong> {selectedProduct.offer ? 'Yes' : 'No'}</p>
@@ -1236,8 +1242,8 @@ const Inventory = ({ token }) => {
                 </div>
               </div>
 
-              {/* Pricing & Stock */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Pricing, Stock & Weight */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div className="flex flex-col">
                   <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price *</label>
                   <input
@@ -1272,6 +1278,19 @@ const Inventory = ({ token }) => {
                     min="0"
                     name="stock"
                     value={formData.stock}
+                    onChange={handleInputChange}
+                    className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col">
+                  <label htmlFor="weight" className="block text-sm font-medium text-gray-700">Weight (grams) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    name="weight"
+                    value={formData.weight}
                     onChange={handleInputChange}
                     className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required

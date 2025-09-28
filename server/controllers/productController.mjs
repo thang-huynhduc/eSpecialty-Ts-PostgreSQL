@@ -31,6 +31,7 @@ const addProduct = async (req, res) => {
       offer,
       description,
       tags,
+      weight, // New field
     } = req.body;
     const image1 = req.files.image1 && req.files.image1[0];
     const image2 = req.files.image2 && req.files.image2[0];
@@ -100,6 +101,7 @@ const addProduct = async (req, res) => {
       description,
       tags: tags ? parsedTags : [],
       images: imagesUrl,
+      weight: weight ? Number(weight) : 500, // New field, default 500g
     };
 
     const product = new productModel(productData);
@@ -373,6 +375,7 @@ const updateStock = async (req, res) => {
 // Update product
 const updateProduct = async (req, res) => {
   try {
+    console.log("product:", req.body)
     const productId = req.params.id;
     const {
       _type,
@@ -387,6 +390,7 @@ const updateProduct = async (req, res) => {
       offer,
       description,
       tags,
+      weight, // Weight
     } = req.body;
 
     const image1 = req.files?.image1 && req.files.image1[0];
@@ -482,6 +486,7 @@ const updateProduct = async (req, res) => {
       description,
       tags: parsedTags,
       images: imagesUrl,
+      weight: weight ? Number(weight) : 500, // New field, default 500g
     };
 
     const updatedProduct = await productModel.findByIdAndUpdate(

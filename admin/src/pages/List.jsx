@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
-import debounce from "lodash.debounce"; 
+import debounce from "lodash.debounce";
 import {
   FaEdit,
   FaTrash,
@@ -67,6 +67,7 @@ const List = ({ token }) => {
     isAvailable: true,
     badge: false,
     tags: [],
+    weight: 500, // Thêm trường weight với giá trị mặc định 500g
   });
 
   const [imageFiles, setImageFiles] = useState({
@@ -104,23 +105,20 @@ const List = ({ token }) => {
         setLoading(false);
       }
     },
-    [filters, perPage]
-  
+    [filters]
   );
+
   const fetchProductsRef = useRef(fetchProducts);
 
-    // Update ref mỗi khi fetchProducts thay đổi
+  // Update ref when fetchProducts changes
   useEffect(() => {
     fetchProductsRef.current = fetchProducts;
   }, [fetchProducts]);
 
   // Debounced fetchProducts
   const debouncedFetchProducts = useMemo(
-    () =>
-      debounce((page) => {
-        fetchProductsRef.current(page); // Sử dụng ref để luôn gọi function mới nhất
-      }, 500),
-    [] // Empty dependency: chỉ tạo một lần
+    () => debounce((page) => fetchProductsRef.current(page), 500),
+    []
   );
 
   // Fetch categories and brands
@@ -157,18 +155,18 @@ const List = ({ token }) => {
     setCurrentPage(1); // Reset to page 1 when filters change
   };
 
-  // Apply debounced fetch khi filters change (giữ nguyên logic, nhưng giờ debounced ổn định)
+  // Apply debounced fetch when filters change
   useEffect(() => {
     debouncedFetchProducts(1);
     return () => {
-      debouncedFetchProducts.cancel(); // Hủy debounce khi component unmount
+      debouncedFetchProducts.cancel(); // Cancel debounce on unmount
     };
-  }, [filters, debouncedFetchProducts]); // Giữ dependency, nhưng debounced không thay đổi nữa
+  }, [filters, debouncedFetchProducts]);
 
   // Pagination handlers
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
-      fetchProducts(page); // Gọi trực tiếp fetchProducts cho phân trang
+      fetchProducts(page);
     }
   };
 
@@ -191,7 +189,8 @@ const List = ({ token }) => {
     } else if (
       name === "price" ||
       name === "discountedPercentage" ||
-      name === "stock"
+      name === "stock" ||
+      name === "weight"
     ) {
       setFormData({
         ...formData,
@@ -240,6 +239,7 @@ const List = ({ token }) => {
       isAvailable: product.isAvailable !== false,
       badge: product.badge || false,
       tags: product.tags || [],
+      weight: product.weight || 500, // Thêm weight vào formData
     });
     setImageFiles({
       image1: null,
@@ -267,6 +267,7 @@ const List = ({ token }) => {
       isAvailable: true,
       badge: false,
       tags: [],
+      weight: 500, // Reset weight
     });
     setImageFiles({
       image1: null,
@@ -319,6 +320,7 @@ const List = ({ token }) => {
       data.append("isAvailable", formData.isAvailable);
       data.append("badge", formData.badge);
       data.append("tags", JSON.stringify(formData.tags));
+      data.append("weight", formData.weight); // Thêm weight vào FormData
 
       // Append image files only if new images are selected
       Object.keys(imageFiles).forEach((key) => {
@@ -630,7 +632,7 @@ const List = ({ token }) => {
             </div>
           </div>
         )}
-        
+
         {/* Products List */}
         {isLoading ? (
           <>
@@ -653,6 +655,9 @@ const List = ({ token }) => {
                         Price
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Weight
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Stock
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -671,6 +676,9 @@ const List = ({ token }) => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="h-4 bg-gray-200 rounded w-24"></div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="h-4 bg-gray-200 rounded w-20"></div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="h-4 bg-gray-200 rounded w-20"></div>
@@ -703,6 +711,7 @@ const List = ({ token }) => {
                     <div className="flex-1 space-y-2">
                       <div className="h-4 bg-gray-200 rounded w-32"></div>
                       <div className="h-3 bg-gray-200 rounded w-24"></div>
+                      <div className="h-3 bg-gray-200 rounded w-20"></div>
                       <div className="h-3 bg-gray-200 rounded w-20"></div>
                       <div className="flex gap-2 mt-3">
                         <div className="h-8 bg-gray-200 rounded w-16"></div>
@@ -755,6 +764,9 @@ const List = ({ token }) => {
                         Price
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Weight
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Stock
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -796,6 +808,11 @@ const List = ({ token }) => {
                               {product.discountedPercentage}% off
                             </div>
                           )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">
+                            {product.weight || 500}g
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
@@ -873,6 +890,9 @@ const List = ({ token }) => {
                           )}
                         </div>
                         <div className="text-right">
+                          <div className="text-sm text-gray-900">
+                            Weight: {product.weight || 500}g
+                          </div>
                           <div className="text-sm text-gray-900">
                             Stock: {product.stock || 0}
                           </div>
@@ -1059,7 +1079,7 @@ const List = ({ token }) => {
                   </div>
                 </div>
 
-                {/* Pricing & Stock */}
+                {/* Pricing, Stock & Weight */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="flex flex-col">
                     <Label htmlFor="price">Price *</Label>
@@ -1095,6 +1115,19 @@ const List = ({ token }) => {
                       min="0"
                       name="stock"
                       value={formData.stock}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex flex-col">
+                    <Label htmlFor="weight">Weight (grams) *</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      name="weight"
+                      value={formData.weight}
                       onChange={handleInputChange}
                       className="mt-1"
                       required

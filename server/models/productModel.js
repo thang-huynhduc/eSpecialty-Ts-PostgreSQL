@@ -17,6 +17,7 @@ const productSchema = new mongoose.Schema(
     description: { type: String, required: true },
     tags: { type: Array },
     stockThreshold: { type: Number, default: 10 },
+    weight: { type: Number, default: 500 }, // Weight in grams, default 500g
   },
   {
     timestamps: true,
