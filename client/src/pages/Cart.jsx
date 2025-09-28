@@ -154,11 +154,16 @@ const Cart = () => {
       if (servicesData.success && servicesData.data?.length > 0) {
         setShippingServices(servicesData.data);
         
-        // Use the first available service to calculate fee
-        const firstService = servicesData.data[0];
-        setSelectedService(firstService);
+        // Select default service based on weight: <20kg -> "Tiết kiệm" (light), >20kg -> "Chuẩn" (heavy)
+        let defaultService;
+        if (totalWeight < 20000) {
+          defaultService = servicesData.data.find(s => s.short_name === 'Tiết kiệm') || servicesData.data[0];
+        } else {
+          defaultService = servicesData.data.find(s => s.short_name === 'Chuẩn') || servicesData.data[0];
+        }
+        setSelectedService(defaultService);
 
-        // Calculate shipping fee
+        // Calculate shipping fee for the default service
         const feeResponse = await fetch(
           `${API_URL}/api/shipping/calculate-fee`,
           {
@@ -171,8 +176,8 @@ const Cart = () => {
               toDistrictId: parseInt(selectedAddress.districtId),
               toWardCode: selectedAddress.wardCode,
               weight: totalWeight,
-              serviceId: firstService.service_id,
-              serviceTypeId: firstService.service_type_id,
+              serviceId: defaultService.service_id,
+              serviceTypeId: defaultService.service_type_id,
               items: products.map(item => ({
                 name: item.name,
                 quantity: item.quantity,

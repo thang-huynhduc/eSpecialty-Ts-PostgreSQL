@@ -88,6 +88,11 @@ const orderSchema = new mongoose.Schema({
       image: {
         type: String,
       },
+      weight: { // Thêm trường weight
+        type: Number,
+        required: true,
+        default: 500, // Mặc định 500g nếu không có giá trị
+      },
     },
   ],
   amount: {

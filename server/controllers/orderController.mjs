@@ -7,9 +7,9 @@ import { sendOtpEmail } from "../services/emaiService.js";
 // Create a new order
 const createOrder = async (req, res) => {
   try {
-    const { items, amount, address, shippingFee  } = req.body;
+    const { items, amount, address, shippingFee } = req.body;
     const userId = req.user?.id;
-    
+
     // Validate authentication
     if (!userId) {
       return res.json({
@@ -33,7 +33,8 @@ const createOrder = async (req, res) => {
         message: "Delivery address is required",
       });
     }
-    // Validate address required fields with flexible field mapping
+
+    // Validate address required fields
     const getAddressValue = (field) => {
       if (field === "firstName" || field === "lastName") {
         const name = (address.name || "").trim();
@@ -91,7 +92,7 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // Validate items have productId
+    // Validate items and fetch weights from productModel
     const itemsWithoutProductId = items.filter(
       (item) => !item._id && !item.productId
     );
@@ -100,6 +101,52 @@ const createOrder = async (req, res) => {
         success: false,
         message: "All items must have a valid product ID",
       });
+    }
+
+    // Fetch product weights
+    const productIds = items.map((item) => item._id || item.productId);
+    const products = await productModel.find({ _id: { $in: productIds } }).select("weight name stock");
+    const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+
+    // Validate stock and prepare items with weight
+    const orderItems = items.map((item) => {
+      const product = productMap.get((item._id || item.productId).toString());
+      if (!product) {
+        throw new Error(`Product not found: ${item.name || item.title}`);
+      }
+      if (product.stock < item.quantity) {
+        throw new Error(`Insufficient stock for ${item.name || item.title}. Available: ${product.stock}`);
+      }
+      return {
+        productId: item._id || item.productId,
+        name: item.name || item.title,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.images?.[0] || item.image,
+        weight: product.weight || 500, // Lấy weight từ productModel, mặc định 500g
+      };
+    });
+
+    // Calculate total weight for GHN
+    const totalWeight = orderItems.reduce(
+      (total, item) => total + (item.weight || 500) * item.quantity,
+      0
+    );
+
+    // Calculate shipping fee if address has required GHN fields
+    let calculatedShippingFee = shippingFee || 0;
+    if (address.districtId && address.wardCode) {
+      const shippingResult = await ghnService.calculateShippingFee({
+        toDistrictId: address.districtId,
+        toWardCode: address.wardCode,
+        weight: totalWeight,
+      });
+
+      if (shippingResult.success) {
+        calculatedShippingFee = shippingResult.data.total || 0;
+      } else {
+        console.error("GHN calculate shipping fee failed:", shippingResult.message);
+      }
     }
 
     // Verify user exists
@@ -111,31 +158,12 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // Calculate shipping fee if address has required GHN fields
-    if (address.districtId && address.wardCode) {
-      const shippingResult = await ghnService.calculateShippingFee({
-        toDistrictId: address.districtId,
-        toWardCode: address.wardCode,
-        weight: items.reduce((total, item) => total + (item.weight || 500) * item.quantity, 0),
-      });
-      
-      if (shippingResult.success) {
-        shippingFee = shippingResult.data.total || 0;
-      }
-    }
-
-    // Create new order with properly mapped fields
+    // Create new order
     const newOrder = new orderModel({
       userId,
-      items: items.map((item) => ({
-        productId: item._id || item.productId,
-        name: item.name || item.title,
-        price: item.price,
-        quantity: item.quantity,
-        image: item.images?.[0] || item.image,
-      })),
+      items: orderItems,
       amount,
-      shippingFee,
+      shippingFee: calculatedShippingFee,
       address: {
         firstName: getAddressValue("firstName"),
         lastName: getAddressValue("lastName"),
@@ -158,41 +186,6 @@ const createOrder = async (req, res) => {
 
     await newOrder.save();
 
-    // Create GHN order if payment method is not COD and address has GHN data
-    // if (newOrder.paymentMethod !== "cod" && address.districtId && address.wardCode) {
-    //   try {
-    //     const ghnOrderData = {
-    //       to_name: `${newOrder.address.firstName} ${newOrder.address.lastName}`,
-    //       to_phone: newOrder.address.phone,
-    //       to_address: newOrder.address.street,
-    //       to_ward_code: newOrder.address.wardCode,
-    //       to_district_id: newOrder.address.districtId,
-    //       weight: items.reduce((total, item) => total + (item.weight || 500) * item.quantity, 0),
-    //       length: 20,
-    //       width: 20,
-    //       height: 10,
-    //       service_type_id: 2,
-    //       payment_type_id: 1,
-    //       note: `Đơn hàng #${newOrder._id}`,
-    //       required_note: "KHONGCHOXEMHANG",
-    //       items: items.map(item => ({
-    //         name: item.name,
-    //         quantity: item.quantity,
-    //         weight: item.weight || 500
-    //       }))
-    //     };
-
-    //     const ghnResult = await ghnService.createOrder(ghnOrderData);
-    //     if (ghnResult.success) {
-    //       newOrder.ghnOrderCode = ghnResult.data.order_code;
-    //       newOrder.ghnExpectedDeliveryTime = new Date(ghnResult.data.expected_delivery_time);
-    //       await newOrder.save();
-    //     }
-    //   } catch (ghnError) {
-    //     console.log("GHN Order Creation Error:", ghnError);
-    //   }
-    // }
-
     // Add order to user's orders array
     await userModel.findByIdAndUpdate(userId, {
       $push: { orders: newOrder._id },
@@ -203,7 +196,7 @@ const createOrder = async (req, res) => {
       message: "Order created successfully",
       order: newOrder,
       orderId: newOrder._id,
-      shippingFee,
+      shippingFee: calculatedShippingFee,
     });
   } catch (error) {
     console.log("Create Order Error:", error);
@@ -448,15 +441,15 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    const oldStatus = order.status; // Lưu status cũ để check transition
+    const oldStatus = order.status;
 
     // Xử lý stock/soldQuantity dựa trên transition
     const items = order.items;
     for (const item of items) {
-      const productId = item.productId._id; // Từ populate
+      const productId = item.productId._id;
       const quantity = item.quantity;
 
-      const product = await productModel.findById(productId);
+      const product = item.productId; // Đã populate
       if (!product) continue;
 
       // Khi chuyển sang "confirmed" từ "pending": Giảm stock
@@ -483,12 +476,12 @@ const updateOrderStatus = async (req, res) => {
         });
       }
 
-      // Khi chuyển sang "cancelled" từ "confirmed" hoặc "pending": Khôi phục stock nếu đã giảm
+      // Khi chuyển sang "cancelled" từ "confirmed" hoặc "pending": Khôi phục stock
       if (status === "cancelled" && oldStatus === "confirmed") {
         await productModel.findByIdAndUpdate(productId, {
           $inc: { stock: quantity },
         });
-        product.isAvailable = true; // Khôi phục availability nếu cần
+        product.isAvailable = true;
         await product.save();
       }
     }
@@ -497,38 +490,47 @@ const updateOrderStatus = async (req, res) => {
     if (status === "confirmed" && oldStatus === "pending") {
       // Tạo GHN order nếu chưa có và có dữ liệu address GHN
       if (!order.ghnOrderCode && order.address.districtId && order.address.wardCode) {
+        const totalWeight = order.items.reduce(
+          (total, item) => total + (item.productId.weight || 500) * item.quantity,
+          0
+        );
+
         const ghnOrderData = {
           to_name: `${order.address.firstName} ${order.address.lastName}`,
           to_phone: order.address.phone,
           to_address: order.address.street,
           to_ward_code: order.address.wardCode,
           to_district_id: order.address.districtId,
-          weight: order.items.reduce((total, item) => total + (item.weight || 500) * item.quantity, 0),
-          length: 20,  // Có thể config động
+          weight: totalWeight,
+          length: 20,
           width: 20,
           height: 10,
-          service_type_id: 2,  // Chuẩn GHN, có thể lấy từ shippingService nếu có
-          payment_type_id: order.paymentMethod === "cod" ? 2 : 1,  // 2 for COD (buyer pays shipping), 1 for paid orders (shop pays)
-          cod_amount: order.paymentMethod === "cod" ? order.amount : 0, // Add COD amount
+          service_type_id: 2,
+          payment_type_id: order.paymentMethod === "cod" ? 2 : 1,
+          cod_amount: order.paymentMethod === "cod" ? order.amount : 0,
           note: `Đơn hàng #${order._id}`,
           required_note: "KHONGCHOXEMHANG",
-          items: order.items.map(item => ({
+          items: order.items.map((item) => ({
             name: item.name,
             quantity: item.quantity,
-            weight: item.weight || 500
-          }))
+            weight: item.productId.weight || 500, // Lấy từ productId
+          })),
         };
 
         const ghnResult = await ghnService.createOrder(ghnOrderData);
         if (ghnResult.success) {
-          console.log("GHN Create Successfull", ghnResult.data)
+          console.log("GHN Create Successful", ghnResult.data);
           order.ghnOrderCode = ghnResult.data.order_code;
           order.ghnExpectedDeliveryTime = new Date(ghnResult.data.expected_delivery_time);
           await order.save();
         } else {
-          // Handle error, nhưng vẫn confirm order
           console.error("GHN creation failed:", ghnResult.message);
         }
+        console.log("GHN Order Data:", {
+          orderId: order._id,
+          totalWeight,
+          ghnOrderData,
+        });
       }
 
       // Gửi email xác nhận với GHN
@@ -542,7 +544,7 @@ const updateOrderStatus = async (req, res) => {
           "order_status_update",
           {
             orderId: order._id,
-            status: "confirmed",  // Will show in email as "cập nhật trạng thái: confirmed"
+            status: "confirmed",
             items: order.items,
             amount: order.amount,
             shippingFee: order.shippingFee,

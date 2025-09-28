@@ -289,6 +289,10 @@ const SingleProduct = () => {
               {productInfo?.description}
             </p>
 
+            <h2>
+              - Khối Lượng Sản Phẩm: {productInfo?.weight || "500 grams"}
+            </h2>
+
             <div className="space-y-6">
               {/* Quantity Selector */}
               <div>
