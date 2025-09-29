@@ -28,8 +28,6 @@ async function getAccessToken() {
   }
 }
 
-
-
 // Function to create email message in RFC 2822 format
 function createEmailMessage(from, to, subject, htmlContent) {
   const boundary = '----=_Part_' + Math.random().toString(36).substr(2, 9);
@@ -92,6 +90,7 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
     order_cancelled: "order cancellation",
     payment_confirmation: "payment confirmation",
     refund_notification: "refund notification",
+    payment_failed: "payment failure notification",
   };
   const actionText = actionMap[type] || "your action";
 
@@ -162,6 +161,81 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
         </body>
       </html>
     `;
+  } else if (type === "payment_failed") {
+    const { orderId, items, amount, shippingFee, address, retryUrl } = orderData || {};
+    htmlContent = `
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <style>
+            body { font-family: Arial, Helvetica, sans-serif; background: #f4f4f7; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+            .header { text-align: center; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+            .header h1 { color: #2a2a2a; }
+            .content { font-size: 15px; color: #333; line-height: 1.6; padding: 20px 0; }
+            .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .table th, .table td { border: 1px solid #eee; padding: 10px; text-align: left; }
+            .retry-button { display: inline-block; padding: 10px 20px; background: #dc3545; color: #fff; text-decoration: none; border-radius: 4px; margin: 10px 0; }
+            .highlight { background: #fff3cd; padding: 10px; border-radius: 4px; margin: 10px 0; }
+            .footer { text-align: center; font-size: 13px; color: #777; border-top: 1px solid #eee; padding-top: 15px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header"><h1>eSpecialty Shopping</h1></div>
+            <div class="content">
+              <p>Xin chào bạn,</p>
+              <p>Thanh toán cho đơn hàng <strong>#${orderId}</strong> của bạn không thành công. Vui lòng thử lại.</p>
+              
+              <div class="highlight">
+                <p><strong>Lưu ý:</strong> Đơn hàng của bạn vẫn đang được giữ. Vui lòng hoàn tất thanh toán sớm để tiếp tục xử lý.</p>
+              </div>
+              
+              <h3>Thông tin địa chỉ giao hàng:</h3>
+              <ul>
+                <li><strong>Họ tên:</strong> ${address?.firstName && address?.lastName ? `${address.firstName} ${address.lastName}` : address?.name || "N/A"}</li>
+                <li><strong>Địa chỉ:</strong> ${address?.street}, ${address?.ward}, ${address?.district}, ${address?.city}, ${address?.country}</li>
+                <li><strong>Mã bưu điện:</strong> ${address?.zipcode}</li>
+                <li><strong>Số điện thoại:</strong> ${address?.phone}</li>
+                <li><strong>Email:</strong> ${address?.email}</li>
+              </ul>
+              
+              <h3>Chi tiết đơn hàng:</h3>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Giá</th>
+                    <th>Tổng</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${items?.map(item => `
+                    <tr>
+                      <td>${item.name}</td>
+                      <td>${item.quantity}</td>
+                      <td>${item.price.toLocaleString('vi-VN')} VND</td>
+                      <td>${(item.price * item.quantity).toLocaleString('vi-VN')} VND</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+              
+              <p><strong>Phí ship:</strong> ${shippingFee?.toLocaleString('vi-VN')} VND</p>
+              <p><strong>Tổng tiền:</strong> ${amount?.toLocaleString('vi-VN')} VND</p>
+              
+              <p>Vui lòng thử thanh toán lại bằng cách nhấn vào nút dưới đây:</p>
+              <a href="${retryUrl}" class="retry-button">Thử thanh toán lại</a>
+              
+              <p>Nếu bạn gặp bất kỳ vấn đề nào, vui lòng liên hệ với chúng tôi.</p>
+              <p>Trân trọng,<br>Đội ngũ eSpecialty Shopping</p>
+            </div>
+            <div class="footer">&copy; ${new Date().getFullYear()} eSpecialty Shopping. Trân trọng!</div>
+          </div>
+        </body>
+      </html>
+    `;
   } else if (type.startsWith("order_")) {
     const { orderId, status, items, amount, shippingFee, address, ghnOrderCode, ghnExpectedDeliveryTime } = orderData || {};
     htmlContent = `
@@ -184,7 +258,7 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
             <div class="header"><h1>eSpecialty Shopping</h1></div>
             <div class="content">
               <p>Xin chào bạn,</p>
-              <p>Đơn hàng của bạn <strong>#${orderId}</strong> đã được ${actionText === "order confirmation" ? "tạo thành công" : actionText === "order cancellation" ? "huỷ" : `cập nhật trạng thái: <strong>${status}</strong>`}.</p>
+              <p>Đơn hàng của bạn <strong>#${orderId}</strong> đã được ${actionText === "order confirmation" ? "tạo thành công" : actionText === "order cancellation" ? "huỷ" : `đã được vận chuyển đi!`}.</p>
               
               <h3>Thông tin địa chỉ giao hàng:</h3>
               <ul>
