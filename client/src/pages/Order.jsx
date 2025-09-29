@@ -211,8 +211,11 @@ const Order = () => {
       case "paid":
         return "bg-green-100 text-green-800 border-green-200";
       case "failed":
-      case "refunded":
         return "bg-red-100 text-red-800 border-red-200";
+      case "refunded":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "refund_pending":
+        return "bg-orange-100 text-orange-800 border-orange-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -475,24 +478,34 @@ const Order = () => {
                         </td>
 
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPaymentStatusColor(
-                              order.paymentStatus
-                            )}`}
-                          >
-                            {order.paymentMethod === "cod" ? (
-                              <FaMoneyBillWave className="w-3 h-3" />
-                            ) : (
-                              <FaCreditCard className="w-3 h-3" />
+                          <div className="flex flex-col gap-1">
+                            <span
+                              className={`inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPaymentStatusColor(
+                                order.paymentStatus
+                              )}`}
+                            >
+                              {order.paymentMethod === "cod" ? (
+                                <FaMoneyBillWave className="w-3 h-3" />
+                              ) : (
+                                <FaCreditCard className="w-3 h-3" />
+                              )}
+                              {getPaymentStatusLabel(order.paymentStatus)}
+                            </span>
+                            {/* Hiển thị thông tin refund */}
+                            {order.paymentStatus === "refunded" && order.refundHistory && order.refundHistory.length > 0 && (
+                              <div className="text-xs text-gray-500">
+                                <div>Refund ID: {order.refundHistory[0].refundId}</div>
+                                <div>Hoàn: <PriceFormat amount={order.refundHistory[0].refundAmount.vnd} /></div>
+                                <div>Ngày: {new Date(order.refundHistory[0].refundedAt).toLocaleDateString("vi-VN")}</div>
+                              </div>
                             )}
-                            {getPaymentStatusLabel(order.paymentStatus)}
-                          </span>
+                          </div>
                         </td>
 
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex gap-2">
-                            {/* Chỉ hiển thị nút hủy khi trạng thái là pending */}
-                            {order.status === "pending" && (
+                            {/* Hiển thị nút hủy khi trạng thái là pending hoặc confirmed, không được hủy khi đã shipped */}
+                            {(order.status === "pending" || order.status === "confirmed") && (
                               <button
                                 onClick={(e) => handleCancelOrder(order, e)}
                                 className="text-red-600 hover:text-red-900 transition-colors flex flex-row gap-2 justify-center items-center"

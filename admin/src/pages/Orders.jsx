@@ -29,6 +29,7 @@ import {
   FaBoxOpen,
   FaReceipt,
   FaInfoCircle,
+  FaUndo,
 } from "react-icons/fa";
 
 const Orders = () => {
@@ -164,6 +165,44 @@ const Orders = () => {
     } catch (error) {
       console.error("Error deleting order:", error);
       toast.error(t("orders.messages.deleteError"));
+    }
+  };
+
+  // Refund PayPal payment
+  const refundPayPalOrder = async (order) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn hoàn tiền cho đơn hàng #${order._id}?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${serverUrl}/api/payment/paypal/refund`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          orderId: order._id,
+          reason: "Order cancelled by admin",
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Hoàn tiền thành công! Refund ID: ${data.refundId}`);
+        fetchOrders(); // Refresh orders
+        // Close detail modal if refunded order is currently being viewed
+        if (selectedOrder && selectedOrder._id === order._id) {
+          setShowDetailModal(false);
+          setSelectedOrder(null);
+        }
+      } else {
+        toast.error(data.message || "Hoàn tiền thất bại");
+      }
+    } catch (error) {
+      console.error("Error refunding PayPal payment:", error);
+      toast.error("Hoàn tiền thất bại");
     }
   };
 
@@ -673,6 +712,21 @@ const Orders = () => {
                       >
                         <FaEdit className="w-4 h-4" />
                       </button>
+                      {/* Refund button - only show for paid PayPal orders */}
+                      {order.paymentMethod === "paypal" && 
+                       order.paymentStatus === "paid" && 
+                       order.status !== "cancelled" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            refundPayPalOrder(order);
+                          }}
+                          className="text-orange-600 hover:text-orange-900 p-1 rounded"
+                          title="Hoàn tiền PayPal"
+                        >
+                          <FaUndo className="w-4 h-4" />
+                        </button>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

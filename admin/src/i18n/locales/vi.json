@@ -209,6 +209,8 @@
     "paymentStatus": {
       "pending": "Đang chờ",
       "paid": "Đã thanh toán",
+      "refunded": "Đã hoàn tiền",
+      "refund_pending": "Chờ hoàn tiền",
       "failed": "Thất bại"
     },
     "buttons": {

@@ -598,6 +598,8 @@
     "free": "Miễn phí",
     "failed": "Thất bại",
     "paid": "Đã thanh toán",
+    "refunded": "Đã hoàn tiền",
+    "refund_pending": "Chờ hoàn tiền",
     "confirmed": "Đã xác nhận",
     "shipped": "Đã giao hàng",
     "delivered": "Đã giao",

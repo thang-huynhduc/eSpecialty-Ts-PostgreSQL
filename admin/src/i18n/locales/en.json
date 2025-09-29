@@ -208,6 +208,8 @@
     "paymentStatus": {
       "pending": "Pending",
       "paid": "Paid",
+      "refunded": "Refunded",
+      "refund_pending": "Refund Pending",
       "failed": "Failed"
     },
     "buttons": {

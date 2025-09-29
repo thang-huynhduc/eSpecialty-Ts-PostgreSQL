@@ -609,6 +609,8 @@
     "total": "Total",
     "failed": "Failed",
     "paid": "Paid",
+    "refunded": "Refunded",
+    "refund_pending": "Refund Pending",
     "pending": "Pending",
     "confirmed": "Confirmed",
     "shipped": "Shipped",

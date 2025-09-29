@@ -333,7 +333,7 @@ const Cart = () => {
         },
         body: JSON.stringify({
           items: products,
-          amount: discount + shippingFee, // Include shipping fee in total
+          amount: discount, // Subtotal without shipping fee
           shippingFee: shippingFee,
           shippingService: selectedService,
           address: {
