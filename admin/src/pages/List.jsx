@@ -100,7 +100,7 @@ const List = ({ token }) => {
         }
       } catch (error) {
         console.log("Product List fetching error", error?.message);
-        toast.error(error?.message);
+        toast.error(error?.response?.data?.message || error?.message);
       } finally {
         setLoading(false);
       }
@@ -373,11 +373,22 @@ const List = ({ token }) => {
         await fetchProducts(currentPage);
         closeDeleteModal();
       } else {
-        toast.error(data?.message);
+        // Display the server's error message and include order IDs if available
+        const errorMessage = data?.message || "Failed to delete product";
+        const orderIds = data?.uncompletedOrderIds
+          ? ` (Orders: ${data.uncompletedOrderIds.join(", ")})`
+          : "";
+        toast.error(`${errorMessage}${orderIds}`);
       }
     } catch (error) {
       console.log("Product remove error", error);
-      toast.error(error?.message);
+      // Improved error handling to extract server message
+      const errorMessage =
+        error?.response?.data?.message || "Error deleting product";
+      const orderIds = error?.response?.data?.uncompletedOrderIds
+        ? ` (Orders: ${error.response.data.uncompletedOrderIds.join(", ")})`
+        : "";
+      toast.error(`${errorMessage}${orderIds}`);
     } finally {
       setSubmitting(false);
     }
