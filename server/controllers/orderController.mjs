@@ -3,6 +3,8 @@ import userModel from "../models/userModel.js";
 import productModel from "../models/productModel.js";
 import ghnService from "../services/ghnService.js";
 import { sendOtpEmail } from "../services/emaiService.js";
+import { refundPayPalPayment as refundPayPalPaymentService } from "../services/paymentService.js";
+import paymentDetailsModel from "../models/paymentDetailsModel.js";
 
 // Create a new order
 const createOrder = async (req, res) => {
@@ -33,51 +35,26 @@ const createOrder = async (req, res) => {
         message: "Delivery address is required",
       });
     }
-
-    // Validate address required fields
-    const getAddressValue = (field) => {
-      if (field === "firstName" || field === "lastName") {
-        const name = (address.name || "").trim();
-        const parts = name.split(/\s+/);
-        if (field === "firstName") return address.firstName || address.first_name || parts[0] || "";
-        if (field === "lastName") return address.lastName || address.last_name || parts.slice(1).join(" ") || "";
-      }
-
-      if (field === "zipcode") {
-        return (
-          address.zipcode ||
-          address.zipCode ||
-          address.zip_code ||
-          address.postal_code ||
-          ""
-        );
-      }
-
-      return address[field] || "";
-    };
-
+    // Validate address required fields (firstName, lastName, zipcode are now optional)
     const requiredAddressFields = [
-      "firstName",
-      "lastName",
       "email",
       "street",
       "ward",
       "district",
       "city",
-      "zipcode",
       "country",
       "phone",
     ];
 
     const missingFields = requiredAddressFields.filter((field) => {
-      const value = getAddressValue(field);
+      const value = address[field] || "";
       return !value || value.toString().trim() === "";
     });
 
     if (missingFields.length > 0) {
       console.log("Missing fields details:");
       missingFields.forEach((field) => {
-        console.log(`${field}: "${getAddressValue(field)}"`);
+        console.log(`${field}: "${address[field] || ""}"`);
       });
       return res.json({
         success: false,
@@ -86,7 +63,7 @@ const createOrder = async (req, res) => {
           receivedAddress: address,
           missingFields: missingFields.map((field) => ({
             field,
-            value: getAddressValue(field),
+            value: address[field] || "",
           })),
         },
       });
@@ -165,14 +142,13 @@ const createOrder = async (req, res) => {
       amount,
       shippingFee: calculatedShippingFee,
       address: {
-        firstName: getAddressValue("firstName"),
-        lastName: getAddressValue("lastName"),
+        name: address.name || "",
         email: address.email || "",
         street: address.street || address.address || "",
         ward: address.ward || address.wardName || "",
         district: address.district || address.districtName || "",
         city: address.city || address.provinceName || "",
-        zipcode: getAddressValue("zipcode"),
+        zipcode: address.zipcode || address.zipCode || address.zip_code || address.postal_code || "",
         country: address.country || "Vietnam",
         phone: address.phone || address.phoneNumber || "",
         provinceId: address.provinceId,
@@ -326,15 +302,15 @@ const cancelOrder = async (req, res) => {
       });
     }
 
-    // Check if order can be cancelled (only pending orders)
-    if (order.status !== "pending") {
+    // Check if order can be cancelled (pending and confirmed orders, but not shipped)
+    if (order.status === "shipped" || order.status === "delivered" || order.status === "cancelled") {
       return res.json({
         success: false,
-        message: `Cannot cancel order with status: ${order.status}. Only pending orders can be cancelled.`,
+        message: `Cannot cancel order with status: ${order.status}. Orders can only be cancelled before shipping.`,
       });
     }
 
-    // Check if order is already cancelled
+    // Check if order is already cancelled (redundant check since we already check above)
     if (order.status === "cancelled") {
       return res.json({
         success: false,
@@ -382,9 +358,46 @@ const cancelOrder = async (req, res) => {
       );
     }
 
-    // If payment was made, mark for refund
+    // If payment was made, process refund
     if (order.paymentStatus === "paid") {
-      order.paymentStatus = "refunded";
+      // Check if it's a PayPal payment and process refund
+      if (order.paymentMethod === "paypal") {
+        try {
+          // Find payment details
+          const paymentDetails = await paymentDetailsModel.findOne({
+            orderId: orderId,
+            paymentMethod: "paypal",
+            gatewayStatus: "completed"
+          });
+
+          if (paymentDetails && paymentDetails.paypal?.orderId) {
+            // Process PayPal refund
+            const refundResult = await refundPayPalPaymentService(
+              paymentDetails.paypal.orderId,
+              orderId,
+              "Order cancelled by customer",
+              "customer"
+            );
+
+            if (refundResult.success) {
+              order.paymentStatus = "refunded";
+              console.log(`PayPal refund successful for order ${orderId}: ${refundResult.refundId}`);
+            } else {
+              console.error(`PayPal refund failed for order ${orderId}: ${refundResult.message}`);
+              order.paymentStatus = "refund_pending"; // Mark as pending refund
+            }
+          } else {
+            console.log(`No PayPal payment details found for order ${orderId}`);
+            order.paymentStatus = "refunded"; // Assume refunded if no payment details
+          }
+        } catch (refundError) {
+          console.error(`PayPal refund error for order ${orderId}:`, refundError);
+          order.paymentStatus = "refund_pending"; // Mark as pending refund
+        }
+      } else {
+        // For other payment methods, just mark as refunded
+        order.paymentStatus = "refunded";
+      }
     } else {
       order.paymentStatus = "failed"; // Mark as failed if payment was pending
     }
@@ -496,7 +509,7 @@ const updateOrderStatus = async (req, res) => {
         );
 
         const ghnOrderData = {
-          to_name: `${order.address.firstName} ${order.address.lastName}`,
+          to_name: order.address.name || "Khách hàng",
           to_phone: order.address.phone,
           to_address: order.address.street,
           to_ward_code: order.address.wardCode,
@@ -560,6 +573,43 @@ const updateOrderStatus = async (req, res) => {
     order.status = status;
     if (paymentStatus) order.paymentStatus = paymentStatus;
     order.updatedAt = Date.now();
+
+    // Xử lý refund khi admin hủy đơn hàng đã thanh toán
+    if (status === "cancelled" && order.paymentStatus === "paid" && order.paymentMethod === "paypal") {
+      try {
+        // Find payment details
+        const paymentDetails = await paymentDetailsModel.findOne({
+          orderId: orderId,
+          paymentMethod: "paypal",
+          gatewayStatus: "completed"
+        });
+
+        if (paymentDetails && paymentDetails.paypal?.orderId) {
+          // Process PayPal refund
+          const refundResult = await refundPayPalPaymentService(
+            paymentDetails.paypal.orderId,
+            orderId,
+            "Order cancelled by admin",
+            "admin"
+          );
+
+          if (refundResult.success) {
+            order.paymentStatus = "refunded";
+            console.log(`PayPal refund successful for order ${orderId}: ${refundResult.refundId}`);
+          } else {
+            console.error(`PayPal refund failed for order ${orderId}: ${refundResult.message}`);
+            order.paymentStatus = "refund_pending"; // Mark as pending refund
+          }
+        } else {
+          console.log(`No PayPal payment details found for order ${orderId}`);
+          order.paymentStatus = "refunded"; // Assume refunded if no payment details
+        }
+      } catch (refundError) {
+        console.error(`PayPal refund error for order ${orderId}:`, refundError);
+        order.paymentStatus = "refund_pending"; // Mark as pending refund
+      }
+    }
+
     await order.save();
 
     res.json({

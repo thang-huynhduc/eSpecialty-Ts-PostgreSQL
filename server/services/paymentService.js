@@ -113,7 +113,7 @@ export const capturePayPalPayment = async (paypalOrderId, orderId) => {
     // Update order status
     await orderModel.findByIdAndUpdate(orderId, {
       paymentStatus: "paid",
-      status: "pending",
+      status: "confirmed",
     });
 
     return {
@@ -254,7 +254,7 @@ const capturePayPalOrderViaSDK = async (paypalOrderId) => {
     throw new Error("Payment capture was not completed");
   }
 
-  return capturedOrder;
+  return capture;
 };
 
 export {
@@ -324,5 +324,233 @@ export const verifyVNPayReturnOrIPN = (params) => {
   const vnpay = getVNPay();
   const result = vnpay.verifyReturnUrl(params);
   return { isValid: result.isSuccess, message: result.message };
+};
+
+/**
+ * ==================== PayPal Refund Functions ====================
+ */
+
+/**
+ * Refund PayPal payment
+ * @param {string} paypalOrderId - PayPal order ID
+ * @param {string} orderId - MongoDB order ID
+ * @param {string} reason - Refund reason
+ * @param {string} refundedBy - Who initiated the refund (admin/customer)
+ * @returns {Promise<Object>} Refund result
+ */
+export const refundPayPalPayment = async (paypalOrderId, orderId, reason, refundedBy) => {
+  try {
+    // Find payment details
+    let paymentDetails;
+    if (paypalOrderId) {
+      paymentDetails = await paymentDetailsModel.findOne({
+        orderId: orderId,
+        paymentMethod: "paypal",
+        "paypal.orderId": paypalOrderId,
+      });
+    } else {
+      paymentDetails = await paymentDetailsModel.findOne({
+        orderId: orderId,
+        paymentMethod: "paypal",
+        gatewayStatus: "completed"
+      });
+    }
+
+    if (!paymentDetails) {
+      throw new Error("Payment details not found");
+    }
+    // Check if already refunded
+    if (paymentDetails.paypal.refundId) {
+      return {
+        success: true,
+        alreadyRefunded: true,
+        refundId: paymentDetails.paypal.refundId,
+        message: "Payment already refunded",
+      };
+    }
+
+    // Check if payment was captured
+    if (!paymentDetails.paypal.captureId) {
+      throw new Error("Payment not captured, cannot refund");
+    }
+
+    // Refund payment via PayPal SDK
+    const refundResult = await refundPayPalOrderViaSDK(
+      paymentDetails.paypal.captureId,
+      paymentDetails.processedAmount,
+      reason
+    );
+
+    // Update payment details
+    paymentDetails.paypal.refundId = refundResult.id;
+    paymentDetails.paypal.refundReason = reason;
+    paymentDetails.paypal.refundedBy = refundedBy;
+    paymentDetails.paypal.refundedAt = new Date();
+    paymentDetails.gatewayStatus = "refunded";
+    paymentDetails.gatewayResponse = refundResult;
+
+    await paymentDetails.save();
+
+    // Update order status and add refund history
+    await orderModel.findByIdAndUpdate(orderId, {
+      paymentStatus: "refunded",
+      status: "cancelled",
+      $push: {
+        refundHistory: {
+          refundId: refundResult.id,
+          refundAmount: {
+            vnd: paymentDetails.originalAmount,
+            usd: paymentDetails.processedAmount,
+          },
+          exchangeRate: paymentDetails.exchangeRate,
+          reason: reason,
+          refundedBy: refundedBy,
+          refundedAt: new Date(),
+          status: "completed",
+        },
+      },
+    });
+
+    return {
+      success: true,
+      refundId: refundResult.id,
+      refundAmount: {
+        vnd: paymentDetails.originalAmount,
+        usd: paymentDetails.processedAmount,
+      },
+      exchangeRate: paymentDetails.exchangeRate,
+      paymentDetails: paymentDetails,
+      message: "Payment refunded successfully",
+    };
+  } catch (error) {
+    console.error("PayPal refund error:", error);
+    
+    // Update failed attempt
+    const paymentDetails = await paymentDetailsModel.findOne({
+      orderId: orderId,
+      "paypal.orderId": paypalOrderId,
+    });
+    
+    if (paymentDetails) {
+      paymentDetails.gatewayStatus = "refund_failed";
+      paymentDetails.gatewayResponse = { error: error.message };
+      await paymentDetails.save();
+    }
+
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
+/**
+ * Get refund details by order ID
+ * @param {string} orderId - MongoDB order ID
+ * @returns {Promise<Object>} Refund details
+ */
+export const getRefundDetailsByOrderId = async (orderId) => {
+  try {
+    const paymentDetails = await paymentDetailsModel.findOne({ orderId }).populate('orderId');
+    
+    if (!paymentDetails || !paymentDetails.paypal.refundId) {
+      return null;
+    }
+
+    return {
+      refundId: paymentDetails.paypal.refundId,
+      refundReason: paymentDetails.paypal.refundReason,
+      refundedBy: paymentDetails.paypal.refundedBy,
+      refundedAt: paymentDetails.paypal.refundedAt,
+      refundAmount: {
+        vnd: paymentDetails.originalAmount,
+        usd: paymentDetails.processedAmount,
+      },
+      exchangeRate: paymentDetails.exchangeRate,
+      status: paymentDetails.gatewayStatus,
+    };
+  } catch (error) {
+    console.error("Error fetching refund details:", error);
+    return null;
+  }
+};
+
+/**
+ * Refund PayPal order via REST API
+ * @param {string} captureId - PayPal capture ID
+ * @param {number} amount - Amount to refund in USD
+ * @param {string} reason - Refund reason
+ * @returns {Promise<Object>} Refund result
+ */
+const refundPayPalOrderViaSDK = async (captureId, amount, reason) => {
+  try {
+    // Get access token
+    const accessToken = await getPayPalAccessToken();
+    
+    const refundRequest = {
+      amount: {
+        value: amount.toString(),
+        currency_code: "USD",
+      },
+      note_to_payer: reason,
+    };
+
+    const response = await fetch(`https://api-m.sandbox.paypal.com/v2/payments/captures/${captureId}/refund`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'PayPal-Request-Id': `refund-${Date.now()}`,
+      },
+      body: JSON.stringify(refundRequest),
+    });
+
+    const refund = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`PayPal refund failed: ${response.status} - ${refund.message || 'Unknown error'}`);
+    }
+
+    if (!refund || refund.status !== "COMPLETED") {
+      throw new Error("Refund was not completed");
+    }
+
+    return refund;
+  } catch (error) {
+    console.error("PayPal refund API error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get PayPal access token
+ * @returns {Promise<string>} Access token
+ */
+const getPayPalAccessToken = async () => {
+  try {
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+    const baseUrl = process.env.PAYPAL_BASE_URL || 'https://api-m.sandbox.paypal.com';
+
+    const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+      },
+      body: 'grant_type=client_credentials',
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`Failed to get PayPal access token: ${data.error_description || 'Unknown error'}`);
+    }
+
+    return data.access_token;
+  } catch (error) {
+    console.error("Error getting PayPal access token:", error);
+    throw error;
+  }
 };
 

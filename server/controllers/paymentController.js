@@ -4,7 +4,7 @@ import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import paypalClient, { PAYPAL_WEBHOOK_CONFIG, SUPPORTED_PAYPAL_EVENTS } from "../config/paypal.js";
 import { convertVNDToUSD, isPayPalSupportedCurrency } from "../services/currencyService.js";
-import { createPayPalOrder as createPayPalOrderService, capturePayPalPayment as capturePayPalPaymentService, createVNPayPaymentUrl, verifyVNPayReturnOrIPN } from "../services/paymentService.js";
+import { createPayPalOrder as createPayPalOrderService, capturePayPalPayment as capturePayPalPaymentService, createVNPayPaymentUrl, verifyVNPayReturnOrIPN, refundPayPalPayment as refundPayPalPaymentService, getRefundDetailsByOrderId } from "../services/paymentService.js";
 import paymentDetailsModel from "../models/paymentDetailsModel.js";
 import { sendOtpEmail } from "../services/emaiService.js";
 
@@ -145,9 +145,9 @@ export const handleStripeWebhook = async (req, res) => {
       // Update order status
       const order = await orderModel.findById(orderId);
         if (order && order.paymentStatus !== "paid") {
-          order.paymentStatus = "paid";
-          // order.status = "confirmed";
-          await order.save();
+              order.paymentStatus = "paid";
+              order.status = "confirmed";
+              await order.save();
           // Send payment confirmation email
           const user = await userModel.findById(order.userId);
           if (user) {
@@ -315,7 +315,7 @@ export const capturePayPalPayment = async (req, res) => {
     if (!result.alreadyCaptured && order.paymentStatus !== "paid") {
       order.paymentStatus = "paid";
       order.paymentMethod = "paypal";
-       // order.status = "confirmed";
+      order.status = "confirmed";
       await order.save();
       // Send payment confirmation email
       const user = await userModel.findById(order.userId);
@@ -408,7 +408,7 @@ export const handlePayPalWebhook = async (req, res) => {
               await paymentDetails.save();
 
               order.paymentStatus = "paid";
-             // order.status = "confirmed";
+              order.status = "confirmed";
               await order.save();
               // Send payment confirmation email
               const user = await userModel.findById(order.userId);
@@ -487,9 +487,9 @@ const handlePaymentCaptureCompleted = async (resource) => {
       // Update order
       const order = await orderModel.findById(paymentDetails.orderId);
       if (order) {
-        order.paymentStatus = "paid";
-       // order.status = "confirmed";
-        await order.save();
+              order.paymentStatus = "paid";
+              order.status = "confirmed";
+              await order.save();
         console.log(`Order ${order._id} payment confirmed via webhook`);
       }
     }
@@ -590,6 +590,151 @@ const handleCheckoutOrderCompleted = async (resource) => {
     }
   } catch (error) {
     console.error("Error handling checkout order completed:", error);
+  }
+};
+
+// Refund PayPal payment
+export const refundPayPalPayment = async (req, res) => {
+  try {
+    const { orderId, reason } = req.body;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    // Find the order
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
+    }
+
+    // Verify order belongs to user (for customer) or user is admin
+    if (userRole !== "admin" && order.userId.toString() !== userId.toString()) {
+      return res.json({
+        success: false,
+        message: "Unauthorized access to order",
+      });
+    }
+
+    // Check if order is paid
+    if (order.paymentStatus !== "paid") {
+      return res.json({ 
+        success: false, 
+        message: "Order is not paid, cannot refund" 
+      });
+    }
+
+    // Check if already refunded
+    if (order.paymentStatus === "refunded") {
+      return res.json({ 
+        success: false, 
+        message: "Order is already refunded" 
+      });
+    }
+
+    // Use payment service to refund PayPal payment
+    const result = await refundPayPalPaymentService(
+      null, // paypalOrderId will be found from payment details
+      orderId, 
+      reason || "Order cancellation", 
+      userRole === "admin" ? "admin" : "customer"
+    );
+
+    if (!result.success) {
+      return res.json({
+        success: false,
+        message: result.message || "Refund failed",
+      });
+    }
+
+    // Send refund notification email
+    const user = await userModel.findById(order.userId);
+    if (user) {
+      const emailSubject = `Hoàn tiền đơn hàng #${order._id}`;
+      await sendOtpEmail(
+        user.email,
+        null,
+        emailSubject,
+        "refund_notification",
+        {
+          orderId: order._id,
+          refundId: result.refundId,
+          refundAmount: result.refundAmount,
+          exchangeRate: result.exchangeRate,
+          reason: reason || "Order cancellation",
+          refundedBy: userRole === "admin" ? "admin" : "customer",
+        }
+      );
+    }
+
+    res.json({
+      success: true,
+      message: result.message,
+      refundId: result.refundId,
+      refundAmount: result.refundAmount,
+      exchangeRate: result.exchangeRate,
+    });
+
+  } catch (error) {
+    console.error("Refund PayPal Payment Error:", error);
+    
+    // Log for audit
+    console.error("PayPal Refund Audit:", {
+      paypalOrderId: req.body.paypalOrderId,
+      orderId: req.body.orderId,
+      userId: req.user?.id,
+      userRole: req.user?.role,
+      timestamp: new Date().toISOString(),
+      error: error.message,
+    });
+
+    res.json({
+      success: false,
+      message: "Refund failed. Please try again.",
+    });
+  }
+};
+
+// Get refund details
+export const getRefundDetails = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    // Find the order
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
+    }
+
+    // Verify order belongs to user (for customer) or user is admin
+    if (userRole !== "admin" && order.userId.toString() !== userId.toString()) {
+      return res.json({
+        success: false,
+        message: "Unauthorized access to order",
+      });
+    }
+
+    // Get refund details
+    const refundDetails = await getRefundDetailsByOrderId(orderId);
+
+    if (!refundDetails) {
+      return res.json({ 
+        success: false, 
+        message: "No refund found for this order" 
+      });
+    }
+
+    res.json({
+      success: true,
+      refundDetails: refundDetails,
+    });
+
+  } catch (error) {
+    console.error("Get Refund Details Error:", error);
+    res.json({
+      success: false,
+      message: "Failed to get refund details",
+    });
   }
 };
 
@@ -847,7 +992,7 @@ export const vnpayIpnHandler = async (req, res) => {
     if (responseCode === "00") {
         order.paymentStatus = "paid";
         order.paymentMethod = "vnpay";
-        // order.status = "confirmed";
+        order.status = "confirmed";
         await order.save();
         // Send payment confirmation email
         const user = await userModel.findById(order.userId);

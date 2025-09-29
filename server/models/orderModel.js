@@ -37,14 +37,14 @@ const decryptStringGetter = (value) => {
 
 const AddressSchema = new mongoose.Schema(
   {
-    firstName: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
-    lastName: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
+    
+    name: { type: String, required: false, set: encryptStringSetter, get: decryptStringGetter },
     email: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
     street: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
     ward: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
     district: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
     city: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
-    zipcode: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
+    zipcode: { type: String, required: false, set: encryptStringSetter, get: decryptStringGetter },
     country: { type: String, required: true, default: "Vietnam", set: encryptStringSetter, get: decryptStringGetter },
     phone: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
     provinceId: { type: Number },
@@ -113,7 +113,7 @@ const orderSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ["pending", "paid", "failed", "refunded"],
+    enum: ["pending", "paid", "failed", "refunded", "refund_pending"],
     default: "pending",
   },
   // Payment tracking
@@ -121,6 +121,31 @@ const orderSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  // Refund history
+  refundHistory: [
+    {
+      refundId: String,
+      refundAmount: {
+        vnd: Number,
+        usd: Number,
+      },
+      exchangeRate: Number,
+      reason: String,
+      refundedBy: {
+        type: String,
+        enum: ["admin", "customer"],
+      },
+      refundedAt: {
+        type: Date,
+        default: Date.now,
+      },
+      status: {
+        type: String,
+        enum: ["completed", "failed", "pending"],
+        default: "completed",
+      },
+    },
+  ],
   shippingFee: {
     type: Number,
     default: 0,
