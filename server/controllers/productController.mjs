@@ -1,6 +1,8 @@
 import { v2 as cloudinary } from "cloudinary";
 import { deleteCloudinaryImage } from "../config/cloudinary.js";
 import productModel from "../models/productModel.js";
+import orderModel from "../models/orderModel.js";
+import mongoose from "mongoose"; // Added for ObjectId casting
 import fs from "fs";
 
 // Helper function to clean up temporary files
@@ -31,7 +33,7 @@ const addProduct = async (req, res) => {
       offer,
       description,
       tags,
-      weight, // New field
+      weight,
     } = req.body;
     const image1 = req.files.image1 && req.files.image1[0];
     const image2 = req.files.image2 && req.files.image2[0];
@@ -101,11 +103,11 @@ const addProduct = async (req, res) => {
       description,
       tags: tags ? parsedTags : [],
       images: imagesUrl,
-      weight: weight ? Number(weight) : 500, // New field, default 500g
+      weight: weight ? Number(weight) : 500,
     };
 
     const product = new productModel(productData);
-    product.save();
+    await product.save();
 
     res.json({
       success: true,
@@ -219,7 +221,7 @@ const listProducts = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(perPage)
-      .lean(); 
+      .lean();
 
     // Format for frontend
     let formattedDbProducts = dbProducts.map((product) => ({
@@ -245,11 +247,58 @@ const listProducts = async (req, res) => {
 // Remove product
 const removeProduct = async (req, res) => {
   try {
-    // First, find the product to get its images
-    const product = await productModel.findById(req.body._id);
+    const productId = req.body._id;
 
+    // Validate product ID
+    if (!productId) {
+      return res.status(400).json({
+        success: false,
+        message: "Product ID is required",
+      });
+    }
+
+    // Ensure productId is a valid ObjectId
+    if (!mongoose.isValidObjectId(productId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Product ID format",
+      });
+    }
+
+    // Find the product
+    const product = await productModel.findById(productId);
     if (!product) {
-      return res.json({ success: false, message: "Product not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    // Check for uncompleted orders
+    const uncompletedOrders = await orderModel.find({
+      "items.productId": new mongoose.Types.ObjectId(productId),
+      status: { $nin: ["delivered", "cancelled", "Delivered", "Cancelled"] }, // Include case variations
+    }).lean();
+
+    // Log the query result for debugging
+    // console.log("Checking uncompleted orders for product", productId, ":", {
+    //   count: uncompletedOrders.length,
+    //   orders: uncompletedOrders.map(order => ({
+    //     _id: order._id,
+    //     status: order.status,
+    //     items: order.items.map(item => ({
+    //       productId: item.productId.toString(),
+    //       name: item.name,
+    //     })),
+    //   })),
+    // });
+
+    if (uncompletedOrders.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Không thể xóa sản phẩm vì nó đang được khách hàng đặt!",
+        uncompletedOrderIds: uncompletedOrders.map((order) => order._id),
+      });
     }
 
     // Delete all product images from Cloudinary
@@ -273,10 +322,10 @@ const removeProduct = async (req, res) => {
     }
 
     // Delete the product from database
-    await productModel.findByIdAndDelete(req.body._id);
+    await productModel.findByIdAndDelete(productId);
     res.json({ success: true, message: "Product removed successfully" });
   } catch (error) {
-    console.log(error);
+    console.log("Remove product error:", error);
     res.json({ success: false, message: error.message });
   }
 };
@@ -390,7 +439,7 @@ const updateProduct = async (req, res) => {
       offer,
       description,
       tags,
-      weight, // Weight
+      weight,
     } = req.body;
 
     const image1 = req.files?.image1 && req.files.image1[0];
@@ -486,7 +535,7 @@ const updateProduct = async (req, res) => {
       description,
       tags: parsedTags,
       images: imagesUrl,
-      weight: weight ? Number(weight) : 500, // New field, default 500g
+      weight: weight ? Number(weight) : 500,
     };
 
     const updatedProduct = await productModel.findByIdAndUpdate(

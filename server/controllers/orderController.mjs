@@ -93,7 +93,7 @@ const createOrder = async (req, res) => {
         throw new Error(`Product not found: ${item.name || item.title}`);
       }
       if (product.stock < item.quantity) {
-        throw new Error(`Insufficient stock for ${item.name || item.title}. Available: ${product.stock}`);
+        throw new Error(`Sản phẩm${item.name || item.title} hiện chỉ còn ${product.stock} sản phẩm trong kho. Không đủ để đặt. Xin cảm ơn quý khách!`);
       }
       return {
         productId: item._id || item.productId,
