@@ -5,6 +5,7 @@ import ghnService from "../services/ghnService.js";
 import { sendOtpEmail } from "../services/emaiService.js";
 import { refundPayPalPayment as refundPayPalPaymentService } from "../services/paymentService.js";
 import paymentDetailsModel from "../models/paymentDetailsModel.js";
+import { createGhnOrder, sendOrderConfirmationEmail } from "../utils/orderUtils.js";
 
 // Create a new order
 const createOrder = async (req, res) => {
@@ -103,6 +104,17 @@ const createOrder = async (req, res) => {
         weight: product.weight || 500, // Lấy weight từ productModel, mặc định 500g
       };
     });
+
+    // Reduce stock for pending order (Tránh 2 user cùng đặt hàng mà hết hàng)
+    for (const item of orderItems) {
+      const product = productMap.get(item.productId.toString());
+      await productModel.findByIdAndUpdate(item.productId, {
+        $inc: { stock: -item.quantity },
+      });
+      if (product.stock - item.quantity <= 0) {
+        await productModel.findByIdAndUpdate(item.productId, { isAvailable: false });
+      }
+    }
 
     // Calculate total weight for GHN
     const totalWeight = orderItems.reduce(
@@ -321,7 +333,19 @@ const cancelOrder = async (req, res) => {
     // Update order status to cancelled
     order.status = "cancelled";
     order.updatedAt = Date.now();
-    
+
+    // Cộng lại stock nếu khách hàng hủy đơn
+    for (const item of order.items) {
+      const product = await productModel.findById(item.productId);
+      if (product) {
+        await productModel.findByIdAndUpdate(item.productId, {
+          $inc: { stock: item.quantity },
+        });
+        if (product.stock + item.quantity > 0) {
+          await productModel.findByIdAndUpdate(item.productId, { isAvailable: true });
+        }
+      }
+    }
     // Cancel GHN nếu có
     if (order.ghnOrderCode) {
       const cancelResult = await ghnService.cancelOrder([order.ghnOrderCode]);
@@ -465,23 +489,6 @@ const updateOrderStatus = async (req, res) => {
       const product = item.productId; // Đã populate
       if (!product) continue;
 
-      // Khi chuyển sang "confirmed" từ "pending": Giảm stock
-      if (status === "confirmed" && oldStatus === "pending") {
-        if (product.stock < quantity) {
-          return res.json({
-            success: false,
-            message: `Insufficient stock for ${product.name}. Available: ${product.stock}`,
-          });
-        }
-        await productModel.findByIdAndUpdate(productId, {
-          $inc: { stock: -quantity },
-        });
-        if (product.stock - quantity <= 0) {
-          product.isAvailable = false;
-          await product.save();
-        }
-      }
-
       // Khi chuyển sang "shipped" từ "confirmed": Tăng soldQuantity
       if (status === "shipped" && oldStatus === "confirmed") {
         await productModel.findByIdAndUpdate(productId, {
@@ -501,72 +508,11 @@ const updateOrderStatus = async (req, res) => {
 
     // Khi confirm từ pending
     if (status === "confirmed" && oldStatus === "pending") {
-      // Tạo GHN order nếu chưa có và có dữ liệu address GHN
-      if (!order.ghnOrderCode && order.address.districtId && order.address.wardCode) {
-        const totalWeight = order.items.reduce(
-          (total, item) => total + (item.productId.weight || 500) * item.quantity,
-          0
-        );
+      // Create GHN order
+      await createGhnOrder(order);
 
-        const ghnOrderData = {
-          to_name: order.address.name || "Khách hàng",
-          to_phone: order.address.phone,
-          to_address: order.address.street,
-          to_ward_code: order.address.wardCode,
-          to_district_id: order.address.districtId,
-          weight: totalWeight,
-          length: 20,
-          width: 20,
-          height: 10,
-          service_type_id: 2,
-          payment_type_id: order.paymentMethod === "cod" ? 2 : 1,
-          cod_amount: order.paymentMethod === "cod" ? order.amount : 0,
-          note: `Đơn hàng #${order._id}`,
-          required_note: "KHONGCHOXEMHANG",
-          items: order.items.map((item) => ({
-            name: item.name,
-            quantity: item.quantity,
-            weight: item.productId.weight || 500, // Lấy từ productId
-          })),
-        };
-
-        const ghnResult = await ghnService.createOrder(ghnOrderData);
-        if (ghnResult.success) {
-          console.log("GHN Create Successful", ghnResult.data);
-          order.ghnOrderCode = ghnResult.data.order_code;
-          order.ghnExpectedDeliveryTime = new Date(ghnResult.data.expected_delivery_time);
-          await order.save();
-        } else {
-          console.error("GHN creation failed:", ghnResult.message);
-        }
-        console.log("GHN Order Data:", {
-          orderId: order._id,
-          totalWeight,
-          ghnOrderData,
-        });
-      }
-
-      // Gửi email xác nhận với GHN
-      const user = await userModel.findById(order.userId);
-      if (user) {
-        const emailSubject = `Đơn hàng #${order._id} đã được xác nhận`;
-        await sendOtpEmail(
-          user.email,
-          null,
-          emailSubject,
-          "order_status_update",
-          {
-            orderId: order._id,
-            status: "confirmed",
-            items: order.items,
-            amount: order.amount,
-            shippingFee: order.shippingFee,
-            address: order.address,
-            ghnOrderCode: order.ghnOrderCode,
-            ghnExpectedDeliveryTime: order.ghnExpectedDeliveryTime,
-          }
-        );
-      }
+      // Send confirmation email
+      await sendOrderConfirmationEmail(order);
     }
 
     // Cập nhật status order

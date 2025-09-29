@@ -333,7 +333,7 @@ const Checkout = () => {
                 <div className="flex items-center gap-2">
                   <FaUser className="w-4 h-4 text-gray-500" />
                   <span className="text-gray-900">
-                    {order.address.firstName} {order.address.lastName}
+                    {order.address.name}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
