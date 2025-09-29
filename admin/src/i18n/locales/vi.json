@@ -568,11 +568,13 @@
     "print": "In",
     "share": "Chia sẻ",
     "close": "Đóng"
-  },
+  }
+},
   "api": {
     "api_documentation": "Tài liệu API"
   },
   "categories": {
+    "Bia & Rượu Thủ Công": "Bia & Rượu Thủ Công",
     "Nước Mắm & Gia Vị": "Nước Mắm & Gia Vị",
     "Mật Ong & Sản Phẩm Ong": "Mật Ong & Sản Phẩm Ong",
     "Bánh Kẹo Truyền Thống": "Bánh Kẹo Truyền Thống",
@@ -616,6 +618,7 @@
     "messages": {
       "noCategories": "Chưa có danh mục đặc sản nào",
       "noCategoriesFound": "Không tìm thấy danh mục",
+      "noDescription": "Không có mô tả",
       "tryAdjustingSearch": "Thử điều chỉnh từ khóa tìm kiếm",
       "startCreating": "Bắt đầu bằng cách tạo danh mục đặc sản đầu tiên",
       "createFirstCategory": "Tạo Danh mục",
@@ -634,7 +637,7 @@
       "imageRequired": "Hình ảnh danh mục đặc sản là bắt buộc"
     }
   },
-  "brands": {
+ "brands": {
     "title": "Thương hiệu",
     "subtitle": "Quản lý thương hiệu đặc sản",
     "refresh": "Làm mới",
@@ -675,6 +678,4 @@
     "updateSuccess": "Cập nhật thương hiệu đặc sản thành công",
     "deleteSuccess": "Xóa thương hiệu đặc sản thành công"
   }
-
-}
 }

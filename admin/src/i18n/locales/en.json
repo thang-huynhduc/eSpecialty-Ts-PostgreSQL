@@ -572,6 +572,7 @@
     "api_documentation": "API documentation"
   },
   "categories": {
+    "Bia & Rượu Thủ Công": "Craft Beer & Spirits",
     "Bộ Quà Tặng Thực Phẩm": "Gift Sets",
     "Gia Vị và Nguyên Liệu Nấu Ăn": "Spices & Cooking Ingredients",
     "Mật Ong": "Honey",
@@ -615,6 +616,7 @@
     "messages": {
       "noCategories": "No categories yet",
       "noCategoriesFound": "No categories found",
+      "noDescription": "No description",
       "tryAdjustingSearch": "Try adjusting your search terms",
       "startCreating": "Start by creating your first category",
       "createFirstCategory": "Create Category",
