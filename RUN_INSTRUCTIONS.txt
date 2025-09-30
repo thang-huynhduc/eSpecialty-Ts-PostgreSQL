@@ -1,0 +1,121 @@
+E-SPECIALTY PROJECT - HƯỚNG DẪN CHẠY DỰ ÁN
+
+1) YÊU CẦU MÔI TRƯỜNG
+- Hệ điều hành: macOS/Windows/Linux
+- Node.js: >= 18.x (khuyến nghị LTS)
+- NPM: >= 9.x (đi kèm Node 18)
+- MongoDB: >= 6.x (đang chạy local hoặc Atlas)
+- Tài khoản dịch vụ (nếu bật tích hợp): Cloudinary, PayPal, VNPay, GHN, Gmail API
+
+2) CẤU TRÚC DỊCH VỤ
+- server: API Node/Express + MongoDB
+- client: Web khách hàng (Vite + React)
+- admin: Web quản trị (Vite + React)
+
+3) THIẾT LẬP BIẾN MÔI TRƯỜNG
+Tạo file .env.development trong thư mục server/ (sử dụng .env.production khi deploy). Ví dụ:
+
+PORT=8000
+NODE_ENV=development
+SERVER_URL=http://localhost:8000
+CLIENT_URL=http://localhost:5173
+ADMIN_URL=http://localhost:5174
+
+# MongoDB
+MONGO_URI=mongodb://127.0.0.1:27017/especialty
+
+# Cloudinary
+CLOUDINARY_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_SECRET_KEY=your_api_secret
+
+# PayPal (Sandbox)
+PAYPAL_CLIENT_ID=your_paypal_client_id
+PAYPAL_CLIENT_SECRET=your_paypal_client_secret
+PAYPAL_WEBHOOK_ID=your_webhook_id
+PAYPAL_WEBHOOK_SECRET=your_webhook_secret
+
+# VNPay
+VNPAY_TMN_CODE=your_tmn_code
+VNPAY_HASH_SECRET=your_hash_secret
+VNPAY_HOST=https://sandbox.vnpayment.vn
+VNPAY_PAYMENT_ENDPOINT=paymentv2/vpcpay.html
+VNPAY_RETURN_URL=http://localhost:8000/api/payment/vnpay/return
+# IPN mặc định: ${SERVER_URL}/api/payment/vnpay/ipn 
+# VNPAY_IPN_URL=optional_override
+
+# GHN (sandbox)
+GHN_TOKEN=your_ghn_token
+GHN_SHOP_ID=your_shop_id
+
+# Gmail API (Gmail OAuth2)
+GMAIL_CLIENT_ID=your_google_oauth_client_id
+GMAIL_CLIENT_SECRET=your_google_oauth_client_secret
+GMAIL_REFRESH_TOKEN=your_gmail_refresh_token
+GMAIL_EMAIL=your_sender_email@gmail.com
+
+# Khởi tạo tài khoản Admin mặc định (tùy chọn)
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=ChangeMe123!
+ADMIN_NAME=System Admin
+
+
+4) CẤU HÌNH FRONTEND (client, admin)
+Tạo file .env.local trong client/ và admin/:
+
+# cả client và admin đều dùng
+VITE_BACKEND_URL=http://localhost:8000
+
+5) CÀI ĐẶT & CHẠY DỰ ÁN (DEV)
+Thực hiện trong thư mục gốc dự án:
+
+- Cài đặt dependencies cho từng service:
+  cd server && npm install && cd ..
+  cd client && npm install && cd ..
+  cd admin && npm install && cd ..
+
+- Chạy API (server):
+  cd server && npm run dev
+  API lắng nghe tại http://localhost:8000
+
+- Chạy web client:
+  Mở terminal khác → cd client && npm run dev
+  Mặc định: http://localhost:5173
+
+- Chạy web admin:
+  Mở terminal khác → cd admin && npm run dev
+  Mặc định: http://localhost:5174
+
+- Tạo tài khoản Admin mặc định (tùy chọn, chạy một lần):
+  cd server && node createAdmin.mjs
+
+6) KIỂM TRA TÍCH HỢP THANH TOÁN & WEBHOOKS
+- PayPal (Sandbox):
+  + Server đã cấu hình SDK sandbox. Thiết lập webhook trên PayPal trỏ về:
+    POST {SERVER_URL}/api/payment/paypal/webhook
+  + Cần PAYPAL_WEBHOOK_ID và PAYPAL_WEBHOOK_SECRET hợp lệ.
+
+- VNPay (Sandbox):
+  + Return URL: {SERVER_URL}/api/payment/vnpay/return
+  + IPN URL: {SERVER_URL}/api/payment/vnpay/ipn (mặc định hóa từ SERVER_URL)
+
+- Email (Gmail API):
+  + Đảm bảo GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN, GMAIL_EMAIL hợp lệ.
+
+7) BUILD & PREVIEW (TÙY CHỌN)
+- client: npm run build → npm run preview
+- admin: npm run build → npm run preview
+- server (prod): npm run prod
+
+8) SỰ CỐ THƯỜNG GẶP
+- MongoDB không kết nối: kiểm tra MONGO_URI và dịch vụ Mongo đang chạy.
+- CORS: sai CLIENT_URL/ADMIN_URL → cập nhật .env.development của server.
+- Cloudinary: sai key → upload ảnh thất bại.
+- PayPal/VNPay: sai webhook/secret → thanh toán thất bại hoặc không đồng bộ trạng thái.
+- Gmail API: thiếu refresh token → không gửi được email.
+
+9) THAM KHẢO
+- GHN_INTEGRATION.md
+- PAYPAL_API_DOCUMENTATION.md
+- VNPAY_INTERGRATION.md
+

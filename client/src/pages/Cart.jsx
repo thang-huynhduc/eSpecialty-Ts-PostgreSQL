@@ -824,7 +824,7 @@ const Cart = () => {
                 )}
 
                 {/* Shipping Options Section */}
-                {selectedAddress && products.length > 0 && (
+                {/* {selectedAddress && products.length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                       <FaTruck className="w-5 h-5" />
@@ -858,8 +858,9 @@ const Cart = () => {
                                 : "border-gray-200 hover:border-gray-300"
                             }`}
                             onClick={() => handleServiceChange(service)}
-                          >
-                            <div className="flex items-center justify-between">
+                          > */}
+
+                            {/* <div className="flex items-center justify-between">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                   <span className="font-medium text-sm text-gray-900">
@@ -879,8 +880,8 @@ const Cart = () => {
                                   <div className="text-xs text-gray-500">Shipping fee</div>
                                 </div>
                               )}
-                            </div>
-                          </div>
+                            </div> */}
+                          {/* </div>
                         ))}
                       </div>
                     ) : selectedAddress ? (
@@ -892,7 +893,7 @@ const Cart = () => {
                       </div>
                     ) : null}
                   </div>
-                )}
+                )} */}
 
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">
                   {t("cart.order_summary_title")}
@@ -920,7 +921,7 @@ const Cart = () => {
                   <div className="flex justify-between py-2">
                     <span className="text-gray-600 flex items-center gap-2">
                       <FaTruck className="w-4 h-4" />
-                      Shipping Fee
+                      {t("cart.shipping_fee")}
                     </span>
                     <span className="font-medium text-gray-900">
                       {isCalculatingShipping ? (

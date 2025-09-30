@@ -671,6 +671,7 @@
     "select_address_type": "Select address type",
     "home_option": "Home",
     "work_option": "Work",
+    "shipping_fee": "Shipping Fee",
     "hometown_option": "Hometown",
     "street_address_required": "Street Address *",
     "house_number_placeholder": "House number and street name",
