@@ -761,6 +761,7 @@ export const refundPayPalPayment = async (req, res) => {
     const user = await userModel.findById(order.userId);
     if (user) {
       const emailSubject = `Hoàn tiền đơn hàng #${order._id}`;
+      
       await sendOtpEmail(
         user.email,
         null,

@@ -497,7 +497,7 @@ const updateOrderStatus = async (req, res) => {
       }
 
       // Khi chuyển sang "cancelled" từ "confirmed" hoặc "pending": Khôi phục stock
-      if (status === "cancelled" && oldStatus === "confirmed") {
+      if (status === "cancelled" && (oldStatus === "confirmed" || oldStatus === "pending")) {
         await productModel.findByIdAndUpdate(productId, {
           $inc: { stock: quantity },
         });
@@ -505,6 +505,7 @@ const updateOrderStatus = async (req, res) => {
         await product.save();
       }
     }
+     
 
     // Khi confirm từ pending
     if (status === "confirmed" && oldStatus === "pending") {
