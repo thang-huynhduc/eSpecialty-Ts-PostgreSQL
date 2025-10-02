@@ -36,7 +36,7 @@ const createOrder = async (req, res) => {
         message: "Delivery address is required",
       });
     }
-    // Validate address required fields (firstName, lastName, zipcode are now optional)
+    // Validate address required fields 
     const requiredAddressFields = [
       "email",
       "street",
@@ -153,6 +153,7 @@ const createOrder = async (req, res) => {
       items: orderItems,
       amount,
       shippingFee: calculatedShippingFee,
+      totalAmount: amount + calculatedShippingFee,
       address: {
         name: address.name || "",
         email: address.email || "",
@@ -584,10 +585,23 @@ const getOrderStats = async (req, res) => {
       status: "delivered",
     });
 
-    // Calculate total revenue
+    // Calculate total revenue using totalAmount (fallback to amount + shippingFee)
     const revenueResult = await orderModel.aggregate([
       { $match: { status: { $in: ["delivered", "shipped", "confirmed"] } } },
-      { $group: { _id: null, totalRevenue: { $sum: "$amount" } } },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: {
+            $sum: {
+              $cond: [
+                { $gt: ["$totalAmount", 0] },
+                "$totalAmount",
+                { $add: ["$amount", { $ifNull: ["$shippingFee", 0] }] }
+              ]
+            }
+          }
+        }
+      },
     ]);
 
     const totalRevenue =
@@ -613,7 +627,15 @@ const getOrderStats = async (req, res) => {
             month: { $month: "$date" },
           },
           count: { $sum: 1 },
-          revenue: { $sum: "$amount" },
+          revenue: {
+            $sum: {
+              $cond: [
+                { $gt: ["$totalAmount", 0] },
+                "$totalAmount",
+                { $add: ["$amount", { $ifNull: ["$shippingFee", 0] }] }
+              ]
+            }
+          },
         },
       },
       { $sort: { "_id.year": 1, "_id.month": 1 } },

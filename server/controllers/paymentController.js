@@ -457,7 +457,7 @@ export const handlePayPalWebhook = async (req, res) => {
 
             // Create GHN order
             const ghnResult = await createGhnOrder(order);
-            console.log('🚀 ~ handlePayPalWebhook ~ createGhnOrder:', ghnResult);
+            console.log('handlePayPalWebhook ~ createGhnOrder:', ghnResult);
             if (!ghnResult.success) {
               console.error("GHN creation failed:", ghnResult.message);
               // Continue despite GHN failure, log for admin review
@@ -479,7 +479,7 @@ export const handlePayPalWebhook = async (req, res) => {
 
           // Create GHN order
           const ghnResult = await createGhnOrder(order);
-          console.log('🚀 ~ handlePayPalWebhook ~ ghnResult:', ghnResult);
+          console.log('handlePayPalWebhook ~ ghnResult:', ghnResult);
           if (!ghnResult.success) {
             console.error("GHN creation failed:", ghnResult.message);
             // Continue despite GHN failure, log for admin review
@@ -872,8 +872,6 @@ export const createOrder = async (req, res) => {
 
     // Validate address required fields
     const requiredAddressFields = [
-      "firstName",
-      "lastName",
       "email",
       "street",
       "ward",
@@ -924,9 +922,9 @@ export const createOrder = async (req, res) => {
       })),
       amount: totalAmount,
       address: {
-        firstName: address.firstName || address.name?.split(" ")[0] || "",
+        name: address.name || address.name?.split(" ")[0] || "",
         lastName:
-          address.lastName || address.name?.split(" ").slice(1).join(" ") || "",
+          address.name?.split(" ").slice(1).join(" ") || "",  
         email: address.email || "",
         street: address.street || "",
         ward: address.ward || "",

@@ -36,8 +36,7 @@ const decryptStringGetter = (value) => {
 
 
 const AddressSchema = new mongoose.Schema(
-  {
-    
+  { 
     name: { type: String, required: false, set: encryptStringSetter, get: decryptStringGetter },
     email: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
     street: { type: String, required: true, set: encryptStringSetter, get: decryptStringGetter },
@@ -98,6 +97,10 @@ const orderSchema = new mongoose.Schema({
   amount: {
     type: Number,
     required: true,
+  },
+  totalAmount: {
+    type: Number,
+    default: 0,
   },
   address: { type: AddressSchema, required: true },
   status: {
@@ -171,6 +174,10 @@ const orderSchema = new mongoose.Schema({
 
 orderSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
+  // Ensure totalAmount stays consistent = amount + shippingFee
+  const shipping = typeof this.shippingFee === "number" ? this.shippingFee : 0;
+  const baseAmount = typeof this.amount === "number" ? this.amount : 0;
+  this.totalAmount = baseAmount + shipping;
   next();
 });
 

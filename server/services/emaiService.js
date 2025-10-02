@@ -97,7 +97,8 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
   let htmlContent;
 
   if (type === "payment_confirmation") {
-    const { orderId, items, amount, shippingFee, address } = orderData || {};
+    const { orderId, items, amount, shippingFee, address, totalAmount } = orderData || {};
+    const computedTotal = (typeof totalAmount === 'number' ? totalAmount : (amount + (shippingFee || 0))).toLocaleString('vi-VN');
     htmlContent = `
       <html>
         <head>
@@ -152,7 +153,7 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
               </table>
               
               <p><strong>Phí ship:</strong> ${shippingFee?.toLocaleString('vi-VN')} VND</p>
-              <p><strong>Tổng tiền:</strong> ${amount?.toLocaleString('vi-VN')} VND</p>
+              <p><strong>Tổng tiền:</strong> ${computedTotal} VND</p>
               
               <p>Đơn hàng sẽ được xác nhận và gửi đi sớm. Cảm ơn bạn!</p>
             </div>
@@ -162,7 +163,8 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
       </html>
     `;
   } else if (type === "payment_failed") {
-    const { orderId, items, amount, shippingFee, address, retryUrl } = orderData || {};
+    const { orderId, items, amount, shippingFee, address, retryUrl, totalAmount } = orderData || {};
+    const computedTotal = (typeof totalAmount === 'number' ? totalAmount : (amount + (shippingFee || 0))).toLocaleString('vi-VN');
     htmlContent = `
       <html>
         <head>
@@ -223,7 +225,7 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
               </table>
               
               <p><strong>Phí ship:</strong> ${shippingFee?.toLocaleString('vi-VN')} VND</p>
-              <p><strong>Tổng tiền:</strong> ${amount?.toLocaleString('vi-VN')} VND</p>
+              <p><strong>Tổng tiền:</strong> ${computedTotal} VND</p>
               
               <p>Vui lòng thử thanh toán lại bằng cách nhấn vào nút dưới đây:</p>
               <a href="${retryUrl}" class="retry-button">Thử thanh toán lại</a>
@@ -237,7 +239,8 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
       </html>
     `;
   } else if (type.startsWith("order_")) {
-    const { orderId, status, items, amount, shippingFee, address, ghnOrderCode, ghnExpectedDeliveryTime } = orderData || {};
+    const { orderId, status, items, amount, shippingFee, address, ghnOrderCode, ghnExpectedDeliveryTime, totalAmount } = orderData || {};
+    const computedTotal = (typeof totalAmount === 'number' ? totalAmount : (amount + (shippingFee || 0))).toLocaleString('vi-VN');
     htmlContent = `
       <html>
         <head>
@@ -292,7 +295,7 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
               </table>
               
               <p><strong>Phí ship:</strong> ${shippingFee?.toLocaleString('vi-VN')} VND</p>
-              <p><strong>Tổng tiền:</strong> ${amount?.toLocaleString('vi-VN')} VND</p>
+              <p><strong>Tổng tiền:</strong> ${computedTotal} VND</p>
               
               ${ghnOrderCode ? `
                 <h3>Thông tin vận chuyển (GHN):</h3>

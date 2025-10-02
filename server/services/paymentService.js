@@ -16,7 +16,7 @@ import paypalClient from "../config/paypal.js";
 export const createPayPalOrder = async (orderId, orderData) => {
   try {
     // Convert VND to USD
-    const conversionResult = await convertVNDToUSD(orderData.amount);
+    const conversionResult = await convertVNDToUSD(orderData.amount + orderData.shippingFee);
     
     if (!conversionResult.success) {
       throw new Error(conversionResult.error);
@@ -34,7 +34,7 @@ export const createPayPalOrder = async (orderId, orderData) => {
       orderId: orderId,
       paymentMethod: "paypal",
       originalCurrency: "VND",
-      originalAmount: orderData.amount,
+      originalAmount: orderData.amount + orderData.shippingFee,
       processedCurrency: "USD",
       processedAmount: conversionResult.usdAmount,
       exchangeRate: conversionResult.exchangeRate,
@@ -50,7 +50,7 @@ export const createPayPalOrder = async (orderId, orderData) => {
       success: true,
       paypalOrderId: paypalOrder.id,
       amount: {
-        vnd: orderData.amount,
+        vnd: orderData.amount + orderData.shippingFee,
         usd: conversionResult.usdAmount,
       },
       exchangeRate: conversionResult.exchangeRate,
@@ -307,8 +307,12 @@ export const createVNPayPaymentUrl = async ({ order, clientIp }) => {
     ? `${VNPAY_CONFIG.returnUrl}${hasQuery ? "&" : "?"}orderId=${order._id.toString()}`
     : "";
 
+  const totalAmountVnd = (typeof order.totalAmount === "number" && order.totalAmount > 0)
+    ? order.totalAmount
+    : (order.amount + (order.shippingFee || 0));
+
   const paymentUrl = vnpay.buildPaymentUrl({
-    vnp_Amount: Math.round(order.amount),
+    vnp_Amount: Math.round(totalAmountVnd),
     vnp_IpAddr: normalizedIp,
     vnp_ReturnUrl: returnUrl,
     vnp_TxnRef: order._id.toString(),
@@ -374,10 +378,25 @@ export const refundPayPalPayment = async (paypalOrderId, orderId, reason, refund
       throw new Error("Payment not captured, cannot refund");
     }
 
+    // Refund amount
+    const order = await orderModel.findById(orderId);
+    const isPreShipment = order && (order.status === "pending" || order.status === "confirmed");
+    const vndToRefund = isPreShipment
+      ? (order.totalAmount && order.totalAmount > 0
+          ? order.totalAmount
+          : (order.amount + (order.shippingFee || 0)))
+      : order.amount;
+
+    // Convert to USD using stored exchange rate, cap by captured amount
+    const usdByRate = paymentDetails.exchangeRate
+      ? Math.round((vndToRefund * paymentDetails.exchangeRate) * 100) / 100
+      : paymentDetails.processedAmount;
+    const usdToRefund = Math.min(usdByRate || 0, paymentDetails.processedAmount || 0);
+
     // Refund payment via PayPal SDK
     const refundResult = await refundPayPalOrderViaSDK(
       paymentDetails.paypal.captureId,
-      paymentDetails.processedAmount,
+      usdToRefund,
       reason
     );
 
@@ -399,8 +418,8 @@ export const refundPayPalPayment = async (paypalOrderId, orderId, reason, refund
         refundHistory: {
           refundId: refundResult.id,
           refundAmount: {
-            vnd: paymentDetails.originalAmount,
-            usd: paymentDetails.processedAmount,
+            vnd: vndToRefund,
+            usd: usdToRefund,
           },
           exchangeRate: paymentDetails.exchangeRate,
           reason: reason,
@@ -415,8 +434,8 @@ export const refundPayPalPayment = async (paypalOrderId, orderId, reason, refund
       success: true,
       refundId: refundResult.id,
       refundAmount: {
-        vnd: paymentDetails.originalAmount,
-        usd: paymentDetails.processedAmount,
+        vnd: vndToRefund,
+        usd: usdToRefund,
       },
       exchangeRate: paymentDetails.exchangeRate,
       paymentDetails: paymentDetails,
