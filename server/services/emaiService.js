@@ -155,7 +155,7 @@ export const sendOtpEmail = async (toEmail, otpCode, subject, type, orderData = 
               <p><strong>Phí ship:</strong> ${shippingFee?.toLocaleString('vi-VN')} VND</p>
               <p><strong>Tổng tiền:</strong> ${computedTotal} VND</p>
               
-              <p>Đơn hàng sẽ được xác nhận và gửi đi sớm. Cảm ơn bạn!</p>
+              <p>Đơn hàng sẽ được chuẩn bị và gửi đi sớm. Cảm ơn bạn!</p>
             </div>
             <div class="footer">&copy; ${new Date().getFullYear()} eSpecialty Shopping. Trân trọng!</div>
           </div>

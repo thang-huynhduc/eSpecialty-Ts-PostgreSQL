@@ -173,7 +173,7 @@ const Invoice = () => {
       totalItems: selectedOrdersData.reduce((sum, order) => 
         sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
       ),
-      totalAmount: selectedOrdersData.reduce((sum, order) => sum + order.amount, 0)
+      totalAmount: selectedOrdersData.reduce((sum, order) => sum + ((order.totalAmount && order.totalAmount > 0) ? order.totalAmount : (order.amount + (order.shippingFee || 0))), 0)
     };
 
     setInvoiceData(invoice);
@@ -262,7 +262,7 @@ const Invoice = () => {
         formatDate(o.date),
         o.items.length.toString(),
         o.status.charAt(0).toUpperCase() + o.status.slice(1),
-        `${o.amount} VND`,
+        `${(o.totalAmount && o.totalAmount > 0) ? o.totalAmount : (o.amount + (o.shippingFee || 0))} VND`,
       ]);
 
       autoTable(doc, {
@@ -396,9 +396,9 @@ const Invoice = () => {
     }
   };
 
-  const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.amount, 0);
+  const totalRevenue = filteredOrders.reduce((sum, order) => sum + ((order.totalAmount && order.totalAmount > 0) ? order.totalAmount : (order.amount + (order.shippingFee || 0))), 0);
   const selectedRevenue = orders.filter(order => selectedOrders.includes(order._id))
-    .reduce((sum, order) => sum + order.amount, 0);
+    .reduce((sum, order) => sum + ((order.totalAmount && order.totalAmount > 0) ? order.totalAmount : (order.amount + (order.shippingFee || 0))), 0);
 
   if (loading) {
     return (
@@ -553,7 +553,7 @@ const Invoice = () => {
                   </td>
                   <td className="p-4 text-gray-900">{formatDate(order.date)}</td>
                   <td className="p-4">
-                    <span className="font-semibold text-green-600">{formatCurrency(order.amount)}</span>
+                    <span className="font-semibold text-green-600">{formatCurrency((order.totalAmount && order.totalAmount > 0) ? order.totalAmount : (order.amount + (order.shippingFee || 0)))}</span>
                   </td>
                   <td className="p-4">{getStatusBadge(order.status)}</td>
                   <td className="p-4">

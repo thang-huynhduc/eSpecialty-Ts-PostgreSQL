@@ -379,12 +379,14 @@ const Checkout = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">{t("checkout_order.shipping")}</span>
-                  <span className="font-medium text-green-600">{order.shippingFee}</span>
+                  <span className="font-medium text-green-600">
+                    <PriceFormat amount={order.shippingFee || 0} />
+                  </span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold">
                   <span className="text-gray-900">{t("checkout_order.total")}</span>
                   <span className="text-gray-900">
-                    <PriceFormat amount={order.amount + (order.shippingFee || 0)} />
+                    <PriceFormat amount={(order.totalAmount && order.totalAmount > 0) ? order.totalAmount : (order.amount + (order.shippingFee || 0))} />
                   </span>
                 </div>
               </div>
@@ -480,7 +482,7 @@ const Checkout = () => {
 
                       <PayPalPayment
                         orderId={orderId}
-                        amount={order.amount}
+                        amount={(order.totalAmount && order.totalAmount > 0) ? order.totalAmount : (order.amount + (order.shippingFee || 0))}
                         onSuccess={handlePayPalSuccess}
                         onCancel={handlePayPalCancel}
                         onError={handlePayPalError}

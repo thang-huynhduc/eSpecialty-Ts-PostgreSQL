@@ -7,7 +7,7 @@ import { convertVNDToUSD, isPayPalSupportedCurrency } from "../services/currency
 import { createPayPalOrder as createPayPalOrderService, capturePayPalPayment as capturePayPalPaymentService, createVNPayPaymentUrl, verifyVNPayReturnOrIPN, refundPayPalPayment as refundPayPalPaymentService, getRefundDetailsByOrderId } from "../services/paymentService.js";
 import paymentDetailsModel from "../models/paymentDetailsModel.js";
 import { sendOtpEmail } from "../services/emaiService.js";
-import { createGhnOrder, sendOrderConfirmationEmail } from "../utils/orderUtils.js";
+import { createGhnOrder, sendOrderConfirmationEmail, sendPaymentConfirmationEmail } from "../utils/orderUtils.js";
 import productModel from "../models/productModel.js";
 
 // Create payment intent for Stripe
@@ -83,7 +83,7 @@ export const confirmPayment = async (req, res) => {
 
       // Create GHN order
       const ghnResult = await createGhnOrder(order);
-      console.log('🚀 ~ confirmPayment ~ createGhnOrder:', ghnResult);
+      console.log('confirmPayment ~ createGhnOrder:', ghnResult);
       if (!ghnResult.success) {
         console.error("GHN creation failed:", ghnResult.message);
         // Continue despite GHN failure, log for admin review
@@ -163,7 +163,7 @@ export const handleStripeWebhook = async (req, res) => {
 
         // Create GHN order
         const ghnResult = await createGhnOrder(order);
-        console.log('🚀 ~ handleStripeWebhook ~ createGhnOrder:', ghnResult);
+        console.log(' ~ createGhnOrder:', ghnResult);
         if (!ghnResult.success) {
           console.error("GHN creation failed:", ghnResult.message);
           // Continue despite GHN failure, log for admin review
@@ -356,7 +356,7 @@ export const capturePayPalPayment = async (req, res) => {
       }
 
       // Send confirmation email with GHN details
-      await sendOrderConfirmationEmail(order);
+      await sendPaymentConfirmationEmail(order);
     }
 
     res.json({
@@ -464,7 +464,7 @@ export const handlePayPalWebhook = async (req, res) => {
             }
 
             // Send confirmation email with GHN details
-            await sendOrderConfirmationEmail(order);
+            await sendPaymentConfirmationEmail(order);
           }
         }
         break;
@@ -486,7 +486,7 @@ export const handlePayPalWebhook = async (req, res) => {
           }
 
           // Send confirmation email with GHN details
-          await sendOrderConfirmationEmail(order);
+          await sendPaymentConfirmationEmail(order);
         }
         break;
 
@@ -1070,7 +1070,7 @@ export const vnpayReturnHandler = async (req, res) => {
     }
 
     // Send confirmation email with GHN details
-    await sendOrderConfirmationEmail(order);
+    await sendPaymentConfirmationEmail(order);
 
     const redirectUrl = `${process.env.CLIENT_URL}/payment-success?orderId=${orderId}`;
     res.redirect(redirectUrl);
@@ -1124,7 +1124,7 @@ export const vnpayIpnHandler = async (req, res) => {
         }
 
         // Send confirmation email with GHN details
-        await sendOrderConfirmationEmail(order);
+        await sendPaymentConfirmationEmail(order);
       } else {
         order.paymentStatus = "failed";
         await order.save();

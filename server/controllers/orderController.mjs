@@ -10,7 +10,7 @@ import { createGhnOrder, sendOrderConfirmationEmail } from "../utils/orderUtils.
 // Create a new order
 const createOrder = async (req, res) => {
   try {
-    const { items, amount, address, shippingFee } = req.body;
+    const { items, amount, address, shippingFee, shippingService } = req.body;
     const userId = req.user?.id;
 
     // Validate authentication
@@ -121,14 +121,16 @@ const createOrder = async (req, res) => {
       (total, item) => total + (item.weight || 500) * item.quantity,
       0
     );
-
-    // Calculate shipping fee if address has required GHN fields
-    let calculatedShippingFee = shippingFee || 0;
-    if (address.districtId && address.wardCode) {
+ 
+    // Calculate shipping fee: trust client-provided fee when available; otherwise compute via GHN
+    let calculatedShippingFee = typeof shippingFee === "number" ? shippingFee : 0;
+    if (calculatedShippingFee <= 0 && address.districtId && address.wardCode) {
       const shippingResult = await ghnService.calculateShippingFee({
         toDistrictId: address.districtId,
         toWardCode: address.wardCode,
         weight: totalWeight,
+        serviceId: shippingService?.service_id,
+        serviceTypeId: shippingService?.service_type_id,
       });
 
       if (shippingResult.success) {
