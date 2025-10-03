@@ -59,8 +59,8 @@ export const createPaymentIntent = async (req, res) => {
 // Confirm payment and update order status
 export const confirmPayment = async (req, res) => {
   try {
-    const { paymentIntentId, orderId } = req.body;
-    const userId = req.user.id;
+      const { paymentIntentId, orderId } = req.body;
+      const userId = req.user.id;
 
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     if (paymentIntent.status === "succeeded") {

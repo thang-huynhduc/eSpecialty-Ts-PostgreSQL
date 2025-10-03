@@ -393,8 +393,8 @@ export const refundPayPalPayment = async (paypalOrderId, orderId, reason, refund
 
     // Refund amount
     const order = await orderModel.findById(orderId);
-    // Check if order has been physically shipped (has GHN order code means it's been shipped)
-    const isPreShipment = order && !order.ghnOrderCode && (order.status === "pending" || order.status === "confirmed");
+    // Check if order has been physically shipped 
+    const isPreShipment = order && (order.status === "pending" || order.status === "confirmed" || order.status === "cancelled");
     const vndToRefund = isPreShipment
       ? (order.totalAmount && order.totalAmount > 0
           ? order.totalAmount
