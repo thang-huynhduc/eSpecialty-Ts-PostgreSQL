@@ -10,7 +10,7 @@ import { createGhnOrder, sendOrderConfirmationEmail } from "../utils/orderUtils.
 // Create a new order
 const createOrder = async (req, res) => {
   try {
-    const { items, amount, address, shippingFee } = req.body;
+    const { items, amount, address, shippingFee, shippingService } = req.body;
     const userId = req.user?.id;
 
     // Validate authentication
@@ -36,7 +36,7 @@ const createOrder = async (req, res) => {
         message: "Delivery address is required",
       });
     }
-    // Validate address required fields (firstName, lastName, zipcode are now optional)
+    // Validate address required fields 
     const requiredAddressFields = [
       "email",
       "street",
@@ -121,14 +121,16 @@ const createOrder = async (req, res) => {
       (total, item) => total + (item.weight || 500) * item.quantity,
       0
     );
-
-    // Calculate shipping fee if address has required GHN fields
-    let calculatedShippingFee = shippingFee || 0;
-    if (address.districtId && address.wardCode) {
+ 
+    // Calculate shipping fee: trust client-provided fee when available; otherwise compute via GHN
+    let calculatedShippingFee = typeof shippingFee === "number" ? shippingFee : 0;
+    if (calculatedShippingFee <= 0 && address.districtId && address.wardCode) {
       const shippingResult = await ghnService.calculateShippingFee({
         toDistrictId: address.districtId,
         toWardCode: address.wardCode,
         weight: totalWeight,
+        serviceId: shippingService?.service_id,
+        serviceTypeId: shippingService?.service_type_id,
       });
 
       if (shippingResult.success) {
@@ -153,6 +155,7 @@ const createOrder = async (req, res) => {
       items: orderItems,
       amount,
       shippingFee: calculatedShippingFee,
+      totalAmount: amount + calculatedShippingFee,
       address: {
         name: address.name || "",
         email: address.email || "",
@@ -497,7 +500,7 @@ const updateOrderStatus = async (req, res) => {
       }
 
       // Khi chuyển sang "cancelled" từ "confirmed" hoặc "pending": Khôi phục stock
-      if (status === "cancelled" && oldStatus === "confirmed") {
+      if (status === "cancelled" && (oldStatus === "confirmed" || oldStatus === "pending")) {
         await productModel.findByIdAndUpdate(productId, {
           $inc: { stock: quantity },
         });
@@ -505,6 +508,7 @@ const updateOrderStatus = async (req, res) => {
         await product.save();
       }
     }
+     
 
     // Khi confirm từ pending
     if (status === "confirmed" && oldStatus === "pending") {
@@ -583,10 +587,23 @@ const getOrderStats = async (req, res) => {
       status: "delivered",
     });
 
-    // Calculate total revenue
+    // Calculate total revenue using totalAmount (fallback to amount + shippingFee)
     const revenueResult = await orderModel.aggregate([
       { $match: { status: { $in: ["delivered", "shipped", "confirmed"] } } },
-      { $group: { _id: null, totalRevenue: { $sum: "$amount" } } },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: {
+            $sum: {
+              $cond: [
+                { $gt: ["$totalAmount", 0] },
+                "$totalAmount",
+                { $add: ["$amount", { $ifNull: ["$shippingFee", 0] }] }
+              ]
+            }
+          }
+        }
+      },
     ]);
 
     const totalRevenue =
@@ -612,7 +629,15 @@ const getOrderStats = async (req, res) => {
             month: { $month: "$date" },
           },
           count: { $sum: 1 },
-          revenue: { $sum: "$amount" },
+          revenue: {
+            $sum: {
+              $cond: [
+                { $gt: ["$totalAmount", 0] },
+                "$totalAmount",
+                { $add: ["$amount", { $ifNull: ["$shippingFee", 0] }] }
+              ]
+            }
+          },
         },
       },
       { $sort: { "_id.year": 1, "_id.month": 1 } },

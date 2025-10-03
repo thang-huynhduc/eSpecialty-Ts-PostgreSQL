@@ -74,3 +74,28 @@ export const sendOrderConfirmationEmail = async (order) => {
   }
   return false;
 };
+  // Send order payment confirmation email
+export const sendPaymentConfirmationEmail = async (order) => {
+  const user = await userModel.findById(order.userId);
+  if (user) {
+    const emailSubject = `Đơn hàng #${order._id} đã được thanh toán`;
+    await sendOtpEmail(
+      user.email,
+      null,
+      emailSubject,
+      "payment_confirmation",
+      {
+        orderId: order._id,
+        status: "confirmed",
+        items: order.items,
+        amount: order.amount,
+        shippingFee: order.shippingFee,
+        address: order.address,
+        ghnOrderCode: order.ghnOrderCode,
+        ghnExpectedDeliveryTime: order.ghnExpectedDeliveryTime,
+      }
+    );
+    return true;
+  }
+  return false;
+};

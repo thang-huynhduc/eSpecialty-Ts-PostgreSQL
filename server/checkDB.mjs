@@ -7,11 +7,11 @@ import "dotenv/config";
 const checkDatabase = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log("✅ Connected to database");
+    console.log("Connected to database");
 
     // Check products
     const products = await productModel.find({});
-    console.log(`\n📦 Products in database: ${products.length}`);
+    console.log(`\n Products in database: ${products.length}`);
 
     if (products.length > 0) {
       console.log("\nExisting products:");
@@ -43,14 +43,14 @@ const checkDatabase = async () => {
 
     // Check orders
     const orders = await orderModel.find({});
-    console.log(`\n🛍️  Orders in database: ${orders.length}`);
+    console.log(`\n  Orders in database: ${orders.length}`);
 
-    console.log("\n🎯 Database check completed!");
+    console.log("\n Database check completed!");
 
     await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
-    console.error("❌ Error:", error);
+    console.error(" Error:", error);
     process.exit(1);
   }
 };

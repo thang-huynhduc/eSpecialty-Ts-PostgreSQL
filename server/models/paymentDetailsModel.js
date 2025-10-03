@@ -118,6 +118,11 @@ const paymentDetailsSchema = new mongoose.Schema({
     type: Number,
     default: null,
   },
+  // Total order amount including shipping (for refund tracking)
+  orderTotalAmount: {
+    type: Number,
+    default: null,
+  },
   
   // PayPal specific fields
   paypal: {

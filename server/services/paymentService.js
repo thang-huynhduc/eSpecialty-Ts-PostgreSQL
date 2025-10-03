@@ -16,7 +16,7 @@ import paypalClient from "../config/paypal.js";
 export const createPayPalOrder = async (orderId, orderData) => {
   try {
     // Convert VND to USD
-    const conversionResult = await convertVNDToUSD(orderData.amount);
+    const conversionResult = await convertVNDToUSD(orderData.amount + orderData.shippingFee);
     
     if (!conversionResult.success) {
       throw new Error(conversionResult.error);
@@ -34,7 +34,8 @@ export const createPayPalOrder = async (orderId, orderData) => {
       orderId: orderId,
       paymentMethod: "paypal",
       originalCurrency: "VND",
-      originalAmount: orderData.amount,
+      originalAmount: orderData.amount + orderData.shippingFee,
+      orderTotalAmount: orderData.amount + orderData.shippingFee,
       processedCurrency: "USD",
       processedAmount: conversionResult.usdAmount,
       exchangeRate: conversionResult.exchangeRate,
@@ -50,7 +51,7 @@ export const createPayPalOrder = async (orderId, orderData) => {
       success: true,
       paypalOrderId: paypalOrder.id,
       amount: {
-        vnd: orderData.amount,
+        vnd: orderData.amount + orderData.shippingFee,
         usd: conversionResult.usdAmount,
       },
       exchangeRate: conversionResult.exchangeRate,
@@ -101,12 +102,22 @@ export const capturePayPalPayment = async (paypalOrderId, orderId) => {
     // Capture payment via PayPal SDK
     const captureResult = await capturePayPalOrderViaSDK(paypalOrderId);
 
+    // Get order to ensure we have the latest totalAmount
+    const order = await orderModel.findById(orderId);
+    
     // Update payment details
     paymentDetails.paypal.captureId = captureResult.id;
     paymentDetails.paypal.payerInfo = captureResult.payer;
     paymentDetails.gatewayStatus = "completed";
     paymentDetails.gatewayResponse = captureResult;
     paymentDetails.transactionId = captureResult.id;
+    
+    // Store totalAmount from order if not already set
+    if (!paymentDetails.orderTotalAmount && order) {
+      paymentDetails.orderTotalAmount = (order.totalAmount && order.totalAmount > 0) 
+        ? order.totalAmount 
+        : (order.amount + (order.shippingFee || 0));
+    }
 
     await paymentDetails.save();
 
@@ -307,8 +318,12 @@ export const createVNPayPaymentUrl = async ({ order, clientIp }) => {
     ? `${VNPAY_CONFIG.returnUrl}${hasQuery ? "&" : "?"}orderId=${order._id.toString()}`
     : "";
 
+  const totalAmountVnd = (typeof order.totalAmount === "number" && order.totalAmount > 0)
+    ? order.totalAmount
+    : (order.amount + (order.shippingFee || 0));
+
   const paymentUrl = vnpay.buildPaymentUrl({
-    vnp_Amount: Math.round(order.amount),
+    vnp_Amount: Math.round(totalAmountVnd),
     vnp_IpAddr: normalizedIp,
     vnp_ReturnUrl: returnUrl,
     vnp_TxnRef: order._id.toString(),
@@ -374,13 +389,34 @@ export const refundPayPalPayment = async (paypalOrderId, orderId, reason, refund
       throw new Error("Payment not captured, cannot refund");
     }
 
+
+
+    // Refund amount
+    const order = await orderModel.findById(orderId);
+    // Check if order has been physically shipped (has GHN order code means it's been shipped)
+    const isPreShipment = order && !order.ghnOrderCode && (order.status === "pending" || order.status === "confirmed");
+    const vndToRefund = isPreShipment
+      ? (order.totalAmount && order.totalAmount > 0
+          ? order.totalAmount
+          : (order.amount + (order.shippingFee || 0)))
+      : order.amount;
+
+    // Convert to USD using stored exchange rate, cap by captured amount
+    const usdByRate = paymentDetails.exchangeRate
+      ? Math.round((vndToRefund * paymentDetails.exchangeRate) * 100) / 100
+      : paymentDetails.processedAmount;
+    const usdToRefund = Math.min(usdByRate || 0, paymentDetails.processedAmount || 0);
+
     // Refund payment via PayPal SDK
     const refundResult = await refundPayPalOrderViaSDK(
       paymentDetails.paypal.captureId,
-      paymentDetails.processedAmount,
+      usdToRefund,
       reason
     );
 
+    // Get/verify totalAmount from order if not stored
+    const orderTotalAmount = (order.totalAmount && order.totalAmount > 0) ? order.totalAmount : (order.amount + (order.shippingFee || 0));
+    
     // Update payment details
     paymentDetails.paypal.refundId = refundResult.id;
     paymentDetails.paypal.refundReason = reason;
@@ -388,6 +424,11 @@ export const refundPayPalPayment = async (paypalOrderId, orderId, reason, refund
     paymentDetails.paypal.refundedAt = new Date();
     paymentDetails.gatewayStatus = "refunded";
     paymentDetails.gatewayResponse = refundResult;
+    
+    // Ensure orderTotalAmount is stored
+    if (!paymentDetails.orderTotalAmount) {
+      paymentDetails.orderTotalAmount = orderTotalAmount;
+    }
 
     await paymentDetails.save();
 
@@ -399,9 +440,10 @@ export const refundPayPalPayment = async (paypalOrderId, orderId, reason, refund
         refundHistory: {
           refundId: refundResult.id,
           refundAmount: {
-            vnd: paymentDetails.originalAmount,
-            usd: paymentDetails.processedAmount,
+            vnd: vndToRefund,
+            usd: usdToRefund,
           },
+          orderTotalAmount: paymentDetails.orderTotalAmount || orderTotalAmount,
           exchangeRate: paymentDetails.exchangeRate,
           reason: reason,
           refundedBy: refundedBy,
@@ -415,9 +457,10 @@ export const refundPayPalPayment = async (paypalOrderId, orderId, reason, refund
       success: true,
       refundId: refundResult.id,
       refundAmount: {
-        vnd: paymentDetails.originalAmount,
-        usd: paymentDetails.processedAmount,
+        vnd: vndToRefund,
+        usd: usdToRefund,
       },
+      orderTotalAmount: paymentDetails.orderTotalAmount || orderTotalAmount,
       exchangeRate: paymentDetails.exchangeRate,
       paymentDetails: paymentDetails,
       message: "Payment refunded successfully",
@@ -456,6 +499,11 @@ export const getRefundDetailsByOrderId = async (orderId) => {
     if (!paymentDetails || !paymentDetails.paypal.refundId) {
       return null;
     }
+    
+    // Get order to ensure we have totalAmount for fallback
+    const order = paymentDetails.orderId;
+    const orderTotalAmount = paymentDetails.orderTotalAmount || 
+      ((order.totalAmount && order.totalAmount > 0) ? order.totalAmount : (order.amount + (order.shippingFee || 0)));
 
     return {
       refundId: paymentDetails.paypal.refundId,
@@ -466,6 +514,7 @@ export const getRefundDetailsByOrderId = async (orderId) => {
         vnd: paymentDetails.originalAmount,
         usd: paymentDetails.processedAmount,
       },
+      orderTotalAmount: orderTotalAmount,
       exchangeRate: paymentDetails.exchangeRate,
       status: paymentDetails.gatewayStatus,
     };
