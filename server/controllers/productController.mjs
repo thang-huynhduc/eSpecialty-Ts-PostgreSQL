@@ -136,6 +136,7 @@ const listProducts = async (req, res) => {
       minStock,
       _page = 1,
       _perPage = 25,
+      _sort,
     } = req.query;
 
     // Filter by specific ID
@@ -212,13 +213,40 @@ const listProducts = async (req, res) => {
     const perPage = parseInt(_perPage, 10) || 25;
     const skip = (page - 1) * perPage;
 
-    // Get total count after filtering (hiệu quả, không tải data)
+    // Get total count after filtering 
     const totalItems = await productModel.countDocuments(filter);
 
     // Get paginated products from DB directly
+    // Determine sort option based on _sort query
+    let sortOption = { createdAt: -1 };
+    if (_sort) {
+      switch (_sort) {
+        case "price-high":
+          sortOption = { price: -1 };
+          break;
+        case "price-low":
+          sortOption = { price: 1 };
+          break;
+        case "name":
+          sortOption = { name: 1 };
+          break;
+        case "name-desc":
+          sortOption = { name: -1 };
+          break;
+        case "newest":
+          sortOption = { createdAt: -1 };
+          break;
+        case "oldest":
+          sortOption = { createdAt: 1 };
+          break;
+        default:
+          sortOption = { createdAt: -1 };
+      }
+    }
+
     let dbProducts = await productModel
       .find(filter)
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .skip(skip)
       .limit(perPage)
       .lean();
