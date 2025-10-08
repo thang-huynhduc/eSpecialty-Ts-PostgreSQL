@@ -12,6 +12,7 @@ import { readdirSync } from "fs";
 import instanceMongodb from "./config/mongodb.js";
 import connectCloudinary from "./config/cloudinary.js";
 import morgan from "morgan";
+import rateLimitMiddleware from "./middleware/rateLimit.mjs";
 
 
 
@@ -31,6 +32,9 @@ const allowedOrigins = [
   "http://10.0.2.2:8081", // Android emulator
   "http://10.0.2.2:8000", // Android emulator direct access
 ].filter(Boolean); // Remove any undefined values
+
+// Trust proxy for accurate req.ip behind reverse proxies (Vercel/Render/Nginx)
+app.set("trust proxy", 1);
 
 // CORS configuration using config system
 console.log("Allowed CORS Origins:", allowedOrigins);
@@ -70,6 +74,8 @@ connectCloudinary();
 // int morgan
 
 app.use(morgan("dev"));
+// Global rate limiter should be placed early
+app.use(rateLimitMiddleware);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
