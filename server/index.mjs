@@ -64,6 +64,40 @@ app.use(
 );
 app.use(express.json());
 
+// Trust proxy for correct IP detection behind Cloudflare/NGINX/Vercel
+app.set("trust proxy", 1);
+
+// Rate limiting
+import createRateLimiters from "./middleware/rateLimit.mjs";
+const parseIntOr = (val, fallback) => {
+  const n = parseInt(val, 10);
+  return Number.isFinite(n) ? n : fallback;
+};
+const rateLimitWhitelist = (process.env.RATE_LIMIT_WHITELIST || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const limiterOptions = {
+  global: {
+    points: parseIntOr(process.env.RATE_LIMIT_GLOBAL_POINTS, 100),
+    duration: parseIntOr(process.env.RATE_LIMIT_GLOBAL_DURATION, 15 * 60),
+  },
+  authLogin: {
+    points: parseIntOr(process.env.RATE_LIMIT_AUTH_POINTS, 5),
+    duration: parseIntOr(process.env.RATE_LIMIT_AUTH_DURATION, 5 * 60),
+  },
+  checkoutPayment: {
+    points: parseIntOr(process.env.RATE_LIMIT_PAYMENT_POINTS, 30),
+    duration: parseIntOr(process.env.RATE_LIMIT_PAYMENT_DURATION, 10 * 60),
+  },
+  whitelist: rateLimitWhitelist,
+  logBlocked: String(process.env.RATE_LIMIT_LOG_BLOCKED || "true") !== "false",
+};
+const { globalMiddleware, authMiddleware, paymentMiddleware } = createRateLimiters(limiterOptions);
+
+// Apply global limiter first
+app.use(globalMiddleware);
+
 // init db
 instanceMongodb();
 connectCloudinary();
@@ -76,6 +110,11 @@ const __dirname = path.dirname(__filename);
 
 const routesPath = path.resolve(__dirname, "./routes");
 const routeFiles = readdirSync(routesPath);
+// Tighten critical paths with specific middlewares
+// Auth login endpoints
+app.use(["/api/user/login", "/api/user/admin"], authMiddleware);
+// Payment & checkout endpoints (webhooks are auto-bypassed inside middleware)
+app.use(["/api/payment", "/api/checkout"], paymentMiddleware);
 routeFiles.map(async (file) => {
   const routeModule = await import(`./routes/${file}`);
   app.use("/", routeModule.default);

@@ -151,4 +151,4 @@ See `SECURITY.md` for security practices and reporting.
 - React (Vite), TailwindCSS
 - PayPal, VNPay, GHN, Gmail API
 
-— Happy shipping! ✨
+

@@ -194,7 +194,7 @@ export const getPaymentDetailsForAdmin = async (orderId) => {
       transactionId: paymentDetails.transactionId,
       createdAt: paymentDetails.createdAt,
       updatedAt: paymentDetails.updatedAt,
-      // Additional info for transparency (but amount displayed is VND)
+      // Additional info for transparency
       conversionInfo: paymentDetails.processedAmount ? {
         processedAmount: paymentDetails.processedAmount,
         processedCurrency: paymentDetails.processedCurrency,
@@ -287,6 +287,7 @@ const sortObject = (obj) => {
   return sorted;
 };
 
+// HMAC SHA512
 const hmacSHA512 = (data) => {
   return crypto.createHmac("sha512", VNPAY_CONFIG.secureSecret).update(data, "utf-8").digest("hex");
 };
