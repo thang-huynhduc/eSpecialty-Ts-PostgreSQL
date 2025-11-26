@@ -4,6 +4,11 @@
     "rootDir": "./src",     /* <-- Bật cái này lên để code nguồn nằm trong src */
     "outDir": "./dist",     /* <-- Bật cái này lên để code build ra dist */
 
+    "baseUrl": "src",                 /* Gốc để tính đường dẫn */
+    "paths": {
+      "~/*": ["src/*"]              /* Mapping: Cứ gặp ~ thì trỏ vào src */
+    },
+
     /* 2. Environment Settings (Chuẩn ESM) */
     "module": "nodenext",            /* Dùng module chuẩn Node mới nhất */
     "moduleResolution": "nodenext",  /* Cách tìm file chuẩn Node mới nhất */
