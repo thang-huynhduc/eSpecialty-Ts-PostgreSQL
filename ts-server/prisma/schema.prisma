@@ -1,0 +1,299 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --------------------------------------
+// ENUMS (Định nghĩa các tập giá trị cố định)
+// --------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  shipped
+  delivered
+  cancelled
+}
+
+enum PaymentMethod {
+  cod
+  stripe
+  paypal
+  vnpay
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+  refund_pending
+}
+
+enum ContactStatus {
+  unread
+  read
+  replied
+}
+
+// --------------------------------------
+// MODELS
+// --------------------------------------
+
+// 1. USER
+model User {
+  id                  String    @id @default(uuid()) // Thay cho ObjectId
+  name                String
+  email               String    @unique
+  password            String
+  role                Role      @default(USER)
+  isActive            Boolean   @default(true)
+  verified            Boolean   @default(false)
+  avatar              String?
+  
+  // Security
+  failedLoginAttempts Int       @default(0)
+  lockUntil           DateTime?
+  lastLogin           DateTime?
+  lastPasswordChange  DateTime  @default(now())
+
+  // Data JSON: Giỏ hàng lưu dạng JSON vì cấu trúc lỏng lẻo
+  userCart            Json?     @default("{}") 
+
+  // Relations
+  addresses           UserAddress[] // Tách ra bảng riêng (quan hệ 1-N)
+  orders              Order[]
+  contacts            Contact[]
+  otps                Otp[]
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("users")
+}
+
+// 2. USER ADDRESS (Tách từ mảng addresses trong User cũ)
+model UserAddress {
+  id          String  @id @default(uuid())
+  label       String?
+  street      String
+  ward        String?
+  district    String?
+  city        String?
+  provinceId  Int?
+  districtId  Int?
+  wardCode    String?
+  zipCode     String?
+  country     String  @default("Vietnam")
+  phone       String?
+  isDefault   Boolean @default(false)
+
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_addresses")
+}
+
+// 3. OTP
+model Otp {
+  id        String   @id @default(uuid())
+  otpHash   String
+  type      String   // 'register', 'resetPassword'...
+  expiresAt DateTime // Thay vì dùng TTL index của Mongo, ta lưu thời gian hết hạn cụ thể
+  
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("otps")
+}
+
+// 4. BRAND
+model Brand {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  image       String
+  description String?
+  website     String?
+  isActive    Boolean   @default(true)
+  
+  // Relations: Một Brand có nhiều Product
+  products    Product[] 
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("brands")
+}
+
+// 5. CATEGORY
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  image       String
+  description String?
+  isActive    Boolean   @default(true)
+
+  // Relations
+  products    Product[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("categories")
+}
+
+// 6. PRODUCT
+model Product {
+  id                   String   @id @default(uuid())
+  name                 String
+  // Postgre hỗ trợ mảng chuỗi (String[]), không cần JSON
+  images               String[] 
+  price                Decimal  @db.Decimal(15, 2) // Tiền nên dùng Decimal
+  discountedPercentage Int      @default(10)
+  stock                Int      @default(0)
+  soldQuantity         Int      @default(0)
+  
+  description          String
+  tags                 String[]
+  weight               Int      @default(500)
+  
+  isAvailable          Boolean  @default(true)
+  badge                Boolean  @default(false)
+  offer                Boolean  @default(false)
+  stockThreshold       Int      @default(10)
+
+  // Foreign Keys (Thay vì lưu String, ta nối khóa ngoại chuẩn chỉnh)
+  categoryId           String?
+  category             Category? @relation(fields: [categoryId], references: [id])
+  
+  brandId              String?
+  brand                Brand?    @relation(fields: [brandId], references: [id])
+
+  // Relations
+  orderItems           OrderItem[]
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("products")
+}
+
+// 7. ORDER
+model Order {
+  id                      String        @id @default(uuid())
+  amount                  Decimal       @db.Decimal(15, 2)
+  shippingFee             Decimal       @default(0) @db.Decimal(15, 2)
+  status                  OrderStatus   @default(pending)
+  
+  paymentMethod           PaymentMethod @default(cod)
+  paymentStatus           PaymentStatus @default(pending)
+  hasPaymentDetails       Boolean       @default(false)
+  emailSent               Boolean       @default(false)
+
+  // Shipping Address: Lưu JSON snapshot tại thời điểm mua (không nối bảng UserAddress để tránh user sửa địa chỉ làm sai đơn cũ)
+  shippingAddress         Json          
+
+  // Refund History: Lưu mảng object phức tạp -> JSONB là trùm
+  refundHistory           Json?         @default("[]")
+
+  // GHN Info
+  ghnOrderCode            String?
+  ghnStatus               String?
+  ghnExpectedDeliveryTime DateTime?
+
+  // Relations
+  userId                  String
+  user                    User          @relation(fields: [userId], references: [id])
+  
+  items                   OrderItem[]   // Tách items ra bảng riêng
+  paymentDetail           PaymentDetail? // 1 Order có 1 PaymentDetail
+
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  @@map("orders")
+}
+
+// 8. ORDER ITEMS (Bảng trung gian, tách từ mảng items trong Order cũ)
+model OrderItem {
+  id        String  @id @default(uuid())
+  name      String  // Lưu snapshot tên sp lúc mua
+  price     Decimal @db.Decimal(15, 2) // Giá lúc mua
+  quantity  Int     @default(1)
+  image     String?
+  weight    Int     @default(500)
+
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+// 9. PAYMENT DETAIL
+model PaymentDetail {
+  id                 String        @id @default(uuid())
+  paymentMethod      PaymentMethod
+  transactionId      String?
+  gatewayStatus      String?       @default("pending")
+  
+  // Các field phức tạp của Paypal, Stripe, VNPay -> Gom hết vào JSONB
+  gatewayResponse    Json?
+  gatewayData        Json?         // Chứa object paypal{}, vnpay{}... tùy loại
+
+  originalAmount     Decimal       @db.Decimal(15, 2)
+  originalCurrency   String        @default("VND")
+  processedAmount    Decimal?      @db.Decimal(15, 2)
+  processedCurrency  String?
+  exchangeRate       Decimal?
+
+  captureAttempts    Int           @default(0)
+  lastCaptureAttempt DateTime?
+
+  // Relation 1-1 với Order
+  orderId            String        @unique
+  order              Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@map("payment_details")
+}
+
+// 10. CONTACT
+model Contact {
+  id         String        @id @default(uuid())
+  name       String
+  email      String
+  subject    String
+  message    String        @db.Text
+  status     ContactStatus @default(unread)
+  adminNotes String?       @db.Text
+
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@map("contacts")
+}

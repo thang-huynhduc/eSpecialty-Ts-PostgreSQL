@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    /* 1. File Layout */
+    "rootDir": "./src",     /* <-- Bật cái này lên để code nguồn nằm trong src */
+    "outDir": "./dist",     /* <-- Bật cái này lên để code build ra dist */
+
+    /* 2. Environment Settings (Chuẩn ESM) */
+    "module": "nodenext",            /* Dùng module chuẩn Node mới nhất */
+    "moduleResolution": "nodenext",  /* Cách tìm file chuẩn Node mới nhất */
+    "target": "esnext",
+    
+    /* 3. Libraries */
+    "lib": ["esnext"],      /* Hỗ trợ các hàm mới nhất của JS */
+    
+    /* 4. Types & Output */
+    "sourceMap": true,      /* Giúp debug dễ hơn */
+    "declaration": true,    /* Tạo file .d.ts (không quá cần thiết cho backend nhưng có cũng tốt) */
+    
+    /* 5. Interop (Để import các thư viện cũ CommonJS không bị lỗi) */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    /* 6. Strict Typechecking */
+    "strict": true,
+    "noImplicitAny": true,
+    
+    /* 7. Các option khác đại ca thích */
+    "verbatimModuleSyntax": false,    /* Lưu ý: Cái này yêu cầu viết 'import type' rõ ràng (xem lưu ý dưới) */
+    "skipLibCheck": true,
+    "allowJs": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
