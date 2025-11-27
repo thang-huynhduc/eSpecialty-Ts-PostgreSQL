@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import { userService } from 'services/userService.js'
-import type { LoginDTO, RegisterDTO, SendOtpDTO, VerifyOtpDTO } from 'dtos/authDTO.js'
+import type { AddAddressDTO, LoginDTO, RegisterDTO, SendOtpDTO, VerifyOtpDTO } from 'dtos/authDTO.js'
 import ApiError from 'utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 import ms from 'ms'
@@ -165,6 +165,28 @@ export const getUserProfile = async (
   }
 }
 
+/** Address */
+const addUserAddress = async (
+  req: Request<unknown, unknown, AddAddressDTO>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Lấy userId từ token (đã qua authMiddleware)
+    // Lưu ý: Đảm bảo đã config type cho req.jwtDecoded như bài trước
+    const userId = req.jwtDecoded?.userId as string
+
+    const newAddress = await userService.addUserAddress(userId, req.body)
+
+    res.status(StatusCodes.CREATED).json({
+      message: 'Thêm địa chỉ thành công',
+      data: newAddress
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const userController = {
   userRegister,
   userLogin,
@@ -172,5 +194,6 @@ export const userController = {
   logout,
   sendOtp,
   verifyOtp,
-  getUserProfile
+  getUserProfile,
+  addUserAddress
 }

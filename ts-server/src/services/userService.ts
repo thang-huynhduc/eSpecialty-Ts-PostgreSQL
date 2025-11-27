@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { env } from 'config/environment.js'
 import { prisma } from 'config/prisma.js'
-import { LoginDTO, RegisterDTO, SendOtpDTO, VerifyOtpDTO } from 'dtos/authDTO.js'
+import { AddAddressDTO, LoginDTO, RegisterDTO, SendOtpDTO, VerifyOtpDTO } from 'dtos/authDTO.js'
 import { User } from 'generated/prisma/client.js'
 import { StatusCodes } from 'http-status-codes'
 import { JwtProvider } from 'providers/JwtProvider.js'
@@ -274,11 +274,43 @@ export const getUserProfile = async (userId: string) => {
   return userProfile
 }
 
+/** Address */
+const addUserAddress = async (userId: string, data: AddAddressDTO) => {
+  // 1. Kiểm tra xem user này đã có địa chỉ nào chưa
+  const existingCount = await prisma.userAddress.count({
+    where: { userId: userId }
+  })
+
+  // LOGIC 1: Nếu đây là địa chỉ đầu tiên -> Bắt buộc là Default
+  if (existingCount === 0) {
+    data.isDefault = true
+  }
+
+  // LOGIC 2: Nếu địa chỉ mới này được set là Default -> Phải gỡ Default của các địa chỉ cũ
+  if (data.isDefault) {
+    await prisma.userAddress.updateMany({
+      where: { userId: userId, isDefault: true },
+      data: { isDefault: false }
+    })
+  }
+
+  // 3. Tạo địa chỉ mới
+  const newAddress = await prisma.userAddress.create({
+    data: {
+      ...data,
+      userId: userId // Link với user
+    }
+  })
+
+  return newAddress
+}
+
 export const userService = {
   registerUser,
   login,
   adminLogin,
   sendOtp,
   verifyOtp,
-  getUserProfile
+  getUserProfile,
+  addUserAddress
 }

@@ -34,4 +34,7 @@ Router.route('/verify')
 Router.route('/profile')
   .get(authMiddleware.isAuthorize, authMiddleware.userAuth, userController.getUserProfile)
 
+Router.route('/addAddress')
+  .post(authMiddleware.isAuthorize, authMiddleware.userAuth, userValidator.addAddress, userController.addUserAddress)
+
 export const userRoute = Router

@@ -32,3 +32,19 @@ export interface VerifyOtpDTO {
   otp: string;
   type: OtpType;
 }
+
+// Dữ liệu địa chỉ của user
+export interface AddAddressDTO {
+  label?: string;
+  street: string;
+  ward?: string;
+  district?: string;
+  city?: string;
+  provinceId?: number;
+  districtId?: number;
+  wardCode?: string;
+  zipCode?: string;
+  country?: string;
+  phone?: string;
+  isDefault?: boolean;
+}

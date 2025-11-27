@@ -53,8 +53,39 @@ const verifyAccount = async (req: Request, res: Response, next: NextFunction) =>
   }
 }
 
+const addAddress = async (req: Request, res: Response, next: NextFunction) => {
+  const correctCondition = Joi.object({
+    label: Joi.string().optional().max(50),
+    street: Joi.string().required().min(5).trim().messages({
+      'any.required': 'Địa chỉ đường phố là bắt buộc',
+      'string.min': 'Địa chỉ quá ngắn'
+    }),
+    ward: Joi.string().optional(),
+    district: Joi.string().optional(),
+    city: Joi.string().optional(),
+    provinceId: Joi.number().optional(),
+    districtId: Joi.number().optional(),
+    wardCode: Joi.string().optional(),
+    zipCode: Joi.string().optional().pattern(/^\d{4,6}$/),
+    country: Joi.string().default('Vietnam'),
+    phone: Joi.string().required().pattern(/^[0-9]{10,11}$/).messages({
+      'string.pattern.base': 'Số điện thoại không hợp lệ (10-11 số)'
+    }),
+    isDefault: Joi.boolean().default(false)
+  })
+
+  try {
+    await correctCondition.validateAsync(req.body, { abortEarly: false })
+    next()
+  } catch (error) {
+    const errorMessage = (error as Error).message
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, errorMessage))
+  }
+}
+
 export const userValidator = {
   createNew,
   login,
-  verifyAccount
+  verifyAccount,
+  addAddress
 }
