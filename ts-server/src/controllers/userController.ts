@@ -32,14 +32,14 @@ const userLogin = async (
   try {
     const result = await userService.login(req.body)
 
-    res.cookie('access-token', result.token.accessToken, {
+    res.cookie('accessToken', result.token.accessToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
       maxAge: ms('14 days')
     })
 
-    res.cookie('refresh-token', result.token.refreshToken, {
+    res.cookie('refreshToken', result.token.refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
@@ -156,8 +156,8 @@ export const getUserProfile = async (
   next: NextFunction
 ) => {
   try {
-    const { email } = req.body
-    const result = await userService.getUserProfile(email)
+    const userId = req.jwtDecoded?.userId as string
+    const result = await userService.getUserProfile(userId)
 
     res.status(StatusCodes.OK).json(result)
   } catch (error) {

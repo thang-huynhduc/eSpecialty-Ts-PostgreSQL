@@ -230,17 +230,48 @@ export const verifyOtp = async (data: VerifyOtpDTO) => {
 }
 
 /** Profile */
-export const getUserProfile = async (email: string) => {
+export const getUserProfile = async (userId: string) => {
   const user = await prisma.user.findUnique({
-    where: { email: email }
+    where: { id: userId },
+    // JOIN bảng addresses
+    include: {
+      addresses: {
+        orderBy: { isDefault: 'desc' }
+      },
+      // JOIN bảng Order
+      orders: {
+        orderBy: { createdAt: 'desc' }
+      }
+    }
   })
   if (!user) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Email hoặc mật khẩu không đúng')
+    throw new ApiError(StatusCodes.NOT_FOUND, 'User không tồn tại')
+  }
+  // Xử lý logic lấy địa chỉ chính (để map vào phone và address)
+  // Vì ta đã sort ở trên, nên phần tử [0] chính là địa chỉ mặc định (nếu có)
+  const primaryAddress = user.addresses[0] || null
+
+  // Transform dữ liệu (Map sang format đại ca muốn)
+  const userProfile = {
+    id: user.id, // PostgreSQL dùng 'id', không phải '_id'
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatar: user.avatar,
+    isActive: user.isActive,
+    createdAt: user.createdAt,
+    lastLogin: user.lastLogin,
+
+    // Logic: Lấy từ địa chỉ đầu tiên, nếu không có thì trả về rỗng ""
+    phone: primaryAddress?.phone || '',
+    address: primaryAddress?.street || '', // Map street vào field 'address'
+
+    // Trả về nguyên mảng relation
+    addresses: user.addresses,
+    orders: user.orders
   }
 
-  // Trả về data
-  const { id, password, ...userInfo } = user
-  return { user: userInfo }
+  return userProfile
 }
 
 export const userService = {

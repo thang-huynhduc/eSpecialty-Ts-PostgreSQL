@@ -2,6 +2,7 @@ import { userController } from 'controllers/userController.js'
 import express from 'express'
 import type { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
+import { authMiddleware } from 'middlewares/authMiddleware.js'
 import { userValidator } from 'validators/userValidator.js'
 
 const Router = express.Router()
@@ -31,6 +32,6 @@ Router.route('/verify')
 
 /** Profile Route */
 Router.route('/profile')
-  .get(userController.getUserProfile)
+  .get(authMiddleware.isAuthorize, authMiddleware.userAuth, userController.getUserProfile)
 
 export const userRoute = Router
