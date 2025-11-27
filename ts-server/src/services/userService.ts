@@ -305,12 +305,111 @@ const addUserAddress = async (userId: string, data: AddAddressDTO) => {
   return newAddress
 }
 
+// Lấy danh sách địa chỉ
+const getUserAddresses = async (userId: string) => {
+  return await prisma.userAddress.findMany({
+    where: { userId },
+    orderBy: { isDefault: 'desc' },
+    select: {
+      id: true,
+      label: true,
+      street: true,
+      ward: true,
+      district: true,
+      city: true,
+      provinceId: true,
+      districtId: true,
+      wardCode: true,
+      zipCode: true,
+      country: true,
+      phone: true,
+      isDefault: true
+    }
+  })
+}
+
+// Cập nhật địa chỉ
+const updateUserAddress = async (userId: string, addressId: string, data: Partial<AddAddressDTO>) => {
+  // B1: Check quyền sở hữu (User A không được sửa địa chỉ của User B)
+  const targetAddress = await prisma.userAddress.findUnique({
+    where: { id: addressId }
+  })
+
+  if (!targetAddress || targetAddress.userId !== userId) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Address not found or permission denied')
+  }
+
+  // B2: Nếu update này set isDefault = true -> Gỡ default các cái cũ
+  if (data.isDefault) {
+    await prisma.userAddress.updateMany({
+      where: { userId, isDefault: true },
+      data: { isDefault: false }
+    })
+  }
+
+  // B3: Update
+  return await prisma.userAddress.update({
+    where: { id: addressId },
+    data: data
+  })
+}
+
+// Set địa chỉ mặc định
+const setDefaultAddress = async (userId: string, addressId: string) => {
+  // Check quyền sở hữu
+  const targetAddress = await prisma.userAddress.findFirst({
+    where: { id: addressId, userId }
+  })
+  if (!targetAddress) throw new ApiError(StatusCodes.NOT_FOUND, 'Address not found')
+
+  // Dùng Transaction: Gỡ tất cả -> Set 1 cái. Đảm bảo toàn vẹn.
+  const result = await prisma.$transaction([
+    prisma.userAddress.updateMany({
+      where: { userId, isDefault: true },
+      data: { isDefault: false }
+    }),
+    prisma.userAddress.update({
+      where: { id: addressId },
+      data: { isDefault: true }
+    })
+  ])
+
+  return result[1] // Trả về cái bản ghi vừa update thành true
+}
+
+// Xóa địa chỉ (DELETE)
+const deleteUserAddress = async (userId: string, addressId: string) => {
+  const targetAddress = await prisma.userAddress.findFirst({
+    where: { id: addressId, userId }
+  })
+
+  if (!targetAddress) throw new ApiError(StatusCodes.NOT_FOUND, 'Address not found')
+
+  // Rule: Không cho xóa địa chỉ mặc định (để tránh lỗi đơn hàng sau này)
+  // User bắt buộc phải set cái khác làm default rồi mới được xóa cái này
+  if (targetAddress.isDefault) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Cannot delete default address. Please set another address as default first.')
+  }
+
+  await prisma.userAddress.delete({
+    where: { id: addressId }
+  })
+
+  return { message: 'Address deleted successfully' }
+}
+
 export const userService = {
+  // Auth
   registerUser,
   login,
   adminLogin,
   sendOtp,
   verifyOtp,
+  // Profile
   getUserProfile,
-  addUserAddress
+  addUserAddress,
+  getUserAddresses,
+  updateUserAddress,
+  setDefaultAddress,
+  deleteUserAddress
 }

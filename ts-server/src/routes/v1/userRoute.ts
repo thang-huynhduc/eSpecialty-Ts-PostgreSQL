@@ -34,7 +34,13 @@ Router.route('/verify')
 Router.route('/profile')
   .get(authMiddleware.isAuthorize, authMiddleware.userAuth, userController.getUserProfile)
 
-Router.route('/addAddress')
-  .post(authMiddleware.isAuthorize, authMiddleware.userAuth, userValidator.addAddress, userController.addUserAddress)
+Router.route('/addresses')
+  .get(authMiddleware.isAuthorize, authMiddleware.userAuth, userController.getUserAddress) // Lấy danh sách
+  .post(authMiddleware.isAuthorize, authMiddleware.userAuth, userValidator.addAddress, userController.addUserAddress) // Thêm địa chỉ mới
+
+Router.route('/addresses/:addressId')
+  .put(authMiddleware.isAuthorize, authMiddleware.userAuth, userValidator.checkAddressId, userValidator.updateAddress, userController.updateUserAddress) // Update
+  .patch(authMiddleware.isAuthorize, authMiddleware.userAuth, userController.setDefaultAddress) // Set Default Address
+  .delete(authMiddleware.isAuthorize, authMiddleware.userAuth, userController.deleteUserAddress)
 
 export const userRoute = Router

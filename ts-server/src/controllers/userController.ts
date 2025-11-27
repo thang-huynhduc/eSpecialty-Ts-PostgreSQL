@@ -187,6 +187,58 @@ const addUserAddress = async (
   }
 }
 
+// GET ALL
+const getUserAddress = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Lấy userId từ token (đã qua authMiddleware)
+    // Lưu ý: Đảm bảo đã config type cho req.jwtDecoded như bài trước
+    const userId = req.jwtDecoded?.userId as string
+
+    const addresses = await userService.getUserAddresses(userId)
+
+    res.status(StatusCodes.OK).json({
+      data: addresses
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+// Update
+const updateUserAddress = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.jwtDecoded?.userId as string
+    const { addressId } = req.params
+
+    const updated = await userService.updateUserAddress(userId, addressId, req.body)
+    res.status(StatusCodes.OK).json({ message: 'Update success', data: updated })
+  } catch (error) { next(error) }
+}
+
+// Set Default
+const setDefaultAddress = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.jwtDecoded?.userId as string
+    const { addressId } = req.params
+    const result = await userService.setDefaultAddress(userId, addressId)
+    res.status(StatusCodes.OK).json({ message: 'Set default success', data: result })
+  } catch (error) { next(error) }
+}
+
+// Delete
+const deleteUserAddress = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.jwtDecoded?.userId as string
+    const { addressId } = req.params
+    const result = await userService.deleteUserAddress(userId, addressId)
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) { next(error) }
+}
+
 export const userController = {
   userRegister,
   userLogin,
@@ -194,6 +246,11 @@ export const userController = {
   logout,
   sendOtp,
   verifyOtp,
+  // Profile
   getUserProfile,
-  addUserAddress
+  addUserAddress,
+  getUserAddress,
+  updateUserAddress,
+  setDefaultAddress,
+  deleteUserAddress
 }

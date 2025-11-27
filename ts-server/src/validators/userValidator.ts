@@ -83,9 +83,46 @@ const addAddress = async (req: Request, res: Response, next: NextFunction) => {
   }
 }
 
+const updateAddress = async (req: Request, res: Response, next: NextFunction) => {
+  const correctCondition = Joi.object({
+    // Cho phép sửa từng phần, không bắt buộc nhập hết
+    label: Joi.string().optional().max(50),
+    street: Joi.string().optional().min(5).trim(),
+    ward: Joi.string().optional(),
+    district: Joi.string().optional(),
+    city: Joi.string().optional(),
+    provinceId: Joi.number().optional(),
+    districtId: Joi.number().optional(),
+    wardCode: Joi.string().optional(),
+    zipCode: Joi.string().optional(),
+    country: Joi.string().optional(),
+    phone: Joi.string().optional().pattern(/^[0-9]{10,11}$/),
+    isDefault: Joi.boolean().optional() // User có thể set default ngay lúc update
+  })
+
+  try {
+    await correctCondition.validateAsync(req.body, { abortEarly: false })
+    next()
+  } catch (error) {
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, (error as Error).message))
+  }
+}
+
+// Validator cho Params (check ID)
+const checkAddressId = async (req: Request, res: Response, next: NextFunction) => {
+  // Giả sử ID là UUID hoặc String. Nếu ID rỗng thì báo lỗi.
+  if (!req.params.addressId) {
+    next(new ApiError(StatusCodes.BAD_REQUEST, 'Address ID is required'))
+    return
+  }
+  next()
+}
+
 export const userValidator = {
   createNew,
   login,
   verifyAccount,
-  addAddress
+  addAddress,
+  updateAddress,
+  checkAddressId
 }
