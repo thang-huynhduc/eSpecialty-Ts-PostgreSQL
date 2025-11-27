@@ -19,7 +19,7 @@ async function main() {
             phone: '0901234567',
             isDefault: true
           }
-        ],
+        ]
       },
 
       contacts: {
@@ -46,10 +46,11 @@ async function main() {
     include: {
       addresses: true,
       contacts: true,
-      otps: true,
-    },
+      otps: true
+    }
   })
 
+  // eslint-disable-next-line no-console
   console.log('Created user:', JSON.stringify(user, null, 2))
 
   // 2. GET ALL USERS (kèm quan hệ)
@@ -59,9 +60,10 @@ async function main() {
       contacts: true,
       otps: true,
       orders: true
-    },
+    }
   })
 
+  // eslint-disable-next-line no-console
   console.log('All users:', JSON.stringify(allUsers, null, 2))
 }
 
@@ -70,6 +72,7 @@ main()
     await prisma.$disconnect()
   })
   .catch(async (e) => {
+    // eslint-disable-next-line no-console
     console.error(e)
     await prisma.$disconnect()
     process.exit(1)

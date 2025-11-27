@@ -1,16 +1,17 @@
-import type { Request, Response } from 'express'
-import { authService } from 'services/userService.js'
-import type { RegisterDTO } from 'dtos/authDTO.js'
+import type { NextFunction, Request, Response } from 'express'
+import { userService } from 'services/userService.js'
+import type { LoginDTO, RegisterDTO, SendOtpDTO, VerifyOtpDTO } from 'dtos/authDTO.js'
 import ApiError from 'utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 import ms from 'ms'
 
+/** Auth */
 const userRegister = async (
   req: Request<unknown, unknown, RegisterDTO>,
   res: Response
 ) => {
   try {
-    const newUser = await authService.registerUser(req.body)
+    const newUser = await userService.registerUser(req.body)
 
     return res.status(StatusCodes.OK).json({
       message: 'Đăng ký thành công',
@@ -25,11 +26,11 @@ const userRegister = async (
 }
 
 const userLogin = async (
-  req: Request<unknown, unknown, RegisterDTO>,
+  req: Request<unknown, unknown, LoginDTO>,
   res: Response
 ) => {
   try {
-    const result = await authService.login(req.body)
+    const result = await userService.login(req.body)
 
     res.cookie('access-token', result.token.accessToken, {
       httpOnly: true,
@@ -58,11 +59,11 @@ const userLogin = async (
 }
 
 const adminLogin = async (
-  req: Request<unknown, unknown, RegisterDTO>,
+  req: Request<unknown, unknown, LoginDTO>,
   res: Response
 ) => {
   try {
-    const result = await authService.adminLogin(req.body)
+    const result = await userService.adminLogin(req.body)
 
     res.cookie('access-token', result.token.accessToken, {
       httpOnly: true,
@@ -91,7 +92,7 @@ const adminLogin = async (
 }
 
 const logout = async (
-  req: Request<unknown, unknown, RegisterDTO>,
+  req: Request,
   res: Response
 ) => {
   try {
@@ -112,9 +113,64 @@ const logout = async (
   }
 }
 
+/** OTP */
+export const sendOtp = async (
+  req: Request<unknown, unknown, SendOtpDTO>, // Generics để check type body
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Validate req.body ở đây nếu cần (dùng Joi)
+    const result = await userService.sendOtp(req.body)
+
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const verifyOtp = async (
+  req: Request<unknown, unknown, VerifyOtpDTO>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const result = await userService.verifyOtp(req.body)
+
+    res.status(StatusCodes.OK).json({
+      message: 'Xác thực OTP thành công',
+      data: result
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/** Profile */
+interface GetProfileReqBody {
+  email: string;
+}
+export const getUserProfile = async (
+  req: Request<unknown, unknown, GetProfileReqBody>, // Generics để check type body
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email } = req.body
+    const result = await userService.getUserProfile(email)
+
+    res.status(StatusCodes.OK).json(result)
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const userController = {
   userRegister,
   userLogin,
   adminLogin,
-  logout
+  logout,
+  sendOtp,
+  verifyOtp,
+  getUserProfile
 }

@@ -1,69 +1,15 @@
 import bcrypt from 'bcryptjs'
 import { env } from 'config/environment.js'
 import { prisma } from 'config/prisma.js'
-import { LoginDTO, RegisterDTO } from 'dtos/authDTO.js'
+import { LoginDTO, RegisterDTO, SendOtpDTO, VerifyOtpDTO } from 'dtos/authDTO.js'
 import { User } from 'generated/prisma/client.js'
 import { StatusCodes } from 'http-status-codes'
 import { JwtProvider } from 'providers/JwtProvider.js'
 import ApiError from 'utils/apiError.js'
-import { LOCK_TIME, MAX_FAILED_ATTEMPTS } from 'utils/constants.js'
+import { LOCK_TIME, MAX_FAILED_ATTEMPTS, OTP_EXPIRATION_MINUTES } from 'utils/constants.js'
+import { generateNumericOTP } from 'utils/generators.js'
 
-// Hàm private dùng cho file này
-  const verifyPasswordAndHandleLogin = async (user: User, passwordInput: string) => {
-    if (user.lockUntil && user.lockUntil > new Date()) {
-    // Tính toán time còn sót lại
-    const timeLeft = Math.ceil((user.lockUntil.getTime() - Date.now()) / 60000)
-    throw new ApiError(StatusCodes.LOCKED, `Tài khoản tạm thời bị khóa, vui lòng thử lại sau ${timeLeft} phút.`)
-  }
-
-  // 2. So sánh password
-  const isMatch = await bcrypt.compare(passwordInput, user.password)  
-  if (!isMatch) {
-    // Tính toán số lần fail
-    const currentFailed = user.failedLoginAttempts + 1
-
-    // Chuẩn bị dữ liệu để update
-    const updateData: any = {
-      failedLoginAttempts: currentFailed
-    }
-
-    // Nếu sai quá giới hạn thì khóa ngay
-    if (currentFailed >= MAX_FAILED_ATTEMPTS) {
-      updateData.lockUntil = new Date(Date.now() + LOCK_TIME)
-    }
-    // Update vào DB
-    await prisma.user.update({
-      where: { id: user.id },
-      data: updateData
-    })
-
-    // Thông báo lỗi
-    if (currentFailed >= MAX_FAILED_ATTEMPTS) {
-       throw new ApiError(StatusCodes.LOCKED, 'Bạn đã nhập sai quá 5 lần. Tài khoản bị khóa 15 phút.')
-    } else {
-       throw new ApiError(StatusCodes.NOT_ACCEPTABLE, `Mật khẩu sai. Bạn còn ${MAX_FAILED_ATTEMPTS - currentFailed} lần thử.`)
-    }
-  }
-
-  // Trường hợp đăng nhập đúng
-  if (user.failedLoginAttempts > 0 || user.lockUntil) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        failedLoginAttempts: 0, // Reset về 0
-        lockUntil: null,        // Mở khóa
-        lastLogin: new Date()   // Cập nhật thời gian login
-      }
-    })
-  } else {
-    // Nếu acc đang sạch thì chỉ update lastLogin
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastLogin: new Date() }
-    })
-  }
-}
-
+/** Auth */
 const registerUser = async (data: RegisterDTO) => {
   // Kiểm tra xem đã tồn tại email của user
   const existingUser = await prisma.user.findUnique({
@@ -145,8 +91,163 @@ const adminLogin = async (data: LoginDTO) => {
   return { user: userInfo, token: { accessToken, refreshToken } }
 }
 
-export const authService = {
+// Hàm private dùng cho file này
+const verifyPasswordAndHandleLogin = async (user: User, passwordInput: string) => {
+  if (user.lockUntil && user.lockUntil > new Date()) {
+    // Tính toán time còn sót lại
+    const timeLeft = Math.ceil((user.lockUntil.getTime() - Date.now()) / 60000)
+    throw new ApiError(StatusCodes.LOCKED, `Tài khoản tạm thời bị khóa, vui lòng thử lại sau ${timeLeft} phút.`)
+  }
+
+  // 2. So sánh password
+  const isMatch = await bcrypt.compare(passwordInput, user.password)
+  if (!isMatch) {
+    // Tính toán số lần fail
+    const currentFailed = user.failedLoginAttempts + 1
+
+    // Chuẩn bị dữ liệu để update
+    const updateData: any = {
+      failedLoginAttempts: currentFailed
+    }
+
+    // Nếu sai quá giới hạn thì khóa ngay
+    if (currentFailed >= MAX_FAILED_ATTEMPTS) {
+      updateData.lockUntil = new Date(Date.now() + LOCK_TIME)
+    }
+    // Update vào DB
+    await prisma.user.update({
+      where: { id: user.id },
+      data: updateData
+    })
+
+    // Thông báo lỗi
+    if (currentFailed >= MAX_FAILED_ATTEMPTS) {
+      throw new ApiError(StatusCodes.LOCKED, 'Bạn đã nhập sai quá 5 lần. Tài khoản bị khóa 15 phút.')
+    } else {
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, `Mật khẩu sai. Bạn còn ${MAX_FAILED_ATTEMPTS - currentFailed} lần thử.`)
+    }
+  }
+
+  // Trường hợp đăng nhập đúng
+  if (user.failedLoginAttempts > 0 || user.lockUntil) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        failedLoginAttempts: 0, // Reset về 0
+        lockUntil: null, // Mở khóa
+        lastLogin: new Date() // Cập nhật thời gian login
+      }
+    })
+  } else {
+    // Nếu acc đang sạch thì chỉ update lastLogin
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() }
+    })
+  }
+}
+
+/** OTP */
+export const sendOtp = async (data: SendOtpDTO) => {
+  // B1: Tìm User xem có tồn tại không
+  const user = await prisma.user.findUnique({
+    where: { email: data.email }
+  })
+
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Email không tồn tại trong hệ thống')
+  }
+
+  // B2: Xóa OTP cũ (nếu có) của user này với type này để tránh rác
+  await prisma.otp.deleteMany({
+    where: { userId: user.id, type: data.type }
+  })
+
+  // B3: Sinh OTP và Hash
+  const plainOtp = generateNumericOTP(6)
+  const otpHash = await bcrypt.hash(plainOtp, 10)
+  const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MINUTES * 60 * 1000)
+
+  // B4: Lưu vào DB
+  await prisma.otp.create({
+    data: {
+      userId: user.id,
+      otpHash,
+      type: data.type,
+      expiresAt
+    }
+  })
+
+  // B5: Gửi Email (Đoạn này đại ca tích hợp Nodemailer sau)
+  console.log(`[MOCK EMAIL SERVICE] Gửi OTP: ${plainOtp} tới ${data.email}`)
+
+  // Lưu ý: Service chỉ trả về thông báo hoặc kết quả, KHÔNG trả plainOtp về controller (bảo mật)
+  return { message: 'OTP sent successfully' }
+}
+
+// Xác thực OTP
+export const verifyOtp = async (data: VerifyOtpDTO) => {
+  // B1: Tìm User
+  const user = await prisma.user.findUnique({
+    where: { email: data.email }
+  })
+  if (!user) throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')
+
+  // B2: Tìm bản ghi OTP
+  const otpRecord = await prisma.otp.findFirst({
+    where: { userId: user.id, type: data.type },
+    orderBy: { createdAt: 'desc' } // Lấy cái mới nhất
+  })
+
+  if (!otpRecord) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'OTP không tồn tại hoặc đã hết hạn')
+  }
+
+  // B3: Check hết hạn
+  if (new Date() > otpRecord.expiresAt) {
+    await prisma.otp.delete({ where: { id: otpRecord.id } }) // Dọn dẹp
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'OTP đã hết hạn')
+  }
+
+  // B4: So khớp Hash
+  const isValid = await bcrypt.compare(data.otp, otpRecord.otpHash)
+  if (!isValid) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Mã OTP không chính xác')
+  }
+
+  // B5: Nếu đúng -> Xóa OTP ngay (One-time usage)
+  await prisma.otp.delete({ where: { id: otpRecord.id } })
+
+  // B6: Xử lý nghiệp vụ sau khi verify thành công (Ví dụ: kích hoạt tài khoản)
+  if (data.type === 'REGISTER') {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { isActive: true, verified: true }
+    })
+  }
+
+  return { verified: true }
+}
+
+/** Profile */
+export const getUserProfile = async (email: string) => {
+  const user = await prisma.user.findUnique({
+    where: { email: email }
+  })
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Email hoặc mật khẩu không đúng')
+  }
+
+  // Trả về data
+  const { id, password, ...userInfo } = user
+  return { user: userInfo }
+}
+
+export const userService = {
   registerUser,
   login,
-  adminLogin
+  adminLogin,
+  sendOtp,
+  verifyOtp,
+  getUserProfile
 }

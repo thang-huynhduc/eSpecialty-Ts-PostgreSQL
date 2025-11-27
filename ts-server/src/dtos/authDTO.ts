@@ -18,3 +18,17 @@ export interface UserResponseDTO {
   name: string;
   role: string;
 }
+
+// Dữ liệu xác thực OTP
+export type OtpType = 'REGISTER' | 'RESET_PASSWORD';
+
+export interface SendOtpDTO {
+  email: string;
+  type: OtpType;
+}
+
+export interface VerifyOtpDTO {
+  email: string;
+  otp: string;
+  type: OtpType;
+}

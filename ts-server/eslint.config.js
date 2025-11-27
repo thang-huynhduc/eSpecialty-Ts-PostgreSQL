@@ -32,7 +32,7 @@ export default [
 
       // Rule của TS
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'no',
+      '@typescript-eslint/no-explicit-any': 'off',
 
       // Các rules đại ca yêu cầu
       'no-useless-catch': 0,
