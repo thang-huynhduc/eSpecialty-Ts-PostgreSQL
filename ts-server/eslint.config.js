@@ -1,22 +1,22 @@
 // eslint.config.js
-import globals from 'globals';
-import pluginJs from '@eslint/js';
-import tseslint from 'typescript-eslint';
+import globals from 'globals'
+import pluginJs from '@eslint/js'
+import tseslint from 'typescript-eslint'
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   // 1. Thay thế cho file .eslintignore cũ
-  { 
-    ignores: ['dist', 'node_modules', 'coverage'] 
+  {
+    ignores: ['dist', 'node_modules', 'coverage']
   },
 
   // 2. Cấu hình cho toàn bộ file code
   {
     files: ['**/*.{js,mjs,cjs,ts}'],
-    languageOptions: { 
+    languageOptions: {
       globals: { ...globals.node, ...globals.es2020 },
       parserOptions: { ecmaVersion: 'latest', sourceType: 'module' }
-    },
+    }
   },
 
   // 3. Load các bộ luật chuẩn (Recommended)
@@ -32,7 +32,7 @@ export default [
 
       // Rule của TS
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'no',
 
       // Các rules đại ca yêu cầu
       'no-useless-catch': 0,

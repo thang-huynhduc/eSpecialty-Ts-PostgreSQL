@@ -38,7 +38,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   }
 }
 
-export const authValidator = {
+export const userValidator = {
   createNew,
   login
 }
