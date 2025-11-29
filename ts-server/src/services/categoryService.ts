@@ -13,7 +13,7 @@ const createNew = async (data: CreateCategoryDTO, file: Express.Multer.File | un
   // Upload ảnh
   let imageUrl = ''
   if (file) {
-    const result = await CloudinaryProvider.streamUpload(file.buffer, 'categories')
+    const result = await CloudinaryProvider.streamUpload(file.buffer, 'eSpecialty/categories')
     imageUrl = result.secure_url
   }
 
@@ -43,7 +43,7 @@ const updateCategory = async (id: string, data: UpdateCategoryDTO, file?: Expres
   // Xử lý ảnh
   let imageUrl = existingCate.image
   if (file) {
-    const uploadResult = await CloudinaryProvider.streamUpload(file.buffer, 'categories')
+    const uploadResult = await CloudinaryProvider.streamUpload(file.buffer, 'eSpecialty/categories')
     imageUrl = uploadResult.secure_url
 
     // Xóa ảnh cũ

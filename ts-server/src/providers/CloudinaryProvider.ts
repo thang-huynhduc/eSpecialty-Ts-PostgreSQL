@@ -60,7 +60,19 @@ const deleteImage = async (imageUrl: string): Promise<void> => {
   }
 }
 
+/** Upload Nhiều file */
+const uploadMultiple = async (files: Express.Multer.File[], folder: string): Promise<string[]> => {
+  // Dùng Promise.all để chạy song song, upload 4 ảnh chỉ tốn thời gian bằng upload 1 ảnh chậm nhất
+  const uploadPromises = files.map(file => streamUpload(file.buffer, folder))
+
+  const results = await Promise.all(uploadPromises)
+
+  // Trả về mảng các đường link ảnh
+  return results.map(res => res.secure_url)
+}
+
 export const CloudinaryProvider = {
   streamUpload,
-  deleteImage
+  deleteImage,
+  uploadMultiple
 }

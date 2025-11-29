@@ -16,7 +16,7 @@ const createNew = async (data: CreateAndUpdateBrandDTO, brandImgFile: Express.Mu
 
   let brandImgUrl = ''
   if (brandImgFile) {
-    const result = await CloudinaryProvider.streamUpload(brandImgFile.buffer, 'brands')
+    const result = await CloudinaryProvider.streamUpload(brandImgFile.buffer, 'eSpecialty/brands')
     brandImgUrl = result.secure_url
   }
 
@@ -62,7 +62,7 @@ const updateBrand = async (id: string, data: CreateAndUpdateBrandDTO, file?: Exp
 
   if (file) {
     // Upload ảnh mới lên Cloudinary (dùng streamUpload vì đại ca đang dùng MemoryStorage)
-    const uploadResult = await CloudinaryProvider.streamUpload(file.buffer, 'brands')
+    const uploadResult = await CloudinaryProvider.streamUpload(file.buffer, 'eSpecialty/brands')
     imageUrl = uploadResult.secure_url
 
     // (Xóa ảnh cũ trên Cloudinary đi cho đỡ rác public_id cũ

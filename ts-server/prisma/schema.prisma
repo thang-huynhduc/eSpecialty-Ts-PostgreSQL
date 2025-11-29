@@ -292,7 +292,7 @@ model Contact {
   userId     String
   user       User          @relation(fields: [userId], references: [id])
 
-  createdAt  DateTime      @default(now())
+  createdAt  DateTime      @default(now())z
   updatedAt  DateTime      @updatedAt
 
   @@map("contacts")
