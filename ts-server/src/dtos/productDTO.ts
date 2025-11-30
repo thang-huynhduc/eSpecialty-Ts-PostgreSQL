@@ -1,5 +1,6 @@
 export interface CreateProductDTO {
   name: string;
+  type?: string;
   price: number;
   discountedPercentage?: number;
   stock?: number;

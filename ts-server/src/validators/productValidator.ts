@@ -6,6 +6,7 @@ import type { Request, Response, NextFunction } from 'express'
 const createProduct = async (req: Request, res: Response, next: NextFunction) => {
   const correctCondition = Joi.object({
     name: Joi.string().required().min(5).max(255).trim(),
+    type: Joi.string().optional().default('general'),
     price: Joi.number().required().min(0),
     discountedPercentage: Joi.number().optional().min(0).max(100),
     stock: Joi.number().optional().min(0),
@@ -36,6 +37,7 @@ const createProduct = async (req: Request, res: Response, next: NextFunction) =>
 const updateProduct = async (req: Request, res: Response, next: NextFunction) => {
   const correctCondition = Joi.object({
     name: Joi.string().optional().min(5).max(255).trim(),
+    type: Joi.string().optional(),
     price: Joi.number().optional().min(0),
     discountedPercentage: Joi.number().optional().min(0).max(100),
     stock: Joi.number().optional().min(0),

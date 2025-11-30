@@ -28,6 +28,7 @@ const addProduct = async (data: CreateProductDTO, files: Express.Multer.File[]) 
   const newProduct = await prisma.product.create({
     data: {
       ...data,
+      type: data.type || '',
       price: Number(data.price), // Ép kiểu Decimal
       stock: Number(data.stock || 0),
       discountedPercentage: Number(data.discountedPercentage || 10),
@@ -110,6 +111,7 @@ const updateProduct = async (id: string, data: UpdateProductDTO, files?: Express
     where: { id },
     data: {
       name: data.name,
+      type: data.type,
       description: data.description,
       price: data.price ? Number(data.price) : undefined,
       stock: data.stock ? Number(data.stock) : undefined,

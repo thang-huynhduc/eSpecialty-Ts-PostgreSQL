@@ -11,7 +11,7 @@ const createBrand = async (req: Request, res: Response, next: NextFunction) => {
     const newBrand = await brandService.createNew(req.body as CreateAndUpdateBrandDTO, brandImgFile)
 
     res.status(StatusCodes.CREATED).json({
-      message: 'Create brand successfully',
+      success: true,
       data: newBrand
     })
   } catch (error) {
@@ -29,8 +29,8 @@ const updateBrand = async (req: Request, res: Response, next: NextFunction) => {
     const updatedBrand = await brandService.updateBrand(id, req.body as CreateAndUpdateBrandDTO, file)
 
     res.status(StatusCodes.OK).json({
-      message: 'Update brand successfully',
-      data: updatedBrand
+      success: true,
+      brand: updatedBrand
     })
   } catch (error) {
     next(error)
@@ -54,7 +54,10 @@ const deleteBrand = async (req: Request, res: Response, next: NextFunction) => {
 const getAllBrands = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const brands = await brandService.getAllBrands()
-    res.status(StatusCodes.OK).json(brands)
+    res.status(StatusCodes.OK).json({
+      success: true,
+      brands: brands
+    })
   } catch (error) {
     next(error)
   }

@@ -20,7 +20,7 @@ Router.use('/user', userRoute)
 Router.use('/brand', brandRoute)
 
 /** Category API */
-Router.use('/categories', categoryRoute)
+Router.use('/category', categoryRoute)
 
 /** Product API */
 Router.use('/product', productRoute)

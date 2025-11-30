@@ -163,6 +163,7 @@ model Category {
 model Product {
   id                   String   @id @default(uuid())
   name                 String
+  type                 String   @default("general")
   // Postgre hỗ trợ mảng chuỗi (String[]), không cần JSON
   images               String[] 
   price                Decimal  @db.Decimal(15, 2) // Tiền nên dùng Decimal
@@ -292,7 +293,7 @@ model Contact {
   userId     String
   user       User          @relation(fields: [userId], references: [id])
 
-  createdAt  DateTime      @default(now())z
+  createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
   @@map("contacts")
