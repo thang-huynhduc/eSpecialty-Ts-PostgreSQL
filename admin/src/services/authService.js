@@ -4,6 +4,7 @@ import { serverUrl } from "../../config";
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: serverUrl,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -22,13 +23,13 @@ api.interceptors.request.use((config) => {
 export const authService = {
   // Admin login
   adminLogin: async (credentials) => {
-    const response = await api.post("/api/user/admin", credentials);
+    const response = await api.post("/api/user/login", credentials);
     return response.data;
   },
 
   // User login
   userLogin: async (credentials) => {
-    const response = await api.post("/api/user/login", credentials);
+    const response = await api.post("/api/user/", credentials);
     return response.data;
   },
 

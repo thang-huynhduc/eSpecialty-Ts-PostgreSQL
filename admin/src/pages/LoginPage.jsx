@@ -44,15 +44,15 @@ const LoginPage = () => {
       let response = await authService.adminLogin(formData);
 
       // If admin login fails, try user login
-      if (!response.success) {
+      if (!response.data.user) {
         response = await authService.userLogin(formData);
       }
 
-      if (response.success) {
+      if (response.data.user) {
         dispatch(
           loginSuccess({
-            token: response.token,
-            user: response.user || { email: formData.email },
+            token: response.data.token,
+            user: response.data.user || { email: formData.email },
           })
         );
         toast.success(response.message || "Login successful!");

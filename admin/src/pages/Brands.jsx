@@ -41,6 +41,7 @@ const Brands = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          credentials: 'include'
         }
       );
       const data = await response.json();
@@ -105,11 +106,11 @@ const Brands = () => {
       formDataToSend.append("description", formData.description.trim());
       formDataToSend.append("website", formData.website.trim());
       if (formData.image) {
-        formDataToSend.append("image", formData.image);
+        formDataToSend.append("brandImage", formData.image);
       }
 
       const url = editingBrand
-        ? `${import.meta.env.VITE_BACKEND_URL}/api/brand/${editingBrand._id}`
+        ? `${import.meta.env.VITE_BACKEND_URL}/api/brand/${editingBrand.id}`
         : `${import.meta.env.VITE_BACKEND_URL}/api/brand`;
 
       const response = await fetch(url, {
@@ -118,6 +119,7 @@ const Brands = () => {
           Authorization: `Bearer ${token}`,
         },
         body: formDataToSend,
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -381,7 +383,7 @@ const Brands = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredBrands.map((brand) => (
                       <tr
-                        key={brand._id}
+                        key={brand.id}
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -428,7 +430,7 @@ const Brands = () => {
                               {t('brands.edit')}
                             </button>
                             <button
-                              onClick={() => handleDelete(brand._id)}
+                              onClick={() => handleDelete(brand.id)}
                               className="flex items-center gap-1 px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
                             >
                               <FaTrash className="text-xs" />
@@ -447,7 +449,7 @@ const Brands = () => {
             <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-6">
               {filteredBrands.map((brand) => (
                 <div
-                  key={brand._id}
+                  key={brand.id}
                   className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
                 >
                   <div className="relative">
@@ -486,7 +488,7 @@ const Brands = () => {
                         {t('brands.edit')}
                       </button>
                       <button
-                        onClick={() => handleDelete(brand._id)}
+                        onClick={() => handleDelete(brand.id)}
                         className="flex items-center gap-1 px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
                       >
                         <FaTrash />
