@@ -37,6 +37,7 @@ const Categories = () => {
         `${import.meta.env.VITE_BACKEND_URL}/api/category`,
         {
           headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include'
         }
       );
       const data = await response.json();
@@ -100,20 +101,21 @@ const Categories = () => {
       formDataToSend.append("name", formData.name.trim());
       formDataToSend.append("description", formData.description.trim());
       if (formData.image) {
-        formDataToSend.append("image", formData.image);
+        formDataToSend.append("categoryImg", formData.image);
       }
 
       const url = editingCategory
-        ? `${import.meta.env.VITE_BACKEND_URL}/api/category/${editingCategory._id
+        ? `${import.meta.env.VITE_BACKEND_URL}/api/category/${editingCategory.id
         }`
         : `${import.meta.env.VITE_BACKEND_URL}/api/category`;
 
       const response = await fetch(url, {
         method: editingCategory ? "PUT" : "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
         body: formDataToSend,
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -365,7 +367,7 @@ const Categories = () => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredCategories.map((category) => (
-                      <tr key={category._id} className="hover:bg-gray-50">
+                      <tr key={category.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <img
                             src={category.image}
@@ -393,7 +395,7 @@ const Categories = () => {
                               {t('categories.actions.edit')}
                             </button>
                             <button
-                              onClick={() => handleDelete(category._id)}
+                              onClick={() => handleDelete(category.id)}
                               className="flex items-center gap-1 px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
                             >
                               <FaTrash />
@@ -412,7 +414,7 @@ const Categories = () => {
             <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
               {filteredCategories.map((category) => (
                 <div
-                  key={category._id}
+                  key={category.id}
                   className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-start gap-4">
@@ -439,7 +441,7 @@ const Categories = () => {
                           {t('categories.actions.edit')}
                         </button>
                         <button
-                          onClick={() => handleDelete(category._id)}
+                          onClick={() => handleDelete(category.id)}
                           className="flex items-center gap-1 px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
                         >
                           <FaTrash />

@@ -18,31 +18,34 @@ const Add = ({ token }) => {
   const [brands, setBrands] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
-    _type: "",
+    type: "",
     name: "",
     description: "",
-    brand: "",
+    brandId: "",
     price: "",
     discountedPercentage: 10,
     stock: "",
-    category: "",
+    categoryId: "",
     offer: false,
     isAvailable: true,
     badge: false,
     tags: [],
   });
+
+  // State giữ ảnh hiển thị trên UI (vẫn chia 4 slot để dễ quản lý preview)
   const [imageFiles, setImageFiles] = useState({
     image1: null,
     image2: null,
     image3: null,
     image4: null,
   });
+
   const translateCategory = (categoryName) => {
     return t(`categories.${categoryName}`, { defaultValue: categoryName });
   };
 
-  // Fetch categories and brands
   const fetchCategoriesAndBrands = async () => {
     try {
       setLoadingData(true);
@@ -72,83 +75,52 @@ const Add = ({ token }) => {
     fetchCategoriesAndBrands();
   }, []);
 
-  // Handle input change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
-      setFormData({
-        ...formData,
-        [name]: checked,
-      });
+      setFormData({ ...formData, [name]: checked });
     } else if (
       type === "select-one" &&
       (name === "offer" || name === "isAvailable" || name === "badge")
     ) {
-      setFormData({
-        ...formData,
-        [name]: value === "true",
-      });
-    } else if (name === "category") {
-      const originalCategoryName = categories.find(
-        cat => translateCategory(cat.name) === value
-      )?.name || value;
-
-      setFormData({
-        ...formData,
-        [name]: originalCategoryName,
-      });
+      setFormData({ ...formData, [name]: value === "true" });
     } else if (
       name === "price" ||
       name === "discountedPercentage" ||
       name === "stock"
     ) {
-      setFormData({
-        ...formData,
-        [name]: value === "" ? "" : Number(value),
-      });
+      setFormData({ ...formData, [name]: value === "" ? "" : Number(value) });
     } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
+      setFormData({ ...formData, [name]: value });
     }
   };
 
-  // Handle individual image upload
   const handleImageChange = (e, imageKey) => {
     const file = e.target.files[0];
     if (file) {
-      setImageFiles((prev) => ({
-        ...prev,
-        [imageKey]: file,
-      }));
+      setImageFiles((prev) => ({ ...prev, [imageKey]: file }));
     }
   };
 
-  // Remove an image
   const removeImage = (imageKey) => {
-    setImageFiles((prev) => ({
-      ...prev,
-      [imageKey]: null,
-    }));
+    setImageFiles((prev) => ({ ...prev, [imageKey]: null }));
   };
 
   const handleUploadProduct = async (e) => {
     e.preventDefault();
 
-    // Validation
     if (
       !formData.name ||
       !formData.description ||
       !formData.price ||
       !formData.stock ||
-      !formData.category
+      !formData.categoryId ||
+      !formData.brandId
     ) {
       toast.error(t('add_product.addProduct.validation.requiredFields'));
       return;
     }
 
-    // Check if at least one image is uploaded
     const hasImage = Object.values(imageFiles).some((file) => file !== null);
     if (!hasImage) {
       toast.error(t('add_product.addProduct.validation.atLeastOneImage'));
@@ -159,31 +131,35 @@ const Add = ({ token }) => {
       setLoading(true);
       const data = new FormData();
 
-      // Append form fields
-      data.append("_type", formData._type);
+      // Append thông tin text
+      data.append("type", formData.type);
       data.append("name", formData.name);
       data.append("description", formData.description);
-      data.append("brand", formData.brand);
+      data.append("brandId", formData.brandId);
       data.append("price", formData.price);
       data.append("discountedPercentage", formData.discountedPercentage);
       data.append("stock", formData.stock);
-      data.append("category", formData.category);
+      data.append("categoryId", formData.categoryId);
       data.append("offer", formData.offer);
       data.append("isAvailable", formData.isAvailable);
       data.append("badge", formData.badge);
       data.append("tags", JSON.stringify(formData.tags));
 
-      // Append image files
+      // Backend dùng upload.array('productImg', 4) nên tất cả ảnh phải có cùng key là 'productImg'
       Object.keys(imageFiles).forEach((key) => {
         if (imageFiles[key]) {
-          data.append(key, imageFiles[key]);
+          // Thay vì append(key, file), ta append("productImg", file)
+          // FormData sẽ tự động gom các file này thành một mảng
+          data.append("productImg", imageFiles[key]);
         }
       });
 
-      const response = await axios.post(serverUrl + "/api/product/add", data, {
+      const response = await axios.post(serverUrl + "/api/product", data, {
         headers: {
           Authorization: `Bearer ${token}`,
+          // Axios tự động set Content-Type: multipart/form-data khi gửi FormData
         },
+        withCredentials: 'true'
       });
 
       const responseData = response?.data;
@@ -227,62 +203,57 @@ const Add = ({ token }) => {
             </div>
           </div>
 
-          <form
-            className="space-y-6 sm:space-y-8"
-            onSubmit={handleUploadProduct}
-          >
+          <form className="space-y-6 sm:space-y-8" onSubmit={handleUploadProduct}>
             {/* Image Upload Section */}
             <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 {t('add_product.addProduct.images.title')}
               </h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                {["image1", "image2", "image3", "image4"].map(
-                  (imageKey, index) => (
-                    <div key={imageKey} className="relative">
-                      <label htmlFor={imageKey} className="block">
-                        <div className="relative group cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-gray-400 transition-colors duration-200 min-h-[120px] flex flex-col items-center justify-center bg-white">
-                          {imageFiles[imageKey] ? (
-                            <>
-                              <img
-                                src={URL.createObjectURL(imageFiles[imageKey])}
-                                alt={`Preview ${index + 1}`}
-                                className="w-full h-20 object-cover rounded-md mb-2"
-                              />
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  removeImage(imageKey);
-                                }}
-                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                              >
-                                <FaTimes className="text-xs" />
-                              </button>
-                              <span className="text-xs text-gray-600">
-                                {t('add_product.addProduct.images.change')}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <IoMdCloudUpload className="text-3xl text-gray-400 mb-2" />
-                              <span className="text-xs text-gray-600">
-                                {t('add_product.addProduct.images.upload', { number: index + 1 })}
-                              </span>
-                            </>
-                          )}
-                          <input
-                            type="file"
-                            id={imageKey}
-                            hidden
-                            accept="image/*"
-                            onChange={(e) => handleImageChange(e, imageKey)}
-                          />
-                        </div>
-                      </label>
-                    </div>
-                  )
-                )}
+                {["image1", "image2", "image3", "image4"].map((imageKey, index) => (
+                  <div key={imageKey} className="relative">
+                    <label htmlFor={imageKey} className="block">
+                      <div className="relative group cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-gray-400 transition-colors duration-200 min-h-[120px] flex flex-col items-center justify-center bg-white">
+                        {imageFiles[imageKey] ? (
+                          <>
+                            <img
+                              src={URL.createObjectURL(imageFiles[imageKey])}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-20 object-cover rounded-md mb-2"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                removeImage(imageKey);
+                              }}
+                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                            >
+                              <FaTimes className="text-xs" />
+                            </button>
+                            <span className="text-xs text-gray-600">
+                              {t('add_product.addProduct.images.change')}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <IoMdCloudUpload className="text-3xl text-gray-400 mb-2" />
+                            <span className="text-xs text-gray-600">
+                              {t('add_product.addProduct.images.upload', { number: index + 1 })}
+                            </span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          id={imageKey}
+                          hidden
+                          accept="image/*"
+                          onChange={(e) => handleImageChange(e, imageKey)}
+                        />
+                      </div>
+                    </label>
+                  </div>
+                ))}
               </div>
               <p className="text-sm text-gray-500 mt-3">
                 {t('add_product.addProduct.images.hint')}
@@ -322,10 +293,10 @@ const Add = ({ token }) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="brand">{t('add_product.addProduct.basicInfo.brand')}</Label>
+                  <Label htmlFor="brandId">{t('add_product.addProduct.basicInfo.brand')}</Label>
                   <select
-                    name="brand"
-                    value={formData.brand}
+                    name="brandId"
+                    value={formData.brandId}
                     onChange={handleChange}
                     className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     disabled={loadingData}
@@ -334,7 +305,7 @@ const Add = ({ token }) => {
                       {loadingData ? t('add_product.addProduct.basicInfo.loadingBrands') : t('add_product.addProduct.basicInfo.brandPlaceholder')}
                     </option>
                     {brands.map((brand) => (
-                      <option key={brand._id} value={brand.name}>
+                      <option key={brand.id} value={brand.id}>
                         {brand.name}
                       </option>
                     ))}
@@ -342,10 +313,10 @@ const Add = ({ token }) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="_type">{t('add_product.addProduct.basicInfo.type')}</Label>
+                  <Label htmlFor="type">{t('add_product.addProduct.basicInfo.type')}</Label>
                   <select
-                    name="_type"
-                    value={formData._type}
+                    name="type"
+                    value={formData.type}
                     onChange={handleChange}
                     className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
@@ -417,10 +388,10 @@ const Add = ({ token }) => {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <div>
-                  <Label htmlFor="category">{t('add_product.addProduct.category.category')}</Label>
+                  <Label htmlFor="categoryId">{t('add_product.addProduct.category.category')}</Label>
                   <select
-                    name="category"
-                    value={translateCategory(formData.category)}
+                    name="categoryId"
+                    value={formData.categoryId}
                     onChange={handleChange}
                     className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
@@ -430,7 +401,7 @@ const Add = ({ token }) => {
                       {loadingData ? t('add_product.addProduct.category.loadingCategories') : t('add_product.addProduct.category.categoryPlaceholder')}
                     </option>
                     {categories.map((category) => (
-                      <option key={category._id} value={translateCategory(category.name)}>
+                      <option key={category.id} value={category.id}>
                         {translateCategory(category.name)}
                       </option>
                     ))}
@@ -495,22 +466,13 @@ const Add = ({ token }) => {
                       className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setFormData((prevData) => ({
-                            ...prevData,
-                            tags: [...prevData.tags, tag],
-                          }));
+                          setFormData((prev) => ({ ...prev, tags: [...prev.tags, tag] }));
                         } else {
-                          setFormData((prevData) => ({
-                            ...prevData,
-                            tags: prevData.tags.filter((t) => t !== tag),
-                          }));
+                          setFormData((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }));
                         }
                       }}
                     />
-                    <label
-                      htmlFor={tag.toLowerCase()}
-                      className="text-sm text-gray-700 cursor-pointer"
-                    >
+                    <label htmlFor={tag.toLowerCase()} className="text-sm text-gray-700 cursor-pointer">
                       {tag}
                     </label>
                   </div>
