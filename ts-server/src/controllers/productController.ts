@@ -12,8 +12,25 @@ const addProduct = async (req: Request, res: Response, next: NextFunction) => {
     if (files.length > 4) throw new ApiError(StatusCodes.BAD_REQUEST, 'Max 4 images allowed')
 
     const result = await productService.addProduct(req.body, files)
-    res.status(StatusCodes.CREATED).json(result)
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      message: 'Thêm Sản Phẩm Thành Công',
+      data: result
+    })
   } catch (error) { next(error) }
+}
+
+const getAllProduct =async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const results = await productService.getAllProduct()
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'Lấy Danh Sách Sản Phẩm Thành Công',
+      products: results
+    })
+  } catch (error) {
+    next(error)
+  }
 }
 
 const getProductById = async (req: Request, res: Response, next: NextFunction) => {
@@ -34,7 +51,11 @@ const updateProduct = async (req: Request, res: Response, next: NextFunction) =>
   try {
     const files = req.files as Express.Multer.File[] || []
     const result = await productService.updateProduct(req.params.id, req.body, files)
-    res.status(StatusCodes.OK).json(result)
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'cập Nhập Sản Phẩm Thành Công',
+      data: result
+    })
   } catch (error) { next(error) }
 }
 
@@ -48,6 +69,7 @@ const updateStockById = async (req: Request, res: Response, next: NextFunction) 
 
 export const productController = {
   addProduct,
+  getAllProduct,
   getProductById,
   removeProduct,
   updateProduct,

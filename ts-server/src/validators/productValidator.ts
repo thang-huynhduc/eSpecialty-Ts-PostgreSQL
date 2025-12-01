@@ -55,10 +55,10 @@ const updateProduct = async (req: Request, res: Response, next: NextFunction) =>
 
   try {
     await correctCondition.validateAsync(req.body, { abortEarly: false })
-    // Validate file thủ công (Bắt buộc có ít nhất 1 ảnh)
-    if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
-      throw new Error('At least one product image is required!')
-    }
+    // // Validate file thủ công (Bắt buộc có ít nhất 1 ảnh)
+    // if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
+    //   throw new Error('At least one product image is required!')
+    // }
     next()
   } catch (error) {
     next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, (error as Error).message))

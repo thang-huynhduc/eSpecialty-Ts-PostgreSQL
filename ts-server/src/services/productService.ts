@@ -34,7 +34,8 @@ const addProduct = async (data: CreateProductDTO, files: Express.Multer.File[]) 
       discountedPercentage: Number(data.discountedPercentage || 10),
       weight: Number(data.weight || 500),
       isAvailable: data.isAvailable ? String(data.isAvailable) === 'true' : true,
-
+      offer: Boolean(data.offer),
+      badge: Boolean(data.badge),
       tags: formattedTags,
       images: imageUrls // Lưu mảng link ảnh
     }
@@ -42,6 +43,25 @@ const addProduct = async (data: CreateProductDTO, files: Express.Multer.File[]) 
 
   return newProduct
 }
+
+const getAllProduct = async () => {
+  const data = await prisma.product.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      category: { select: { name: true } },
+      brand: { select: { name: true } }
+    }
+  })
+
+  return data.map(p => ({
+    ...p,
+    categoryName: p.category?.name,
+    brandName: p.brand?.name,
+    category: undefined,
+    brand: undefined
+  }))
+}
+
 
 // GET BY ID
 const getProductById = async (id: string) => {
@@ -113,8 +133,21 @@ const updateProduct = async (id: string, data: UpdateProductDTO, files?: Express
       name: data.name,
       type: data.type,
       description: data.description,
+
+      // Number fields
       price: data.price ? Number(data.price) : undefined,
       stock: data.stock ? Number(data.stock) : undefined,
+      discountedPercentage: data.discountedPercentage ? Number(data.discountedPercentage) : undefined,
+      weight: data.weight ? Number(data.weight) : undefined,
+
+      // Boolean fields (FormData luôn là string)
+      offer: Boolean(data.offer),
+      isAvailable: Boolean(data.isAvailable),
+      badge: Boolean(data.badge),
+
+      // Relation fields
+      brandId: data.brandId,
+      categoryId: data.categoryId,
 
       images: newImages,
       tags: formattedTags
@@ -136,6 +169,7 @@ const updateStockById = async (id: string, stock: number) => {
 
 export const productService = {
   addProduct,
+  getAllProduct,
   getProductById,
   removeProduct,
   updateProduct,

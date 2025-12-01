@@ -9,7 +9,10 @@ const Router = express.Router()
 // /api/product
 
 Router.route('/')
-  .post(authMiddleware.isAuthorize, authMiddleware.isAuthorize, multerUploadMiddleware.upload.array('productImg', 4), productValidator.createProduct, productController.addProduct) // add Product
+  .post(authMiddleware.isAuthorize, authMiddleware.adminAuth, multerUploadMiddleware.upload.array('productImg', 4), productValidator.createProduct, productController.addProduct) // add Product
+
+Router.route('/list')
+  .get(authMiddleware.isAuthorize, authMiddleware.adminAuth, productController.getAllProduct)
 
 Router.route('/:id')
   .get(brandValidator.checkBrandId, productController.getProductById) // Check uuid ( Tái sử dụng), Lấy thông tin ProductId
