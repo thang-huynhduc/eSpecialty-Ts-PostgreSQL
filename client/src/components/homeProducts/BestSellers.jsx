@@ -48,7 +48,7 @@ const BestSellers = () => {
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const endpoint = `${config?.baseUrl}/api/products?_type=best_sellers`;
+  const endpoint = `${config?.baseUrl}/api/products/list?type=best_sellers`;
 
   useEffect(() => {
     const getProducts = async () => {
@@ -105,7 +105,7 @@ const BestSellers = () => {
         // Use slider when more than 3 products
         <Slider {...settings}>
           {products?.map((item) => (
-            <div key={item?._id} className="px-2">
+            <div key={item?.id} className="px-2">
               <ProductCard item={item} />
             </div>
           ))}
@@ -114,7 +114,7 @@ const BestSellers = () => {
         // Use simple grid when 3 or fewer products
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {products?.map((item) => (
-            <ProductCard item={item} key={item?._id} />
+            <ProductCard item={item} key={item?.id} />
           ))}
         </div>
       )}

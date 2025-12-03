@@ -24,10 +24,11 @@ function App() {
   const fetchUserOrderCount = useCallback(
     async (token) => {
       try {
-        const response = await fetch(`${serverUrl}/api/order/my-orders`, {
+        const response = await fetch(`${serverUrl}/api/order`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          credentials: 'include'
         });
 
         const data = await response.json();

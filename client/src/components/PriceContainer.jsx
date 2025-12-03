@@ -9,7 +9,7 @@ const PriceContainer = ({ item, className }) => {
   const [existingProduct, setExistingProduct] = useState(null);
   useEffect(() => {
     const availableItem = products.find(
-      (product) => product?._id === item?._id
+      (product) => product?.id === item?.id
     );
 
     setExistingProduct(availableItem || null);
@@ -63,7 +63,7 @@ const PriceContainer = ({ item, className }) => {
 
 PriceContainer.propTypes = {
   item: PropTypes.shape({
-    _id: PropTypes.string,
+    id: PropTypes.string,
     price: PropTypes.number,
     offer: PropTypes.bool,
     discountedPercentage: PropTypes.number,

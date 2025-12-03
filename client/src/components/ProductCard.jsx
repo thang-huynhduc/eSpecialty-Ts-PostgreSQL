@@ -9,7 +9,7 @@ const ProductCard = ({ item, viewMode = "grid", className = "" }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleProductDetails = () => {
-    navigate(`/product/${item?._id}`, {
+    navigate(`/product/${item?.id}`, {
       state: {
         item: item,
       },
@@ -75,15 +75,15 @@ const ProductCard = ({ item, viewMode = "grid", className = "" }) => {
                 </div>
               </div>
 
-              {item?.brand && (
+              {item?.brand.name && (
                 <p className="text-sm text-gray-600 mb-2">
-                  Brand: {item.brand}
+                  Brand: {item.brand.name}
                 </p>
               )}
 
-              {item?.category && (
+              {item?.category.name && (
                 <p className="text-sm text-gray-600 mb-3">
-                  Category: {item.category}
+                  Category: {item.category.name}
                 </p>
               )}
 
@@ -173,7 +173,11 @@ const ProductCard = ({ item, viewMode = "grid", className = "" }) => {
 
         {/* Price */}
         <div className="mb-4">
-          <PriceContainer item={item} />
+          <PriceContainer item={{
+            ...item,
+            price: Number(item.price),
+            discountedPercentage: Number(item.discountedPercentage || 0)
+          }} />
         </div>
 
         {/* Add to Cart Button */}
@@ -195,8 +199,8 @@ ProductCard.propTypes = {
     offer: PropTypes.bool,
     badge: PropTypes.bool,
     discountedPercentage: PropTypes.number,
-    brand: PropTypes.string,
-    category: PropTypes.string,
+    brand: PropTypes.object,
+    category: PropTypes.object,
     description: PropTypes.string,
   }).isRequired,
   viewMode: PropTypes.oneOf(["grid", "list"]),

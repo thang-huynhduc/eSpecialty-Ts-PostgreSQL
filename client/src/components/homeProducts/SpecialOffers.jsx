@@ -48,7 +48,7 @@ const SpecialOffers = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const API_URL = import.meta.env.VITE_BACKEND_URL;
-  const endpoint = `${API_URL}/api/products?offer=true`;
+  const endpoint = `${API_URL}/api/products/list?offer=true`;
 
   useEffect(() => {
     const getProducts = async () => {
@@ -103,7 +103,7 @@ const SpecialOffers = () => {
         // Use slider when more than 3 products
         <Slider {...settings}>
           {products?.map((item) => (
-            <div key={item?._id} className="px-2">
+            <div key={item?.id} className="px-2">
               <ProductCard item={item} />
             </div>
           ))}
@@ -112,7 +112,7 @@ const SpecialOffers = () => {
         // Use simple grid when 3 or fewer products
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {products?.map((item) => (
-            <ProductCard item={item} key={item?._id} />
+            <ProductCard item={item} key={item?.id} />
           ))}
         </div>
       )}

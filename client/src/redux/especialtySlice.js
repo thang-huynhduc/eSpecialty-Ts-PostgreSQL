@@ -12,27 +12,28 @@ export const especialtySlice = createSlice({
   reducers: {
     addToCart: (state, action) => {
       const item = state.products.find(
-        (item) => item._id === action.payload._id
+        (item) => item.id === action.payload.id
       );
       if (item) {
         item.quantity = (item.quantity || 0) + (action.payload.quantity || 1);
       } else {
         state.products.push({
           ...action.payload,
+          // Đảm bảo giá là số (vì PostgreSQL trả về Decimal string)
+          price: Number(action.payload.price), 
           quantity: action.payload.quantity || 1,
         });
       }
     },
     increaseQuantity: (state, action) => {
-      const item = state.products.find((item) => item._id === action.payload);
-
+      // action.payload là id
+      const item = state.products.find((item) => item.id === action.payload);
       if (item) {
         item.quantity = (item.quantity || 0) + 1;
       }
     },
     decreaseQuantity: (state, action) => {
-      const item = state.products.find((item) => item._id === action.payload);
-
+      const item = state.products.find((item) => item.id === action.payload);
       if (item) {
         const currentQuantity = item.quantity || 1;
         if (currentQuantity === 1) {
@@ -44,7 +45,7 @@ export const especialtySlice = createSlice({
     },
     deleteItem: (state, action) => {
       state.products = state.products.filter(
-        (item) => item._id !== action.payload
+        (item) => item.id !== action.payload
       );
     },
     resetCart: (state) => {
