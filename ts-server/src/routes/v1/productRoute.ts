@@ -6,7 +6,7 @@ import { brandValidator } from 'validators/brandValidator.js'
 import { productValidator } from 'validators/productValidator.js'
 
 const Router = express.Router()
-// /api/product
+// /api/products
 
 Router.route('/')
   .post(authMiddleware.isAuthorize, authMiddleware.adminAuth, multerUploadMiddleware.upload.array('productImg', 4), productValidator.createProduct, productController.addProduct) // add Product

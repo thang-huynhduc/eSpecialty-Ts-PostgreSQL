@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { productService } from '../services/productService.js'
 import ApiError from '../utils/apiError.js'
+import { UUID } from 'crypto'
 
 const addProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -22,7 +23,11 @@ const addProduct = async (req: Request, res: Response, next: NextFunction) => {
 
 const getAllProduct =async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const results = await productService.getAllProduct()
+    const { type, categoryId } = req.query
+    const results = await productService.getAllProduct({
+      type: type as string,
+      categoryId: categoryId as UUID
+    })
     res.status(StatusCodes.OK).json({
       success: true,
       message: 'Lấy Danh Sách Sản Phẩm Thành Công',
@@ -35,8 +40,11 @@ const getAllProduct =async (req: Request, res: Response, next: NextFunction) => 
 
 const getProductById = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await productService.getProductById(req.params.id)
-    res.status(StatusCodes.OK).json(result)
+    const product = await productService.getProductById(req.params.id)
+    res.status(StatusCodes.OK).json({
+      success: true,
+      product: product
+    })
   } catch (error) { next(error) }
 }
 

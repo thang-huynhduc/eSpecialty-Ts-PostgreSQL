@@ -48,6 +48,7 @@ const userLogin = async (
 
     return res.status(StatusCodes.OK).json({
       message: 'Đăng nhập thành công',
+      success: true,
       data: result
     })
   } catch (err) {

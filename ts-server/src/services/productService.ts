@@ -3,6 +3,8 @@ import { prisma } from '../config/prisma.js'
 import { CloudinaryProvider } from '../providers/CloudinaryProvider.js'
 import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
+import { Prisma } from 'generated/prisma/client.js'
+import { UUID } from 'crypto'
 
 // ADD PRODUCT
 const addProduct = async (data: CreateProductDTO, files: Express.Multer.File[]) => {
@@ -44,8 +46,24 @@ const addProduct = async (data: CreateProductDTO, files: Express.Multer.File[]) 
   return newProduct
 }
 
-const getAllProduct = async () => {
+const getAllProduct = async (query: { type?: string, categoryId?: UUID }) => {
+  const { type, categoryId } = query
+
+  // 1. Khởi tạo điều kiện lọc
+  const whereCondition: Prisma.ProductWhereInput = {
+    isAvailable: true // (Optional) Mặc định chỉ lấy sản phẩm đang bán
+  }
+
+  // 2. Nếu có type gửi lên thì thêm vào điều kiện lọc
+  if (type) {
+    whereCondition.type = type
+  } else if (categoryId) {
+    whereCondition.categoryId = categoryId
+  }
+
+  // 3. Query DB
   const data = await prisma.product.findMany({
+    where: whereCondition,
     orderBy: { createdAt: 'desc' },
     include: {
       category: { select: { name: true } },
@@ -53,15 +71,13 @@ const getAllProduct = async () => {
     }
   })
 
+  // 4. Map dữ liệu trả về (Flatten categoryName, brandName)
   return data.map(p => ({
     ...p,
     categoryName: p.category?.name,
-    brandName: p.brand?.name,
-    category: undefined,
-    brand: undefined
+    brandName: p.brand?.name
   }))
 }
-
 
 // GET BY ID
 const getProductById = async (id: string) => {
