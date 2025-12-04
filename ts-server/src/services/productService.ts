@@ -1,4 +1,4 @@
-import { CreateProductDTO, UpdateProductDTO } from 'dtos/productDTO.js'
+import { CreateProductDTO, UpdateProductDTO } from 'types/IProduct.js'
 import { prisma } from '../config/prisma.js'
 import { CloudinaryProvider } from '../providers/CloudinaryProvider.js'
 import ApiError from '../utils/apiError.js'

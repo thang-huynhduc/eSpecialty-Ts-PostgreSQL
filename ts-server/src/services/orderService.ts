@@ -1,4 +1,4 @@
-import { CreateOrderDTO, OrderItemDTO } from 'dtos/orderDTO.js'
+import { CreateOrderDTO, OrderItemDTO } from 'types/IOrder.js'
 import { prisma } from '../config/prisma.js'
 import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'

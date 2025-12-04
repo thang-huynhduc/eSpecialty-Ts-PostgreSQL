@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { brandService } from '../services/brandService.js'
-import { CreateAndUpdateBrandDTO } from 'dtos/brandDTO.js'
+import { CreateAndUpdateBrandDTO } from 'types/IBrand.js'
 
 const createBrand = async (req: Request, res: Response, next: NextFunction) => {
   try {

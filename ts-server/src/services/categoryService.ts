@@ -1,5 +1,5 @@
 import { prisma } from '../config/prisma.js'
-import { CreateCategoryDTO, UpdateCategoryDTO } from 'dtos/categoriesDTO.js'
+import { CreateCategoryDTO, UpdateCategoryDTO } from 'types/ICategory.js'
 import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 import { CloudinaryProvider } from '../providers/CloudinaryProvider.js'

@@ -1,4 +1,4 @@
-import { CreateAndUpdateBrandDTO } from 'dtos/brandDTO.js'
+import { CreateAndUpdateBrandDTO } from 'types/IBrand.js'
 import { prisma } from '../config/prisma.js'
 import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'

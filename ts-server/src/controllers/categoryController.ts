@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { categoryService } from '../services/categoryService.js'
-import { CreateCategoryDTO, UpdateCategoryDTO } from 'dtos/categoriesDTO.js'
+import { CreateCategoryDTO, UpdateCategoryDTO } from 'types/ICategory.js'
 
 const createCategory = async (req: Request, res: Response, next: NextFunction) => {
   try {

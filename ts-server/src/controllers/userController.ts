@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express'
 import { userService } from 'services/userService.js'
-import type { AddAddressDTO, LoginDTO, RegisterDTO, SendOtpDTO, VerifyOtpDTO } from 'dtos/authDTO.js'
+import type { AddAddressDTO, LoginDTO, RegisterDTO, SendOtpDTO, VerifyOtpDTO } from 'types/IAuth.js'
 import ApiError from 'utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 import ms from 'ms'

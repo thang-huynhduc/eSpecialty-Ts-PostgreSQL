@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { env } from 'config/environment.js'
 import { prisma } from 'config/prisma.js'
-import { AddAddressDTO, LoginDTO, RegisterDTO, SendOtpDTO, VerifyOtpDTO } from 'dtos/authDTO.js'
+import { AddAddressDTO, LoginDTO, RegisterDTO, SendOtpDTO, VerifyOtpDTO } from 'types/IAuth.js'
 import { User } from 'generated/prisma/client.js'
 import { StatusCodes } from 'http-status-codes'
 import { JwtProvider } from 'providers/JwtProvider.js'

@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { orderService } from '../services/orderService.js'
-import { CreateOrderDTO } from 'dtos/orderDTO.js'
+import { CreateOrderDTO } from 'types/IOrder.js'
 
 // Create
 const createOrder = async (req: Request, res: Response, next: NextFunction) => {
