@@ -144,7 +144,7 @@ const Order = () => {
         // Cập nhật state local
         setOrders(orders.map(o =>
           o.id === order.id
-            ? { ...o, status: "cancelled", paymentStatus: data.order.paymentStatus, updatedAt: data.order.updatedAt }
+            ? { ...o, status: "cancelled", paymentStatus: 'failed', updatedAt: Date.now() }
             : o
         ));
       } else {

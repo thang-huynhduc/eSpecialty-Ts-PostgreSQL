@@ -27,7 +27,7 @@ const Shop = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const endpoint = `${config?.baseUrl}/api/products`;
+  const endpoint = `${config?.baseUrl}/api/products/list`;
 
   // Handle URL parameters for category filtering
   useEffect(() => {

@@ -235,7 +235,7 @@ const setDefaultAddress = async (req: Request, res: Response, next: NextFunction
     const userId = req.jwtDecoded?.userId as string
     const { addressId } = req.params
     const result = await userService.setDefaultAddress(userId, addressId)
-    res.status(StatusCodes.OK).json({ message: 'Set default success', data: result })
+    res.status(StatusCodes.OK).json({ success: true, message: 'Set default success', data: result })
   } catch (error) { next(error) }
 }
 

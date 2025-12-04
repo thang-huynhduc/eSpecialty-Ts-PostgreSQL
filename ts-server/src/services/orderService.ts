@@ -3,6 +3,7 @@ import { prisma } from '../config/prisma.js'
 import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 import { OrderStatus, PaymentStatus } from 'generated/prisma/enums.js'
+import { ghn } from 'config/Giaohangnhanh.js'
 
 // 1. TẠO ĐƠN HÀNG (Transaction)
 const createOrder = async (userId: string, data: CreateOrderDTO) => {
@@ -225,6 +226,50 @@ const deleteOrder = async (orderId: string) => {
   return { message: 'Order deleted permanently' }
 }
 
+/**
+ * Tính phí ship GHN
+ * @param districtId ID Quận/Huyện (VD: 1454)
+ * @param wardCode Mã Phường/Xã (VD: "21012")
+ * @param items Danh sách sản phẩm để tính cân nặng
+ */
+const calculateShippingFee = async (districtId: number, wardCode: string, items: any[]) => {
+  try {
+    // 1. Tính tổng cân nặng (Gram)
+    // Nếu sản phẩm trong DB không có trường weight, đại ca nên default 1 giá trị (VD: 200g)
+    let totalWeight = 0
+    let totalPrice = 0
+
+    items.forEach(item => {
+      const weight = item.weight || 200 // Mặc định 200g nếu thiếu
+      totalWeight += weight * item.quantity
+      totalPrice += item.price * item.quantity
+    })
+
+    // Giới hạn cân nặng tối đa (VD: GHN thường giới hạn 30kg - 50kg tùy gói)
+    if (totalWeight > 30000) totalWeight = 30000
+
+    // 2. Gọi API GHN
+    const result = await ghn.calculateFee.calculateShippingFee({
+      from_district_id: 1454, // ID Quận/Huyện KHO CỦA ĐẠI CA (SET CỨNG HOẶC LẤY TỪ ENV)
+      service_type_id: 2, // 2 = E-commerce Delivery (Giao hàng TMĐT - Thường dùng)
+      to_district_id: districtId,
+      to_ward_code: wardCode,
+      height: 10, // Kích thước gói hàng (cm) - Có thể ước lượng hoặc fix cứng
+      length: 10,
+      width: 10,
+      weight: totalWeight,
+      insurance_value: totalPrice // Giá trị đơn hàng (để tính bảo hiểm)
+    })
+
+    return result // Trả về object chứa { total: 30000, ... }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error: any) {
+    // Fallback: Nếu lỗi thì trả về phí mặc định hoặc ném lỗi
+    throw new ApiError(400, 'Không thể tính phí vận chuyển lúc này. Vui lòng thử lại.')
+  }
+}
+
 export const orderService = {
   createOrder,
   getAllUserOrders,
@@ -234,5 +279,7 @@ export const orderService = {
   getAllOrders,
   getOrdersByUserId,
   updateOrderStatus,
-  deleteOrder
+  deleteOrder,
+  // GHN
+  calculateShippingFee
 }

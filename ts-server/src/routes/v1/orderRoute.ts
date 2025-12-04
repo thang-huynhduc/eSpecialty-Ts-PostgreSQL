@@ -34,4 +34,8 @@ Router.route('/admin/:id/status')
 Router.route('/admin/:id')
   .delete(authMiddleware.isAuthorize, authMiddleware.adminAuth, orderValidator.checkOrderId, orderController.deleteOrder)
 
+// Tính phí ship
+Router.route('/calculate-fee')
+  .post(orderController.calculateFee)
+
 export const orderRoute = Router

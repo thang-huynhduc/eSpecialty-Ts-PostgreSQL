@@ -90,6 +90,39 @@ const deleteOrder = async (req: Request, res: Response, next: NextFunction) => {
   } catch (error) { next(error) }
 }
 
+const calculateFee = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { districtId, wardCode, items } = req.body
+
+    // Validate dữ liệu đầu vào
+    if (!districtId || !wardCode || !items || items.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Thiếu thông tin địa chỉ hoặc giỏ hàng trống'
+      })
+      return
+    }
+
+    // Gọi service
+    const feeData = await orderService.calculateShippingFee(
+      Number(districtId),
+      String(wardCode),
+      items
+    )
+
+    res.status(200).json({
+      success: true,
+      data: {
+        total: feeData.total, // Tổng phí ship
+        service_fee: feeData.service_fee, // Phí dịch vụ
+        insurance_fee: feeData.insurance_fee // Phí bảo hiểm
+      }
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const orderController = {
   createOrder,
   getAllUserOrders,
@@ -99,5 +132,7 @@ export const orderController = {
   getAllOrders,
   getUserOrders,
   updateOrderStatus,
-  deleteOrder
+  deleteOrder,
+  // GHN
+  calculateFee
 }

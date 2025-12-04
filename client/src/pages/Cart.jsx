@@ -106,16 +106,50 @@ const Cart = () => {
     }
   }, [userInfo]);
 
-  // --- 3. SHIPPING LOGIC (MOCK HOẶC GỌI API) ---
+  // --- 3. SHIPPING FEE ---
   useEffect(() => {
-    if (selectedAddress && products.length > 0) {
-      // TODO: Uncomment dòng dưới khi API shipping sẵn sàng
-      // calculateShippingFee(); 
-      setShippingFee(30000); // Mock phí ship 30k
-    } else {
-      setShippingFee(0);
-    }
-  }, [selectedAddress, products]);
+    const calculateShipping = async () => {
+      // Chỉ tính khi có địa chỉ đầy đủ (Quận + Phường) và có hàng
+      if (selectedAddress?.districtId && selectedAddress?.wardCode && products.length > 0) {
+        setIsCalculatingShipping(true); // Đại ca nhớ thêm state này vào component: const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+        try {
+          const response = await fetch(`${API_URL}/order/calculate-fee`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              // 'Authorization': `Bearer ...` (Nếu route yêu cầu login)
+            },
+            body: JSON.stringify({
+              districtId: selectedAddress.districtId,
+              wardCode: selectedAddress.wardCode,
+              items: products.map(p => ({
+                weight: p.weight, // Nếu sản phẩm FE ko có weight thì backend sẽ tự default
+                quantity: p.quantity,
+                price: p.price
+              }))
+            })
+          });
+          
+          const data = await response.json();
+          if (data.success) {
+            setShippingFee(data.data.total);
+          } else {
+            console.error(data.message);
+            setShippingFee(30000); // Fallback nếu lỗi
+          }
+        } catch (error) {
+          console.error("Lỗi tính phí ship:", error);
+          setShippingFee(30000); // Fallback
+        } finally {
+          setIsCalculatingShipping(false);
+        }
+      } else {
+        setShippingFee(0);
+      }
+    };
+
+    calculateShipping();
+  }, [selectedAddress, products]); // Chạy lại khi địa chỉ hoặc giỏ hàng thay đổi
 
   const fetchAddresses = async () => {
     try {
@@ -206,7 +240,7 @@ const Cart = () => {
       // Payload chuẩn cho Backend createOrder
       const orderPayload = {
         items: products.map(p => ({
-            productId: p.id, // Sửa _id thành id
+            productId: p.id,
             quantity: p.quantity
         })),
         shippingAddress: selectedAddress, // Gửi nguyên object để lưu snapshot
@@ -231,7 +265,7 @@ const Cart = () => {
         dispatch(resetCart());
         dispatch(setOrderCount(orderCount + 1));
         // Điều hướng tới trang Checkout/Success
-        navigate(`/checkout/${data.id}`); 
+        navigate(`/checkout/${data.order.id}`); 
       } else {
         toast.error(data.message || t("cart.failed_place_order"));
       }

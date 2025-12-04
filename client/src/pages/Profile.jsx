@@ -229,13 +229,14 @@ const Profile = () => {
   const handleSetDefaultAddress = async (addressId) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.put(
-        `${serverUrl}/api/user/addresses/${addressId}/default`,
+      const response = await axios.patch(
+        `${serverUrl}/api/user/addresses/${addressId}`,
         {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          withCredentials: 'true'
         }
       );
 
@@ -716,7 +717,7 @@ const Profile = () => {
                               #{order.id.slice(-8).toUpperCase()}
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(order.date).toLocaleDateString()}
+                              {new Date(order.createdAt).toLocaleDateString()}
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                               {order.items.length} {order.items.length !== 1 ? t("profile.items_plural") : t("profile.item_single")}
