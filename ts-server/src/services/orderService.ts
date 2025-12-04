@@ -53,7 +53,7 @@ const createOrder = async (userId: string, data: CreateOrderDTO) => {
   }
 
   // Cộng phí ship
-  totalAmount += Number(data.shippingFee || 0)
+  // totalAmount += Number(data.shippingFee || 0)
 
   // B3: CHẠY TRANSACTION (Tạo đơn + Trừ kho)
   // Dùng $transaction để đảm bảo tính toàn vẹn dữ liệu
@@ -107,7 +107,7 @@ const getAllUserOrders = async (userId: string) => {
 const getOrderById = async (userId: string, orderId: string) => {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { items: true, paymentDetail: true }
+    include: { items: true, paymentDetail: true, user: { select: { name: true, email: true } } }
   })
 
   if (!order) throw new ApiError(StatusCodes.NOT_FOUND, 'Order not found')

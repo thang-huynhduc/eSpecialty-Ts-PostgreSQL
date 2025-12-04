@@ -6,6 +6,7 @@ import { brandRoute } from './brandRoute.js'
 import { categoryRoute } from './categoryRoute.js'
 import { productRoute } from './productRoute.js'
 import { orderRoute } from './orderRoute.js'
+import { ghnRoute } from './ghnRoute.js'
 
 const Router = express.Router()
 
@@ -27,5 +28,8 @@ Router.use('/products', productRoute)
 
 /** Order Route */
 Router.use('/order', orderRoute)
+
+/** GHN Route */
+Router.use('/ghn', ghnRoute)
 
 export const API_V1 = Router

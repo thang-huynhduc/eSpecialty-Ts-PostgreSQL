@@ -18,8 +18,7 @@ const createOrder = async (req: Request, res: Response, next: NextFunction) => {
     shippingAddress: Joi.object({
       street: Joi.string().required(),
       city: Joi.string().required(),
-      phone: Joi.string().required().pattern(/^[0-9]{10,11}$/),
-      name: Joi.string().required()
+      phone: Joi.string().required().pattern(/^[0-9]{10,11}$/)
     }).unknown(true).required(), // unknown(true) để cho phép các trường khác như ward, district...
 
     paymentMethod: Joi.string().valid(...Object.values(PaymentMethod)).default(PaymentMethod.cod),

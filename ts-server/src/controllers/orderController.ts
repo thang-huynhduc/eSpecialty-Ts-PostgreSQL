@@ -8,7 +8,10 @@ const createOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.jwtDecoded?.userId as string
     const newOrder = await orderService.createOrder(userId, req.body as CreateOrderDTO)
-    res.status(StatusCodes.CREATED).json(newOrder)
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      order: newOrder
+    })
   } catch (error) { next(error) }
 }
 
@@ -17,7 +20,11 @@ const getAllUserOrders = async (req: Request, res: Response, next: NextFunction)
   try {
     const userId = req.jwtDecoded?.userId as string
     const orders = await orderService.getAllUserOrders(userId)
-    res.status(StatusCodes.OK).json(orders)
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'Lấy danh sách đơn hàng thành công',
+      orders: orders
+    })
   } catch (error) { next(error) }
 }
 
@@ -27,7 +34,10 @@ const getOrderById = async (req: Request, res: Response, next: NextFunction) => 
     const userId = req.jwtDecoded?.userId as string
     const orderId = req.params.id
     const order = await orderService.getOrderById(userId, orderId)
-    res.status(StatusCodes.OK).json(order)
+    res.status(StatusCodes.OK).json({
+      success: true,
+      order: order
+    })
   } catch (error) { next(error) }
 }
 
@@ -37,7 +47,10 @@ const cancelOrder = async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.jwtDecoded?.userId as string
     const orderId = req.params.id
     const result = await orderService.cancelOrder(userId, orderId)
-    res.status(StatusCodes.OK).json(result)
+    res.status(StatusCodes.OK).json({
+      success: true,
+      result
+    })
   } catch (error) { next(error) }
 }
 

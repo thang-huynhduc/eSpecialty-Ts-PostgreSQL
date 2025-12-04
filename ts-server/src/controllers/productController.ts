@@ -40,7 +40,8 @@ const getAllProduct =async (req: Request, res: Response, next: NextFunction) => 
 
 const getProductById = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const product = await productService.getProductById(req.params.id)
+    const { id } = req.params
+    const product = await productService.getProductById(id)
     res.status(StatusCodes.OK).json({
       success: true,
       product: product

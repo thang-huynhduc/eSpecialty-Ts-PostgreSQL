@@ -158,9 +158,12 @@ export const getUserProfile = async (
 ) => {
   try {
     const userId = req.jwtDecoded?.userId as string
-    const result = await userService.getUserProfile(userId)
+    const user = await userService.getUserProfile(userId)
 
-    res.status(StatusCodes.OK).json(result)
+    res.status(StatusCodes.OK).json({
+      success: true,
+      user: user
+    })
   } catch (error) {
     next(error)
   }
@@ -181,6 +184,7 @@ const addUserAddress = async (
 
     res.status(StatusCodes.CREATED).json({
       message: 'Thêm địa chỉ thành công',
+      success: true,
       data: newAddress
     })
   } catch (error) {
@@ -202,7 +206,8 @@ const getUserAddress = async (
     const addresses = await userService.getUserAddresses(userId)
 
     res.status(StatusCodes.OK).json({
-      data: addresses
+      success: true,
+      addresses: addresses
     })
   } catch (error) {
     next(error)
@@ -216,7 +221,11 @@ const updateUserAddress = async (req: Request, res: Response, next: NextFunction
     const { addressId } = req.params
 
     const updated = await userService.updateUserAddress(userId, addressId, req.body)
-    res.status(StatusCodes.OK).json({ message: 'Update success', data: updated })
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: 'Update success',
+      data: updated
+    })
   } catch (error) { next(error) }
 }
 
@@ -235,8 +244,10 @@ const deleteUserAddress = async (req: Request, res: Response, next: NextFunction
   try {
     const userId = req.jwtDecoded?.userId as string
     const { addressId } = req.params
-    const result = await userService.deleteUserAddress(userId, addressId)
-    res.status(StatusCodes.OK).json(result)
+    await userService.deleteUserAddress(userId, addressId)
+    res.status(StatusCodes.OK).json({
+      success: true
+    })
   } catch (error) { next(error) }
 }
 

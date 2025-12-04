@@ -394,8 +394,6 @@ const deleteUserAddress = async (userId: string, addressId: string) => {
   await prisma.userAddress.delete({
     where: { id: addressId }
   })
-
-  return { message: 'Address deleted successfully' }
 }
 
 export const userService = {
