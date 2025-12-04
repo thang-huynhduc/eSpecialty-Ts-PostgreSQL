@@ -37,11 +37,12 @@ const Checkout = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${API_URL}/api/order/user/${orderId}`,
+        `${API_URL}/api/order/${orderId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          credentials: 'include'
         }
       );
       const data = await response.json();
@@ -128,7 +129,7 @@ const Checkout = () => {
   };
 
   const handleItemClick = (item) => {
-    navigate(`/product/${item.productId._id}`);
+    navigate(`/product/${item.productId}`);
   };
 
   const getStatusColor = (status) => {
@@ -209,7 +210,7 @@ const Checkout = () => {
                 {t("checkout_order.order_confirmation")} {/* i18n */}
               </h1>
               <p className="text-gray-600">
-                {t("checkout_order.order_id")}: #{order._id}
+                {t("checkout_order.order_id")}: #{order.id}
               </p>
             </div>
           </div>
@@ -254,7 +255,7 @@ const Checkout = () => {
                   <FaClock className="w-4 h-4 text-gray-500" />
                   <span className="text-sm text-gray-600">
                     {t("checkout_order.order_date")}:{" "}
-                    {new Date(order.date).toLocaleDateString()}
+                    {new Date(order?.createdAt).toLocaleDateString()}
                   </span>
                 </div>
                 {order.ghnOrderCode && (
@@ -327,32 +328,39 @@ const Checkout = () => {
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <FaMapMarkerAlt className="w-5 h-5" />
-                {t("checkout_order.delivery_address")} {/* i18n */}
+                {t("checkout_order.delivery_address")}
               </h2>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <FaUser className="w-4 h-4 text-gray-500" />
                   <span className="text-gray-900">
-                    {order.address.name}
+                    {order.user?.name ||  "Tên người nhận"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <FaEnvelope className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-600">{order.address.email}</span>
+                  <span className="text-gray-600">
+                    {/* SỬA: address -> shippingAddress */}
+                    {order.user?.email || "Email chưa cập nhật"}
+                  </span>
                 </div>
-                {order.address.phone && (
+                {/* Lưu ý: Trong JSON đại ca gửi có trường phone, nhưng check kỹ nhé */}
+                {order.shippingAddress?.phone && (
                   <div className="flex items-center gap-2">
                     <FaPhone className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">{order.address.phone}</span>
+                    <span className="text-gray-600">{order.shippingAddress.phone}</span>
                   </div>
                 )}
                 <div className="flex items-start gap-2">
                   <FaMapMarkerAlt className="w-4 h-4 text-gray-500 mt-0.5" />
                   <div className="text-gray-600">
-                    <p>{order.address.street}</p>
-                    <p>{order.address.ward}, {order.address.district}</p>
+                    {/* SỬA: address -> shippingAddress */}
+                    <p>{order.shippingAddress?.street}</p>
                     <p>
-                      {order.address.city} {order.address.country}
+                      {order.shippingAddress?.ward}, {order.shippingAddress?.district}
+                    </p>
+                    <p>
+                      {order.shippingAddress?.city} {order.shippingAddress?.country}
                     </p>
                   </div>
                 </div>
@@ -386,7 +394,7 @@ const Checkout = () => {
                 <div className="flex justify-between text-lg font-semibold">
                   <span className="text-gray-900">{t("checkout_order.total")}</span>
                   <span className="text-gray-900">
-                    <PriceFormat amount={(order.totalAmount && order.totalAmount > 0) ? order.totalAmount : (order.amount + (order.shippingFee || 0))} />
+                    <PriceFormat amount={(order.totalAmount && order.totalAmount > 0) ? order.totalAmount : (Number(order.amount) + (Number(order.shippingFee) || 0))} />
                   </span>
                 </div>
               </div>

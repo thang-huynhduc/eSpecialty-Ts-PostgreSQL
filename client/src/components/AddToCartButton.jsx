@@ -20,7 +20,7 @@ const AddToCartButton = ({ item, className }) => {
 
   useEffect(() => {
     const availableItem = products.find(
-      (product) => product?._id === item?._id
+      (product) => product?.id === item?.id
     );
     setExistingProduct(availableItem || null);
   }, [products, item]);
@@ -41,7 +41,7 @@ const AddToCartButton = ({ item, className }) => {
       toast.error("Cannot add more, stock limit reached!");
       return;
     }
-    dispatch(increaseQuantity(item?._id));
+    dispatch(increaseQuantity(item?.id));
     toast.success("Quantity increased successfully!");
   };
 
@@ -57,7 +57,7 @@ const AddToCartButton = ({ item, className }) => {
           <button
             disabled={existingProduct?.quantity <= 1}
             onClick={() => {
-              dispatch(decreaseQuantity(item?._id));
+              dispatch(decreaseQuantity(item?.id));
               toast.success("Quantity decreased successfully!");
             }}
             className="border border-gray-300 text-gray-700 p-2 hover:border-black hover:text-black rounded-md text-sm transition-all duration-200 cursor-pointer disabled:text-gray-300 disabled:border-gray-200 disabled:hover:border-gray-200 disabled:hover:text-gray-300"
@@ -90,7 +90,7 @@ const AddToCartButton = ({ item, className }) => {
 
 AddToCartButton.propTypes = {
   item: PropTypes.shape({
-    _id: PropTypes.string,
+    id: PropTypes.string,
     name: PropTypes.string,
     stock: PropTypes.number, // Thêm stock vào PropTypes
   }).isRequired,

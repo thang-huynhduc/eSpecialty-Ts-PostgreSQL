@@ -14,7 +14,7 @@ const CartProduct = ({ item }) => {
       <div className="flex col-span-5 md:col-span-2 items-center gap-4 ml-4">
         <ImCross
           onClick={() => {
-            dispatch(deleteItem(item._id));
+            dispatch(deleteItem(item.id));
             toast.success(
               `${item?.name.substring(0, 10)}... is deleted successfully!`
             );

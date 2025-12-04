@@ -74,7 +74,7 @@ const Cart = () => {
   const [shippingError, setShippingError] = useState(null);
   
   // Config API URL
-  const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v1`; 
+  const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api`; 
 
   // --- 1. TÍNH TOÁN TỔNG TIỀN (LOGIC MỚI) ---
   useEffect(() => {
@@ -121,15 +121,16 @@ const Cart = () => {
     try {
       const token = localStorage.getItem("token");
       // Gọi API lấy danh sách địa chỉ (Endpoint chuẩn backend)
-      const response = await fetch(`${API_URL}/users/address`, {
+      const response = await fetch(`${API_URL}/user/addresses`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include'
       });
       const data = await response.json();
       
       // Xử lý data trả về (có thể là mảng trực tiếp hoặc data object)
-      const addressList = Array.isArray(data) ? data : data.data || [];
+      const addressList = Array.isArray(data) ? data : data.addresses || [];
       
       setAddresses(addressList);
       
@@ -151,12 +152,13 @@ const Cart = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/users/address`, {
+      const response = await fetch(`${API_URL}/user/addresses`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify({
           ...addressForm,
           // Convert các ID sang number theo đúng schema Prisma
@@ -210,15 +212,15 @@ const Cart = () => {
         shippingAddress: selectedAddress, // Gửi nguyên object để lưu snapshot
         shippingFee: shippingFee,
         paymentMethod: "cod", // Hardcode hoặc lấy từ state payment
-        amount: discount // Tổng tiền hàng (đã trừ khuyến mãi)
       };
 
-      const response = await fetch(`${API_URL}/orders`, {
+      const response = await fetch(`${API_URL}/order`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify(orderPayload),
       });
 
@@ -580,25 +582,126 @@ const Cart = () => {
                     <button onClick={() => setShowAddressModal(false)}><FaTimes/></button>
                 </div>
                 <form onSubmit={handleAddAddress} className="space-y-4">
-                    {/* ... Form fields (Label, Street, etc.) giữ nguyên ... */}
-                    {/* Chỉ cần nhớ AddressSelector trả về data để set vào state */}
-                    <AddressSelector onAddressChange={(data) => {
-                        setAddressData(data);
-                        setAddressForm(prev => ({
-                            ...prev,
-                            city: data.provinceName,
-                            district: data.districtName,
-                            ward: data.wardName
-                        }));
-                    }} />
-                    
-                    {/* ... Các input còn lại ... */}
-                    <div className="flex gap-3 pt-4">
-                        <button type="button" onClick={() => setShowAddressModal(false)} className="flex-1 px-4 py-2 border rounded hover:bg-gray-50">{t("cart.cancel_button")}</button>
-                        <button type="submit" disabled={isAddingAddress} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
-                            {isAddingAddress ? "Saving..." : t("cart.add_address_button")}
-                        </button>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("profile.address_label_required")}
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={addressForm.label}
+                        onChange={(e) =>
+                          setAddressForm({ ...addressForm, label: e.target.value })
+                        }
+                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white cursor-pointer"
+                        required
+                      >
+                        <option value="">{t("profile.select_address_type_placeholder")}</option>
+                        <option value="Home">{t("profile.home_option")}</option>
+                        <option value="Work">{t("profile.work_option")}</option>
+                        <option value="Hometown">{t("profile.hometown_option")}</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <svg
+                          className="w-4 h-4 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("profile.street_address_required")}
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.street}
+                      onChange={(e) =>
+                        setAddressForm({ ...addressForm, street: e.target.value })
+                      }
+                      placeholder={t("profile.house_number_placeholder")}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                  {/* Chỉ cần nhớ AddressSelector trả về data để set vào state */}
+                  <AddressSelector onAddressChange={(data) => {
+                      setAddressData(data);
+                      setAddressForm(prev => ({
+                          ...prev,
+                          city: data.provinceName,
+                          district: data.districtName,
+                          ward: data.wardName
+                      }));
+                  }} />
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("profile.zip_code_label")}
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.zipCode}
+                      onChange={(e) =>
+                        setAddressForm({
+                          ...addressForm,
+                          zipCode: e.target.value,
+                        })
+                      }
+                      placeholder={t("profile.optional_label")}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("profile.phone_number_label_optional")}
+                    </label>
+                    <input
+                      type="tel"
+                      value={addressForm.phone}
+                      onChange={(e) =>
+                        setAddressForm({ ...addressForm, phone: e.target.value })
+                      }
+                      placeholder={t("profile.optional_label")}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="isDefault"
+                      checked={addressForm.isDefault}
+                      onChange={(e) =>
+                        setAddressForm({
+                          ...addressForm,
+                          isDefault: e.target.checked,
+                        })
+                      }
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor="isDefault"
+                      className="ml-2 text-sm text-gray-700"
+                    >
+                      {t("profile.set_default_checkbox")}
+                    </label>
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                      <button type="button" onClick={() => setShowAddressModal(false)} className="flex-1 px-4 py-2 border rounded hover:bg-gray-50">{t("cart.cancel_button")}</button>
+                      <button type="submit" disabled={isAddingAddress} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">
+                          {isAddingAddress ? "Saving..." : t("cart.add_address_button")}
+                      </button>
+                  </div>
                 </form>
            </div>
         </div>

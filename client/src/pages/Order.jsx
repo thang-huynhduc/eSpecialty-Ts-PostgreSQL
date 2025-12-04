@@ -47,11 +47,12 @@ const Order = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${API_URL}/api/order/my-orders`,
+        `${API_URL}/api/order`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          credentials: 'include'
         }
       );
 
@@ -126,16 +127,14 @@ const Order = () => {
       setCancelling(true);
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${API_URL}/api/order/cancel`,
+        `${API_URL}/api/order/${order.id}/cancel`,
         {
-          method: "POST",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            orderId: order._id,
-          }),
+          credentials: 'include',
         }
       );
 
@@ -144,7 +143,7 @@ const Order = () => {
         toast.success("Đơn hàng đã được hủy thành công");
         // Cập nhật state local
         setOrders(orders.map(o =>
-          o._id === order._id
+          o.id === order.id
             ? { ...o, status: "cancelled", paymentStatus: data.order.paymentStatus, updatedAt: data.order.updatedAt }
             : o
         ));
@@ -321,11 +320,11 @@ const Order = () => {
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <button
-                          onClick={() => handleSort("_id")}
+                          onClick={() => handleSort("id")}
                           className="flex items-center gap-1 hover:text-gray-700"
                         >
-                          {t("orders.order_id")}
-                          {sortConfig.key === "_id" ? (
+                          {t("orders.orderid")}
+                          {sortConfig.key === "id" ? (
                             sortConfig.direction === "asc" ? (
                               <FaSortUp />
                             ) : (
@@ -401,24 +400,24 @@ const Order = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {sortedOrders.map((order) => (
                       <motion.tr
-                        key={order._id}
+                        key={order.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.3 }}
                         className="hover:bg-gray-50 cursor-pointer"
-                        onClick={() => handleRowClick(order._id)}
+                        onClick={() => handleRowClick(order.id)}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
-                            #{order._id.slice(-8).toUpperCase()}
+                            #{order.id.slice(-8).toUpperCase()}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {new Date(order.date).toLocaleDateString("vi-VN")}
+                            {new Date(order.createdAt).toLocaleDateString("vi-VN")}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {new Date(order.date).toLocaleTimeString("vi-VN", {
+                            {new Date(order.createdAt).toLocaleTimeString("vi-VN", {
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
@@ -463,7 +462,7 @@ const Order = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-semibold text-gray-900">
-                            <PriceFormat amount={order.amount + order.shippingFee} />
+                            <PriceFormat amount={Number(order.amount) + Number(order.shippingFee)} />
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -552,7 +551,7 @@ const Order = () => {
                   <p className="text-sm text-gray-500 mb-6">
                     Bạn có chắc chắn muốn hủy đơn hàng{" "}
                     <span className="font-semibold">
-                      #{cancelModal.order._id.slice(-8).toUpperCase()}
+                      #{cancelModal.order.id.slice(-8).toUpperCase()}
                     </span>?
                     <br />
                     Hành động này không thể hoàn tác.

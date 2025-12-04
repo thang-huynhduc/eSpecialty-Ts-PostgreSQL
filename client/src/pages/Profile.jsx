@@ -79,6 +79,7 @@ const Profile = () => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        withCredentials: 'true'
       });
 
       if (response.data.success) {
@@ -109,10 +110,11 @@ const Profile = () => {
     try {
       setOrdersLoading(true);
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${serverUrl}/api/order/my-orders`, {
+      const response = await axios.get(`${serverUrl}/api/order`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        withCredentials: 'true'
       });
 
       if (response.data.success) {
@@ -143,6 +145,7 @@ const Profile = () => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        withCredentials: 'true'
       });
       if (response.data.success) {
         setAddresses(response.data.addresses);
@@ -158,7 +161,7 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("token");
       const url = editingAddress 
-        ? `${serverUrl}/api/user/addresses/${editingAddress._id}`
+        ? `${serverUrl}/api/user/addresses/${editingAddress.id}`
         : `${serverUrl}/api/user/addresses`;
       
       const method = editingAddress ? 'PUT' : 'POST';
@@ -171,6 +174,7 @@ const Profile = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        withCredentials: 'true',
         data: {
           ...addressForm,
           provinceId: addressForm.provinceId,
@@ -206,6 +210,7 @@ const Profile = () => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        withCredentials: 'true'
       });
 
       if (response.data.success) {
@@ -611,7 +616,7 @@ const Profile = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {addresses.map((address) => (
                       <div
-                        key={address._id}
+                        key={address.id}
                         className={`border-2 rounded-lg p-4 transition-all ${
                           address.isDefault 
                             ? 'border-green-500 bg-green-50' 
@@ -636,7 +641,7 @@ const Profile = () => {
                               <FaEdit className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => handleDeleteAddress(address._id)}
+                              onClick={() => handleDeleteAddress(address.id)}
                               className="p-1 text-gray-400 hover:text-red-600 transition-colors"
                               title={t("profile.delete_address")}
                             >
@@ -655,7 +660,7 @@ const Profile = () => {
 
                         {!address.isDefault && (
                           <button
-                            onClick={() => handleSetDefaultAddress(address._id)}
+                            onClick={() => handleSetDefaultAddress(address.id)}
                             className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                           >
                             {t("profile.set_as_default")}
@@ -706,9 +711,9 @@ const Profile = () => {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {recentOrders.map((order) => (
-                          <tr key={order._id} className="hover:bg-gray-50">
+                          <tr key={order.id} className="hover:bg-gray-50">
                             <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              #{order._id.slice(-8).toUpperCase()}
+                              #{order.id.slice(-8).toUpperCase()}
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(order.date).toLocaleDateString()}
