@@ -186,7 +186,7 @@ const getOrdersByUserId = async (userId: string) => {
 }
 
 // 7. [ADMIN] CẬP NHẬT TRẠNG THÁI
-const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
+const updateOrderStatus = async (orderId: string, status: OrderStatus, paymentStatus: PaymentStatus) => {
   const order = await prisma.order.findUnique({ where: { id: orderId } })
   if (!order) throw new ApiError(StatusCodes.NOT_FOUND, 'Order not found')
 
@@ -199,12 +199,10 @@ const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
   }
 
   // Các trạng thái khác (Confirmed, Shipped, Delivered...) -> Update bình thường
-  const updatedOrder = await prisma.order.update({
+  await prisma.order.update({
     where: { id: orderId },
-    data: { status }
+    data: { status, paymentStatus }
   })
-
-  return updatedOrder
 }
 
 // 8. [ADMIN] XÓA ĐƠN HÀNG (Hard Delete)

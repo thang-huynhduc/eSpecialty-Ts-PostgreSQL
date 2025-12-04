@@ -58,7 +58,10 @@ const cancelOrder = async (req: Request, res: Response, next: NextFunction) => {
 const getAllOrders = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const orders = await orderService.getAllOrders()
-    res.status(StatusCodes.OK).json(orders)
+    res.status(StatusCodes.OK).json({
+      success: true,
+      orders: orders
+    })
   } catch (error) { next(error) }
 }
 
@@ -75,9 +78,11 @@ const getUserOrders = async (req: Request, res: Response, next: NextFunction) =>
 const updateOrderStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params
-    const { status } = req.body
-    const result = await orderService.updateOrderStatus(id, status)
-    res.status(StatusCodes.OK).json(result)
+    const { status, paymentStatus } = req.body
+    await orderService.updateOrderStatus(id, status, paymentStatus)
+    res.status(StatusCodes.OK).json({
+      success: true
+    })
   } catch (error) { next(error) }
 }
 

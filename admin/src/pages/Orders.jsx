@@ -64,10 +64,11 @@ const Orders = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await fetch(`${serverUrl}/api/order/list`, {
+      const response = await fetch(`${serverUrl}/api/order/admin/all-orders`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -95,18 +96,19 @@ const Orders = () => {
   const updateOrderStatus = async (orderId, status, paymentStatus = null) => {
     try {
       const token = localStorage.getItem("token");
-      const updateData = { orderId, status };
+      const updateData = { status };
 
       if (paymentStatus) {
         updateData.paymentStatus = paymentStatus;
       }
 
-      const response = await fetch(`${serverUrl}/api/order/update-status`, {
-        method: "POST",
+      const response = await fetch(`${serverUrl}/api/order/admin/${orderId}/status`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify(updateData),
       });
 
@@ -117,7 +119,7 @@ const Orders = () => {
         setShowEditModal(false);
         setEditingOrder(null);
         // Update selected order if it's currently being viewed
-        if (selectedOrder && selectedOrder._id === orderId) {
+        if (selectedOrder && selectedOrder.id === orderId) {
           const updatedOrder = { ...selectedOrder, status };
           if (paymentStatus) {
             updatedOrder.paymentStatus = paymentStatus;
@@ -155,7 +157,7 @@ const Orders = () => {
         toast.success(t("orders.messages.deleteSuccess"));
         fetchOrders(); // Refresh orders
         // Close detail modal if deleted order is currently being viewed
-        if (selectedOrder && selectedOrder._id === orderId) {
+        if (selectedOrder && selectedOrder.id === orderId) {
           setShowDetailModal(false);
           setSelectedOrder(null);
         }
@@ -170,7 +172,7 @@ const Orders = () => {
 
   // Refund PayPal payment
   const refundPayPalOrder = async (order) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn hoàn tiền cho đơn hàng #${order._id}?`)) {
+    if (!window.confirm(`Bạn có chắc chắn muốn hoàn tiền cho đơn hàng #${order.id}?`)) {
       return;
     }
 
@@ -183,7 +185,7 @@ const Orders = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          orderId: order._id,
+          orderId: order.id,
           reason: "Order cancelled by admin",
         }),
       });
@@ -193,7 +195,7 @@ const Orders = () => {
         toast.success(`Hoàn tiền thành công! Refund ID: ${data.refundId}`);
         fetchOrders(); // Refresh orders
         // Close detail modal if refunded order is currently being viewed
-        if (selectedOrder && selectedOrder._id === order._id) {
+        if (selectedOrder && selectedOrder.id === order.id) {
           setShowDetailModal(false);
           setSelectedOrder(null);
         }
@@ -223,7 +225,7 @@ const Orders = () => {
   // Handle save changes
   const handleSaveChanges = () => {
     if (editingOrder) {
-      updateOrderStatus(editingOrder._id, newStatus, newPaymentStatus);
+      updateOrderStatus(editingOrder.id, newStatus, newPaymentStatus);
     }
   };
 
@@ -231,7 +233,7 @@ const Orders = () => {
   const filteredOrders = orders
     .filter((order) => {
       const matchesSearch =
-        order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.userId?.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -620,13 +622,13 @@ const Orders = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {currentOrders.map((order) => (
                 <tr
-                  key={order._id}
+                  key={order.id}
                   className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => handleViewOrderDetails(order)}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      #{order._id.slice(-8).toUpperCase()}
+                      #{order.id.slice(-8).toUpperCase()}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -638,10 +640,10 @@ const Orders = () => {
                       </div>
                       <div className="ml-3">
                         <div className="text-sm font-medium text-gray-900">
-                          {order.userId?.name || "N/A"}
+                          {order.user?.name || "N/A"}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {order.userId?.email || "N/A"}
+                          {order.user?.email || "N/A"}
                         </div>
                       </div>
                     </div>
@@ -649,7 +651,7 @@ const Orders = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center text-sm text-gray-900">
                       <FaCalendarAlt className="w-4 h-4 mr-2 text-gray-400" />
-                      {new Date(order.date).toLocaleDateString()}
+                      {new Date(order.createdAt).toLocaleDateString()}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -659,7 +661,7 @@ const Orders = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      <PriceFormat amount={(order.totalAmount && order.totalAmount > 0) ? order.totalAmount : (order.amount + (order.shippingFee || 0))} />
+                      <PriceFormat amount={(Number(order.amount) + (Number(order.shippingFee) || 0))} />
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -730,7 +732,7 @@ const Orders = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          deleteOrder(order._id);
+                          deleteOrder(order.id);
                         }}
                         className="text-red-600 hover:text-red-900 p-1 rounded"
                         title={t("orders.buttons.delete")}
@@ -825,7 +827,7 @@ const Orders = () => {
           <>
             {currentOrders.map((order) => (
               <div
-                key={order._id}
+                key={order.id}
                 className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => handleViewOrderDetails(order)}
               >
@@ -837,7 +839,7 @@ const Orders = () => {
                     </div>
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        #{order._id.slice(-8).toUpperCase()}
+                        #{order.id.slice(-8).toUpperCase()}
                       </div>
                       <div className="text-xs text-gray-500">
                         {order.userId?.name || "N/A"}
@@ -868,7 +870,7 @@ const Orders = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteOrder(order._id);
+                        deleteOrder(order.id);
                       }}
                       className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50"
                       title="Delete Order"
@@ -1004,7 +1006,7 @@ const Orders = () => {
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                 <FaReceipt className="w-5 h-5 text-blue-600" />
-                Order Details - #{selectedOrder._id.slice(-8).toUpperCase()}
+                Order Details - #{selectedOrder.id.slice(-8).toUpperCase()}
               </h3>
               <div className="flex items-center gap-3">
                 <button
@@ -1071,7 +1073,7 @@ const Orders = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Date:</span>
                       <span className="text-sm font-medium text-gray-900">
-                        {new Date(selectedOrder.date).toLocaleDateString()}
+                        {new Date(selectedOrder.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
@@ -1086,16 +1088,16 @@ const Orders = () => {
                   <div className="space-y-2">
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {selectedOrder.userId?.name || `${selectedOrder.address?.firstName || ''} ${selectedOrder.address?.lastName || ''}`.trim() || "N/A"}
+                        {selectedOrder.user?.name  || "N/A"}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <FaEnvelope className="w-3 h-3" />
-                      {selectedOrder.userId?.email || selectedOrder.address?.email || "N/A"}
+                      {selectedOrder.user?.email || "N/A"}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <FaPhone className="w-3 h-3" />
-                      {selectedOrder.address?.phone || "N/A"}
+                      {selectedOrder.shippingAddress?.phone || "N/A"}
                     </div>
                   </div>
                 </div>
@@ -1110,19 +1112,19 @@ const Orders = () => {
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Subtotal:</span>
                       <span className="text-sm font-medium text-gray-900">
-                        <PriceFormat amount={selectedOrder.amount} />
+                        <PriceFormat amount={Number(selectedOrder.amount)} />
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Shipping:</span>
                       <span className="text-sm font-medium text-gray-900">
-                        <PriceFormat amount={selectedOrder.shippingFee || 0} />
+                        <PriceFormat amount={Number(selectedOrder.shippingFee) || 0} />
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Total:</span>
                       <span className="text-sm font-bold text-gray-900">
-                        <PriceFormat amount={(selectedOrder.totalAmount && selectedOrder.totalAmount > 0) ? selectedOrder.totalAmount : (selectedOrder.amount + (selectedOrder.shippingFee || 0))} />
+                        <PriceFormat amount={(Number(selectedOrder.amount) + (Number(selectedOrder.shippingFee) || 0))} />
                       </span>
                     </div>
                     {selectedOrder.originalAmount && (
@@ -1164,25 +1166,25 @@ const Orders = () => {
                     <div>
                       <p className="text-sm font-medium text-gray-900 mb-1">Full Name</p>
                       <p className="text-sm text-gray-600">
-                        {`${selectedOrder.address?.firstName || ''} ${selectedOrder.address?.lastName || ''}`.trim() || "N/A"}
+                        {`${selectedOrder.user?.name}`.trim() || "N/A"}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900 mb-1">Phone</p>
                       <p className="text-sm text-gray-600">
-                        {selectedOrder.address?.phone || "N/A"}
+                        {selectedOrder.shippingAddress?.phone || "N/A"}
                       </p>
                     </div>
                     <div className="md:col-span-2">
                       <p className="text-sm font-medium text-gray-900 mb-1">Address</p>
                       <p className="text-sm text-gray-600">
-                        {formatAddress(selectedOrder.address)}
+                        {formatAddress(selectedOrder.shippingAddress)}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900 mb-1">Zipcode</p>
                       <p className="text-sm text-gray-600">
-                        {selectedOrder.address?.zipcode || "N/A"}
+                        {selectedOrder.shippingAddress?.zipCode || "N/A"}
                       </p>
                     </div>
                   </div>
@@ -1199,13 +1201,13 @@ const Orders = () => {
                 </div>
                 <div className="space-y-4">
                   {selectedOrder.items.map((item, index) => (
-                    <div key={item._id || index} className="bg-gray-50 rounded-lg p-4">
+                    <div key={item.id || index} className="bg-gray-50 rounded-lg p-4">
                       <div className="flex flex-col md:flex-row gap-4">
                         {/* Product Image */}
                         <div className="flex-shrink-0">
                           <img
                             src={item.image}
-                            alt={item.name}
+                            alt={item?.name}
                             className="w-20 h-20 object-cover rounded-lg border border-gray-200"
                             onError={(e) => {
                               e.target.src = '/placeholder-image.jpg';
@@ -1222,7 +1224,7 @@ const Orders = () => {
                             <div>
                               <span className="text-gray-600">Price: </span>
                               <span className="font-medium text-gray-900">
-                                <PriceFormat amount={item.price} />
+                                <PriceFormat amount={Number(item.price)} />
                               </span>
                             </div>
                             <div>
@@ -1236,10 +1238,10 @@ const Orders = () => {
                               </span>
                             </div>
                           </div>
-                          {item.productId?._id && (
+                          {item.productId && (
                             <div className="mt-2">
                               <span className="text-xs text-gray-500">
-                                Product ID: {item.productId._id}
+                                Product ID: {item.productId}
                               </span>
                             </div>
                           )}
@@ -1254,14 +1256,14 @@ const Orders = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-gray-900">Order Total:</span>
                     <span className="text-xl font-bold text-blue-600">
-                      <PriceFormat amount={(selectedOrder.totalAmount && selectedOrder.totalAmount > 0) ? selectedOrder.totalAmount : (selectedOrder.amount + (selectedOrder.shippingFee || 0))} />
+                      <PriceFormat amount={((Number(selectedOrder.amount) + Number(selectedOrder.shippingFee) || 0))} />
                     </span>
                   </div>
                   {selectedOrder.originalAmount && selectedOrder.originalAmount !== selectedOrder.amount && (
                     <div className="flex justify-between items-center mt-2 text-sm">
                       <span className="text-gray-600">Original Amount (VND):</span>
                       <span className="text-gray-900">
-                        {formatVND(selectedOrder.originalAmount)}
+                        {formatVND(Number(selectedOrder.amount) + Number(selectedOrder.shippingFee))}
                       </span>
                     </div>
                   )}
@@ -1319,7 +1321,7 @@ const Orders = () => {
 
               <div className="mb-4">
                 <div className="text-sm text-gray-600 mb-2">
-                  Order #{editingOrder._id.slice(-8).toUpperCase()}
+                  Order #{editingOrder.id.slice(-8).toUpperCase()}
                 </div>
               </div>
 

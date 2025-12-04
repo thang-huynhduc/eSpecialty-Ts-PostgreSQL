@@ -2,7 +2,7 @@ import Joi from 'joi'
 import { StatusCodes } from 'http-status-codes'
 import ApiError from '../utils/apiError.js'
 import type { Request, Response, NextFunction } from 'express'
-import { OrderStatus, PaymentMethod } from 'generated/prisma/enums.js'
+import { OrderStatus, PaymentMethod, PaymentStatus } from 'generated/prisma/enums.js'
 
 const createOrder = async (req: Request, res: Response, next: NextFunction) => {
   const correctCondition = Joi.object({
@@ -41,9 +41,8 @@ const checkOrderId = async (req: Request, res: Response, next: NextFunction) => 
 
 const updateOrderStatus = async (req: Request, res: Response, next: NextFunction) => {
   const correctCondition = Joi.object({
-    status: Joi.string()
-      .valid(...Object.values(OrderStatus)) // Chỉ chấp nhận: pending, confirmed, shipped...
-      .required()
+    status: Joi.string().valid(...Object.values(OrderStatus)).required(), // Chỉ chấp nhận: pending, confirmed, shipped...
+    paymentStatus: Joi.string().valid(...Object.values(PaymentStatus)).optional()
   })
 
   try {
