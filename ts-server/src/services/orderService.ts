@@ -3,7 +3,7 @@ import { prisma } from '../config/prisma.js'
 import ApiError from '../utils/apiError.js'
 import { StatusCodes } from 'http-status-codes'
 import { OrderStatus, PaymentStatus } from 'generated/prisma/enums.js'
-import { ghn } from 'config/Giaohangnhanh.js'
+import { ghn } from 'providers/GhnProvider.js'
 
 // 1. TẠO ĐƠN HÀNG (Transaction)
 const createOrder = async (userId: string, data: CreateOrderDTO) => {

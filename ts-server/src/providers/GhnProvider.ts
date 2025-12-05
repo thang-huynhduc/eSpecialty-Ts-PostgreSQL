@@ -1,5 +1,5 @@
 import { Ghn } from 'giaohangnhanh'
-import { env } from './environment.js'
+import { env } from '../config/environment.js'
 
 export const ghn = new Ghn({
   token: env.GHN_API_TOKEN as string, // Thay bằng token của bạn
